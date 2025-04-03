@@ -28,7 +28,6 @@ type TaskQuery struct {
 	predicates   []predicate.Task
 	withMessages *MessageQuery
 	withAgent    *AgentQuery
-	withFKs      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -79,7 +78,7 @@ func (tq *TaskQuery) QueryMessages() *MessageQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(task.Table, task.FieldID, selector),
 			sqlgraph.To(message.Table, message.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, task.MessagesTable, task.MessagesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, task.MessagesTable, task.MessagesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -101,7 +100,7 @@ func (tq *TaskQuery) QueryAgent() *AgentQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(task.Table, task.FieldID, selector),
 			sqlgraph.To(agent.Table, agent.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, task.AgentTable, task.AgentColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, task.AgentTable, task.AgentColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -408,19 +407,12 @@ func (tq *TaskQuery) prepareQuery(ctx context.Context) error {
 func (tq *TaskQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Task, error) {
 	var (
 		nodes       = []*Task{}
-		withFKs     = tq.withFKs
 		_spec       = tq.querySpec()
 		loadedTypes = [2]bool{
 			tq.withMessages != nil,
 			tq.withAgent != nil,
 		}
 	)
-	if tq.withAgent != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, task.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Task).scanValues(nil, columns)
 	}
@@ -465,7 +457,9 @@ func (tq *TaskQuery) loadMessages(ctx context.Context, query *MessageQuery, node
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(message.FieldTaskID)
+	}
 	query.Where(predicate.Message(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(task.MessagesColumn), fks...))
 	}))
@@ -474,13 +468,10 @@ func (tq *TaskQuery) loadMessages(ctx context.Context, query *MessageQuery, node
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.task_messages
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "task_messages" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TaskID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "task_messages" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "task_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -490,10 +481,7 @@ func (tq *TaskQuery) loadAgent(ctx context.Context, query *AgentQuery, nodes []*
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Task)
 	for i := range nodes {
-		if nodes[i].agent_tasks == nil {
-			continue
-		}
-		fk := *nodes[i].agent_tasks
+		fk := nodes[i].AgentID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -510,7 +498,7 @@ func (tq *TaskQuery) loadAgent(ctx context.Context, query *AgentQuery, nodes []*
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "agent_tasks" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "agent_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -543,6 +531,9 @@ func (tq *TaskQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != task.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if tq.withAgent != nil {
+			_spec.Node.AddColumnOnce(task.FieldAgentID)
 		}
 	}
 	if ps := tq.predicates; len(ps) > 0 {

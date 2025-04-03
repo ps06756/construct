@@ -41,22 +41,34 @@ type Model struct {
 	CacheReadCost float64 `json:"cache_read_cost,omitempty"`
 	// Enabled holds the value of the "enabled" field.
 	Enabled bool `json:"enabled,omitempty"`
+	// ModelProviderID holds the value of the "model_provider_id" field.
+	ModelProviderID uuid.UUID `json:"model_provider_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ModelQuery when eager-loading is set.
-	Edges                 ModelEdges `json:"edges"`
-	model_provider_models *uuid.UUID
-	selectValues          sql.SelectValues
+	Edges        ModelEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // ModelEdges holds the relations/edges for other nodes in the graph.
 type ModelEdges struct {
-	// ModelProvider holds the value of the model_provider edge.
-	ModelProvider *ModelProvider `json:"model_provider,omitempty"`
 	// Agents holds the value of the agents edge.
 	Agents []*Agent `json:"agents,omitempty"`
+	// ModelProvider holds the value of the model_provider edge.
+	ModelProvider *ModelProvider `json:"model_provider,omitempty"`
+	// Messages holds the value of the messages edge.
+	Messages []*Message `json:"messages,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
+}
+
+// AgentsOrErr returns the Agents value or an error if the edge
+// was not loaded in eager-loading.
+func (e ModelEdges) AgentsOrErr() ([]*Agent, error) {
+	if e.loadedTypes[0] {
+		return e.Agents, nil
+	}
+	return nil, &NotLoadedError{edge: "agents"}
 }
 
 // ModelProviderOrErr returns the ModelProvider value or an error if the edge
@@ -64,19 +76,19 @@ type ModelEdges struct {
 func (e ModelEdges) ModelProviderOrErr() (*ModelProvider, error) {
 	if e.ModelProvider != nil {
 		return e.ModelProvider, nil
-	} else if e.loadedTypes[0] {
+	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: modelprovider.Label}
 	}
 	return nil, &NotLoadedError{edge: "model_provider"}
 }
 
-// AgentsOrErr returns the Agents value or an error if the edge
+// MessagesOrErr returns the Messages value or an error if the edge
 // was not loaded in eager-loading.
-func (e ModelEdges) AgentsOrErr() ([]*Agent, error) {
-	if e.loadedTypes[1] {
-		return e.Agents, nil
+func (e ModelEdges) MessagesOrErr() ([]*Message, error) {
+	if e.loadedTypes[2] {
+		return e.Messages, nil
 	}
-	return nil, &NotLoadedError{edge: "agents"}
+	return nil, &NotLoadedError{edge: "messages"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -96,10 +108,8 @@ func (*Model) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case model.FieldCreateTime, model.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
-		case model.FieldID:
+		case model.FieldID, model.FieldModelProviderID:
 			values[i] = new(uuid.UUID)
-		case model.ForeignKeys[0]: // model_provider_models
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -183,12 +193,11 @@ func (m *Model) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.Enabled = value.Bool
 			}
-		case model.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field model_provider_models", values[i])
-			} else if value.Valid {
-				m.model_provider_models = new(uuid.UUID)
-				*m.model_provider_models = *value.S.(*uuid.UUID)
+		case model.FieldModelProviderID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field model_provider_id", values[i])
+			} else if value != nil {
+				m.ModelProviderID = *value
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -203,14 +212,19 @@ func (m *Model) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
 }
 
+// QueryAgents queries the "agents" edge of the Model entity.
+func (m *Model) QueryAgents() *AgentQuery {
+	return NewModelClient(m.config).QueryAgents(m)
+}
+
 // QueryModelProvider queries the "model_provider" edge of the Model entity.
 func (m *Model) QueryModelProvider() *ModelProviderQuery {
 	return NewModelClient(m.config).QueryModelProvider(m)
 }
 
-// QueryAgents queries the "agents" edge of the Model entity.
-func (m *Model) QueryAgents() *AgentQuery {
-	return NewModelClient(m.config).QueryAgents(m)
+// QueryMessages queries the "messages" edge of the Model entity.
+func (m *Model) QueryMessages() *MessageQuery {
+	return NewModelClient(m.config).QueryMessages(m)
 }
 
 // Update returns a builder for updating this Model.
@@ -265,6 +279,9 @@ func (m *Model) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("enabled=")
 	builder.WriteString(fmt.Sprintf("%v", m.Enabled))
+	builder.WriteString(", ")
+	builder.WriteString("model_provider_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.ModelProviderID))
 	builder.WriteByte(')')
 	return builder.String()
 }

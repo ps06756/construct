@@ -41,7 +41,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "model" package.
 	ModelsInverseTable = "models"
 	// ModelsColumn is the table column denoting the models relation/edge.
-	ModelsColumn = "model_provider_models"
+	ModelsColumn = "model_provider_id"
 )
 
 // Columns holds all SQL columns for modelprovider fields.

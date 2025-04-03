@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/furisto/construct/backend/memory/agent"
+	"github.com/furisto/construct/backend/memory/message"
 	"github.com/furisto/construct/backend/memory/model"
 	"github.com/furisto/construct/backend/memory/predicate"
 	"github.com/furisto/construct/backend/memory/task"
@@ -85,23 +86,59 @@ func (au *AgentUpdate) SetNillableInstructions(s *string) *AgentUpdate {
 	return au
 }
 
+// SetDefaultModel sets the "default_model" field.
+func (au *AgentUpdate) SetDefaultModel(u uuid.UUID) *AgentUpdate {
+	au.mutation.SetDefaultModel(u)
+	return au
+}
+
+// SetNillableDefaultModel sets the "default_model" field if the given value is not nil.
+func (au *AgentUpdate) SetNillableDefaultModel(u *uuid.UUID) *AgentUpdate {
+	if u != nil {
+		au.SetDefaultModel(*u)
+	}
+	return au
+}
+
 // SetModelID sets the "model" edge to the Model entity by ID.
 func (au *AgentUpdate) SetModelID(id uuid.UUID) *AgentUpdate {
 	au.mutation.SetModelID(id)
 	return au
 }
 
-// SetNillableModelID sets the "model" edge to the Model entity by ID if the given value is not nil.
-func (au *AgentUpdate) SetNillableModelID(id *uuid.UUID) *AgentUpdate {
-	if id != nil {
-		au = au.SetModelID(*id)
-	}
-	return au
-}
-
 // SetModel sets the "model" edge to the Model entity.
 func (au *AgentUpdate) SetModel(m *Model) *AgentUpdate {
 	return au.SetModelID(m.ID)
+}
+
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
+func (au *AgentUpdate) AddTaskIDs(ids ...uuid.UUID) *AgentUpdate {
+	au.mutation.AddTaskIDs(ids...)
+	return au
+}
+
+// AddTasks adds the "tasks" edges to the Task entity.
+func (au *AgentUpdate) AddTasks(t ...*Task) *AgentUpdate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return au.AddTaskIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (au *AgentUpdate) AddMessageIDs(ids ...uuid.UUID) *AgentUpdate {
+	au.mutation.AddMessageIDs(ids...)
+	return au
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (au *AgentUpdate) AddMessages(m ...*Message) *AgentUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return au.AddMessageIDs(ids...)
 }
 
 // AddDelegateIDs adds the "delegates" edge to the Agent entity by IDs.
@@ -134,21 +171,6 @@ func (au *AgentUpdate) AddDelegators(a ...*Agent) *AgentUpdate {
 	return au.AddDelegatorIDs(ids...)
 }
 
-// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (au *AgentUpdate) AddTaskIDs(ids ...uuid.UUID) *AgentUpdate {
-	au.mutation.AddTaskIDs(ids...)
-	return au
-}
-
-// AddTasks adds the "tasks" edges to the Task entity.
-func (au *AgentUpdate) AddTasks(t ...*Task) *AgentUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return au.AddTaskIDs(ids...)
-}
-
 // Mutation returns the AgentMutation object of the builder.
 func (au *AgentUpdate) Mutation() *AgentMutation {
 	return au.mutation
@@ -158,6 +180,48 @@ func (au *AgentUpdate) Mutation() *AgentMutation {
 func (au *AgentUpdate) ClearModel() *AgentUpdate {
 	au.mutation.ClearModel()
 	return au
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (au *AgentUpdate) ClearTasks() *AgentUpdate {
+	au.mutation.ClearTasks()
+	return au
+}
+
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (au *AgentUpdate) RemoveTaskIDs(ids ...uuid.UUID) *AgentUpdate {
+	au.mutation.RemoveTaskIDs(ids...)
+	return au
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
+func (au *AgentUpdate) RemoveTasks(t ...*Task) *AgentUpdate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return au.RemoveTaskIDs(ids...)
+}
+
+// ClearMessages clears all "messages" edges to the Message entity.
+func (au *AgentUpdate) ClearMessages() *AgentUpdate {
+	au.mutation.ClearMessages()
+	return au
+}
+
+// RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
+func (au *AgentUpdate) RemoveMessageIDs(ids ...uuid.UUID) *AgentUpdate {
+	au.mutation.RemoveMessageIDs(ids...)
+	return au
+}
+
+// RemoveMessages removes "messages" edges to Message entities.
+func (au *AgentUpdate) RemoveMessages(m ...*Message) *AgentUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return au.RemoveMessageIDs(ids...)
 }
 
 // ClearDelegates clears all "delegates" edges to the Agent entity.
@@ -200,27 +264,6 @@ func (au *AgentUpdate) RemoveDelegators(a ...*Agent) *AgentUpdate {
 		ids[i] = a[i].ID
 	}
 	return au.RemoveDelegatorIDs(ids...)
-}
-
-// ClearTasks clears all "tasks" edges to the Task entity.
-func (au *AgentUpdate) ClearTasks() *AgentUpdate {
-	au.mutation.ClearTasks()
-	return au
-}
-
-// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
-func (au *AgentUpdate) RemoveTaskIDs(ids ...uuid.UUID) *AgentUpdate {
-	au.mutation.RemoveTaskIDs(ids...)
-	return au
-}
-
-// RemoveTasks removes "tasks" edges to Task entities.
-func (au *AgentUpdate) RemoveTasks(t ...*Task) *AgentUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return au.RemoveTaskIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -266,6 +309,9 @@ func (au *AgentUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`memory: validator failed for field "Agent.name": %w`, err)}
 		}
 	}
+	if au.mutation.ModelCleared() && len(au.mutation.ModelIDs()) > 0 {
+		return errors.New(`memory: clearing a required unique edge "Agent.model"`)
+	}
 	return nil
 }
 
@@ -299,7 +345,7 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if au.mutation.ModelCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   agent.ModelTable,
 			Columns: []string{agent.ModelColumn},
 			Bidi:    false,
@@ -312,12 +358,102 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := au.mutation.ModelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   agent.ModelTable,
 			Columns: []string{agent.ModelColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(model.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if au.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RemovedTasksIDs(); len(nodes) > 0 && !au.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if au.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !au.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -415,51 +551,6 @@ func (au *AgentUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if au.mutation.TasksCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := au.mutation.RemovedTasksIDs(); len(nodes) > 0 && !au.mutation.TasksCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := au.mutation.TasksIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{agent.Label}
@@ -534,23 +625,59 @@ func (auo *AgentUpdateOne) SetNillableInstructions(s *string) *AgentUpdateOne {
 	return auo
 }
 
+// SetDefaultModel sets the "default_model" field.
+func (auo *AgentUpdateOne) SetDefaultModel(u uuid.UUID) *AgentUpdateOne {
+	auo.mutation.SetDefaultModel(u)
+	return auo
+}
+
+// SetNillableDefaultModel sets the "default_model" field if the given value is not nil.
+func (auo *AgentUpdateOne) SetNillableDefaultModel(u *uuid.UUID) *AgentUpdateOne {
+	if u != nil {
+		auo.SetDefaultModel(*u)
+	}
+	return auo
+}
+
 // SetModelID sets the "model" edge to the Model entity by ID.
 func (auo *AgentUpdateOne) SetModelID(id uuid.UUID) *AgentUpdateOne {
 	auo.mutation.SetModelID(id)
 	return auo
 }
 
-// SetNillableModelID sets the "model" edge to the Model entity by ID if the given value is not nil.
-func (auo *AgentUpdateOne) SetNillableModelID(id *uuid.UUID) *AgentUpdateOne {
-	if id != nil {
-		auo = auo.SetModelID(*id)
-	}
-	return auo
-}
-
 // SetModel sets the "model" edge to the Model entity.
 func (auo *AgentUpdateOne) SetModel(m *Model) *AgentUpdateOne {
 	return auo.SetModelID(m.ID)
+}
+
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
+func (auo *AgentUpdateOne) AddTaskIDs(ids ...uuid.UUID) *AgentUpdateOne {
+	auo.mutation.AddTaskIDs(ids...)
+	return auo
+}
+
+// AddTasks adds the "tasks" edges to the Task entity.
+func (auo *AgentUpdateOne) AddTasks(t ...*Task) *AgentUpdateOne {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return auo.AddTaskIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (auo *AgentUpdateOne) AddMessageIDs(ids ...uuid.UUID) *AgentUpdateOne {
+	auo.mutation.AddMessageIDs(ids...)
+	return auo
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (auo *AgentUpdateOne) AddMessages(m ...*Message) *AgentUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return auo.AddMessageIDs(ids...)
 }
 
 // AddDelegateIDs adds the "delegates" edge to the Agent entity by IDs.
@@ -583,21 +710,6 @@ func (auo *AgentUpdateOne) AddDelegators(a ...*Agent) *AgentUpdateOne {
 	return auo.AddDelegatorIDs(ids...)
 }
 
-// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (auo *AgentUpdateOne) AddTaskIDs(ids ...uuid.UUID) *AgentUpdateOne {
-	auo.mutation.AddTaskIDs(ids...)
-	return auo
-}
-
-// AddTasks adds the "tasks" edges to the Task entity.
-func (auo *AgentUpdateOne) AddTasks(t ...*Task) *AgentUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return auo.AddTaskIDs(ids...)
-}
-
 // Mutation returns the AgentMutation object of the builder.
 func (auo *AgentUpdateOne) Mutation() *AgentMutation {
 	return auo.mutation
@@ -607,6 +719,48 @@ func (auo *AgentUpdateOne) Mutation() *AgentMutation {
 func (auo *AgentUpdateOne) ClearModel() *AgentUpdateOne {
 	auo.mutation.ClearModel()
 	return auo
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (auo *AgentUpdateOne) ClearTasks() *AgentUpdateOne {
+	auo.mutation.ClearTasks()
+	return auo
+}
+
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (auo *AgentUpdateOne) RemoveTaskIDs(ids ...uuid.UUID) *AgentUpdateOne {
+	auo.mutation.RemoveTaskIDs(ids...)
+	return auo
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
+func (auo *AgentUpdateOne) RemoveTasks(t ...*Task) *AgentUpdateOne {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return auo.RemoveTaskIDs(ids...)
+}
+
+// ClearMessages clears all "messages" edges to the Message entity.
+func (auo *AgentUpdateOne) ClearMessages() *AgentUpdateOne {
+	auo.mutation.ClearMessages()
+	return auo
+}
+
+// RemoveMessageIDs removes the "messages" edge to Message entities by IDs.
+func (auo *AgentUpdateOne) RemoveMessageIDs(ids ...uuid.UUID) *AgentUpdateOne {
+	auo.mutation.RemoveMessageIDs(ids...)
+	return auo
+}
+
+// RemoveMessages removes "messages" edges to Message entities.
+func (auo *AgentUpdateOne) RemoveMessages(m ...*Message) *AgentUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return auo.RemoveMessageIDs(ids...)
 }
 
 // ClearDelegates clears all "delegates" edges to the Agent entity.
@@ -649,27 +803,6 @@ func (auo *AgentUpdateOne) RemoveDelegators(a ...*Agent) *AgentUpdateOne {
 		ids[i] = a[i].ID
 	}
 	return auo.RemoveDelegatorIDs(ids...)
-}
-
-// ClearTasks clears all "tasks" edges to the Task entity.
-func (auo *AgentUpdateOne) ClearTasks() *AgentUpdateOne {
-	auo.mutation.ClearTasks()
-	return auo
-}
-
-// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
-func (auo *AgentUpdateOne) RemoveTaskIDs(ids ...uuid.UUID) *AgentUpdateOne {
-	auo.mutation.RemoveTaskIDs(ids...)
-	return auo
-}
-
-// RemoveTasks removes "tasks" edges to Task entities.
-func (auo *AgentUpdateOne) RemoveTasks(t ...*Task) *AgentUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return auo.RemoveTaskIDs(ids...)
 }
 
 // Where appends a list predicates to the AgentUpdate builder.
@@ -728,6 +861,9 @@ func (auo *AgentUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`memory: validator failed for field "Agent.name": %w`, err)}
 		}
 	}
+	if auo.mutation.ModelCleared() && len(auo.mutation.ModelIDs()) > 0 {
+		return errors.New(`memory: clearing a required unique edge "Agent.model"`)
+	}
 	return nil
 }
 
@@ -778,7 +914,7 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 	if auo.mutation.ModelCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   agent.ModelTable,
 			Columns: []string{agent.ModelColumn},
 			Bidi:    false,
@@ -791,12 +927,102 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 	if nodes := auo.mutation.ModelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   agent.ModelTable,
 			Columns: []string{agent.ModelColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(model.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if auo.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RemovedTasksIDs(); len(nodes) > 0 && !auo.mutation.TasksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if auo.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !auo.mutation.MessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -887,51 +1113,6 @@ func (auo *AgentUpdateOne) sqlSave(ctx context.Context) (_node *Agent, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if auo.mutation.TasksCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := auo.mutation.RemovedTasksIDs(); len(nodes) > 0 && !auo.mutation.TasksCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := auo.mutation.TasksIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

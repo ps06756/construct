@@ -172,6 +172,26 @@ func (tu *TaskUpdate) ClearCost() *TaskUpdate {
 	return tu
 }
 
+// SetAgentID sets the "agent_id" field.
+func (tu *TaskUpdate) SetAgentID(u uuid.UUID) *TaskUpdate {
+	tu.mutation.SetAgentID(u)
+	return tu
+}
+
+// SetNillableAgentID sets the "agent_id" field if the given value is not nil.
+func (tu *TaskUpdate) SetNillableAgentID(u *uuid.UUID) *TaskUpdate {
+	if u != nil {
+		tu.SetAgentID(*u)
+	}
+	return tu
+}
+
+// ClearAgentID clears the value of the "agent_id" field.
+func (tu *TaskUpdate) ClearAgentID() *TaskUpdate {
+	tu.mutation.ClearAgentID()
+	return tu
+}
+
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
 func (tu *TaskUpdate) AddMessageIDs(ids ...uuid.UUID) *TaskUpdate {
 	tu.mutation.AddMessageIDs(ids...)
@@ -185,20 +205,6 @@ func (tu *TaskUpdate) AddMessages(m ...*Message) *TaskUpdate {
 		ids[i] = m[i].ID
 	}
 	return tu.AddMessageIDs(ids...)
-}
-
-// SetAgentID sets the "agent" edge to the Agent entity by ID.
-func (tu *TaskUpdate) SetAgentID(id uuid.UUID) *TaskUpdate {
-	tu.mutation.SetAgentID(id)
-	return tu
-}
-
-// SetNillableAgentID sets the "agent" edge to the Agent entity by ID if the given value is not nil.
-func (tu *TaskUpdate) SetNillableAgentID(id *uuid.UUID) *TaskUpdate {
-	if id != nil {
-		tu = tu.SetAgentID(*id)
-	}
-	return tu
 }
 
 // SetAgent sets the "agent" edge to the Agent entity.
@@ -334,7 +340,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -347,7 +353,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !tu.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -363,7 +369,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.MessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -379,7 +385,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if tu.mutation.AgentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   task.AgentTable,
 			Columns: []string{task.AgentColumn},
 			Bidi:    false,
@@ -392,7 +398,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := tu.mutation.AgentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   task.AgentTable,
 			Columns: []string{task.AgentColumn},
 			Bidi:    false,
@@ -566,6 +572,26 @@ func (tuo *TaskUpdateOne) ClearCost() *TaskUpdateOne {
 	return tuo
 }
 
+// SetAgentID sets the "agent_id" field.
+func (tuo *TaskUpdateOne) SetAgentID(u uuid.UUID) *TaskUpdateOne {
+	tuo.mutation.SetAgentID(u)
+	return tuo
+}
+
+// SetNillableAgentID sets the "agent_id" field if the given value is not nil.
+func (tuo *TaskUpdateOne) SetNillableAgentID(u *uuid.UUID) *TaskUpdateOne {
+	if u != nil {
+		tuo.SetAgentID(*u)
+	}
+	return tuo
+}
+
+// ClearAgentID clears the value of the "agent_id" field.
+func (tuo *TaskUpdateOne) ClearAgentID() *TaskUpdateOne {
+	tuo.mutation.ClearAgentID()
+	return tuo
+}
+
 // AddMessageIDs adds the "messages" edge to the Message entity by IDs.
 func (tuo *TaskUpdateOne) AddMessageIDs(ids ...uuid.UUID) *TaskUpdateOne {
 	tuo.mutation.AddMessageIDs(ids...)
@@ -579,20 +605,6 @@ func (tuo *TaskUpdateOne) AddMessages(m ...*Message) *TaskUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return tuo.AddMessageIDs(ids...)
-}
-
-// SetAgentID sets the "agent" edge to the Agent entity by ID.
-func (tuo *TaskUpdateOne) SetAgentID(id uuid.UUID) *TaskUpdateOne {
-	tuo.mutation.SetAgentID(id)
-	return tuo
-}
-
-// SetNillableAgentID sets the "agent" edge to the Agent entity by ID if the given value is not nil.
-func (tuo *TaskUpdateOne) SetNillableAgentID(id *uuid.UUID) *TaskUpdateOne {
-	if id != nil {
-		tuo = tuo.SetAgentID(*id)
-	}
-	return tuo
 }
 
 // SetAgent sets the "agent" edge to the Agent entity.
@@ -758,7 +770,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 	if tuo.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -771,7 +783,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 	if nodes := tuo.mutation.RemovedMessagesIDs(); len(nodes) > 0 && !tuo.mutation.MessagesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -787,7 +799,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 	if nodes := tuo.mutation.MessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -803,7 +815,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 	if tuo.mutation.AgentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   task.AgentTable,
 			Columns: []string{task.AgentColumn},
 			Bidi:    false,
@@ -816,7 +828,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 	if nodes := tuo.mutation.AgentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   task.AgentTable,
 			Columns: []string{task.AgentColumn},
 			Bidi:    false,

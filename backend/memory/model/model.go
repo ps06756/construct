@@ -35,26 +35,37 @@ const (
 	FieldCacheReadCost = "cache_read_cost"
 	// FieldEnabled holds the string denoting the enabled field in the database.
 	FieldEnabled = "enabled"
-	// EdgeModelProvider holds the string denoting the model_provider edge name in mutations.
-	EdgeModelProvider = "model_provider"
+	// FieldModelProviderID holds the string denoting the model_provider_id field in the database.
+	FieldModelProviderID = "model_provider_id"
 	// EdgeAgents holds the string denoting the agents edge name in mutations.
 	EdgeAgents = "agents"
+	// EdgeModelProvider holds the string denoting the model_provider edge name in mutations.
+	EdgeModelProvider = "model_provider"
+	// EdgeMessages holds the string denoting the messages edge name in mutations.
+	EdgeMessages = "messages"
 	// Table holds the table name of the model in the database.
 	Table = "models"
-	// ModelProviderTable is the table that holds the model_provider relation/edge.
-	ModelProviderTable = "models"
-	// ModelProviderInverseTable is the table name for the ModelProvider entity.
-	// It exists in this package in order to avoid circular dependency with the "modelprovider" package.
-	ModelProviderInverseTable = "model_providers"
-	// ModelProviderColumn is the table column denoting the model_provider relation/edge.
-	ModelProviderColumn = "model_provider_models"
 	// AgentsTable is the table that holds the agents relation/edge.
 	AgentsTable = "agents"
 	// AgentsInverseTable is the table name for the Agent entity.
 	// It exists in this package in order to avoid circular dependency with the "agent" package.
 	AgentsInverseTable = "agents"
 	// AgentsColumn is the table column denoting the agents relation/edge.
-	AgentsColumn = "model_agents"
+	AgentsColumn = "default_model"
+	// ModelProviderTable is the table that holds the model_provider relation/edge.
+	ModelProviderTable = "models"
+	// ModelProviderInverseTable is the table name for the ModelProvider entity.
+	// It exists in this package in order to avoid circular dependency with the "modelprovider" package.
+	ModelProviderInverseTable = "model_providers"
+	// ModelProviderColumn is the table column denoting the model_provider relation/edge.
+	ModelProviderColumn = "model_provider_id"
+	// MessagesTable is the table that holds the messages relation/edge.
+	MessagesTable = "messages"
+	// MessagesInverseTable is the table name for the Message entity.
+	// It exists in this package in order to avoid circular dependency with the "message" package.
+	MessagesInverseTable = "messages"
+	// MessagesColumn is the table column denoting the messages relation/edge.
+	MessagesColumn = "model_id"
 )
 
 // Columns holds all SQL columns for model fields.
@@ -70,23 +81,13 @@ var Columns = []string{
 	FieldCacheWriteCost,
 	FieldCacheReadCost,
 	FieldEnabled,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the "models"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"model_provider_models",
+	FieldModelProviderID,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -175,11 +176,9 @@ func ByEnabled(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEnabled, opts...).ToFunc()
 }
 
-// ByModelProviderField orders the results by model_provider field.
-func ByModelProviderField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newModelProviderStep(), sql.OrderByField(field, opts...))
-	}
+// ByModelProviderID orders the results by the model_provider_id field.
+func ByModelProviderID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldModelProviderID, opts...).ToFunc()
 }
 
 // ByAgentsCount orders the results by agents count.
@@ -195,6 +194,34 @@ func ByAgents(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAgentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByModelProviderField orders the results by model_provider field.
+func ByModelProviderField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newModelProviderStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByMessagesCount orders the results by messages count.
+func ByMessagesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMessagesStep(), opts...)
+	}
+}
+
+// ByMessages orders the results by messages terms.
+func ByMessages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMessagesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newAgentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AgentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, AgentsTable, AgentsColumn),
+	)
+}
 func newModelProviderStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -202,10 +229,10 @@ func newModelProviderStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, ModelProviderTable, ModelProviderColumn),
 	)
 }
-func newAgentsStep() *sqlgraph.Step {
+func newMessagesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(AgentsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, AgentsTable, AgentsColumn),
+		sqlgraph.To(MessagesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, MessagesTable, MessagesColumn),
 	)
 }

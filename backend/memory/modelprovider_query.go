@@ -414,7 +414,9 @@ func (mpq *ModelProviderQuery) loadModels(ctx context.Context, query *ModelQuery
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(model.FieldModelProviderID)
+	}
 	query.Where(predicate.Model(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(modelprovider.ModelsColumn), fks...))
 	}))
@@ -423,13 +425,10 @@ func (mpq *ModelProviderQuery) loadModels(ctx context.Context, query *ModelQuery
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.model_provider_models
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "model_provider_models" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.ModelProviderID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "model_provider_models" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "model_provider_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

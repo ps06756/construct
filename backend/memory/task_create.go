@@ -121,6 +121,20 @@ func (tc *TaskCreate) SetNillableCost(f *float64) *TaskCreate {
 	return tc
 }
 
+// SetAgentID sets the "agent_id" field.
+func (tc *TaskCreate) SetAgentID(u uuid.UUID) *TaskCreate {
+	tc.mutation.SetAgentID(u)
+	return tc
+}
+
+// SetNillableAgentID sets the "agent_id" field if the given value is not nil.
+func (tc *TaskCreate) SetNillableAgentID(u *uuid.UUID) *TaskCreate {
+	if u != nil {
+		tc.SetAgentID(*u)
+	}
+	return tc
+}
+
 // SetID sets the "id" field.
 func (tc *TaskCreate) SetID(u uuid.UUID) *TaskCreate {
 	tc.mutation.SetID(u)
@@ -148,20 +162,6 @@ func (tc *TaskCreate) AddMessages(m ...*Message) *TaskCreate {
 		ids[i] = m[i].ID
 	}
 	return tc.AddMessageIDs(ids...)
-}
-
-// SetAgentID sets the "agent" edge to the Agent entity by ID.
-func (tc *TaskCreate) SetAgentID(id uuid.UUID) *TaskCreate {
-	tc.mutation.SetAgentID(id)
-	return tc
-}
-
-// SetNillableAgentID sets the "agent" edge to the Agent entity by ID if the given value is not nil.
-func (tc *TaskCreate) SetNillableAgentID(id *uuid.UUID) *TaskCreate {
-	if id != nil {
-		tc = tc.SetAgentID(*id)
-	}
-	return tc
 }
 
 // SetAgent sets the "agent" edge to the Agent entity.
@@ -292,7 +292,7 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 	if nodes := tc.mutation.MessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
+			Inverse: true,
 			Table:   task.MessagesTable,
 			Columns: []string{task.MessagesColumn},
 			Bidi:    false,
@@ -308,7 +308,7 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 	if nodes := tc.mutation.AgentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   task.AgentTable,
 			Columns: []string{task.AgentColumn},
 			Bidi:    false,
@@ -319,7 +319,7 @@ func (tc *TaskCreate) createSpec() (*Task, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.agent_tasks = &nodes[0]
+		_node.AgentID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

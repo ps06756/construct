@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/furisto/construct/backend/memory/agent"
+	"github.com/furisto/construct/backend/memory/message"
 	"github.com/furisto/construct/backend/memory/model"
 	"github.com/furisto/construct/backend/memory/task"
 	"github.com/google/uuid"
@@ -77,6 +78,12 @@ func (ac *AgentCreate) SetInstructions(s string) *AgentCreate {
 	return ac
 }
 
+// SetDefaultModel sets the "default_model" field.
+func (ac *AgentCreate) SetDefaultModel(u uuid.UUID) *AgentCreate {
+	ac.mutation.SetDefaultModel(u)
+	return ac
+}
+
 // SetID sets the "id" field.
 func (ac *AgentCreate) SetID(u uuid.UUID) *AgentCreate {
 	ac.mutation.SetID(u)
@@ -97,17 +104,39 @@ func (ac *AgentCreate) SetModelID(id uuid.UUID) *AgentCreate {
 	return ac
 }
 
-// SetNillableModelID sets the "model" edge to the Model entity by ID if the given value is not nil.
-func (ac *AgentCreate) SetNillableModelID(id *uuid.UUID) *AgentCreate {
-	if id != nil {
-		ac = ac.SetModelID(*id)
-	}
-	return ac
-}
-
 // SetModel sets the "model" edge to the Model entity.
 func (ac *AgentCreate) SetModel(m *Model) *AgentCreate {
 	return ac.SetModelID(m.ID)
+}
+
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
+func (ac *AgentCreate) AddTaskIDs(ids ...uuid.UUID) *AgentCreate {
+	ac.mutation.AddTaskIDs(ids...)
+	return ac
+}
+
+// AddTasks adds the "tasks" edges to the Task entity.
+func (ac *AgentCreate) AddTasks(t ...*Task) *AgentCreate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return ac.AddTaskIDs(ids...)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (ac *AgentCreate) AddMessageIDs(ids ...uuid.UUID) *AgentCreate {
+	ac.mutation.AddMessageIDs(ids...)
+	return ac
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (ac *AgentCreate) AddMessages(m ...*Message) *AgentCreate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return ac.AddMessageIDs(ids...)
 }
 
 // AddDelegateIDs adds the "delegates" edge to the Agent entity by IDs.
@@ -138,21 +167,6 @@ func (ac *AgentCreate) AddDelegators(a ...*Agent) *AgentCreate {
 		ids[i] = a[i].ID
 	}
 	return ac.AddDelegatorIDs(ids...)
-}
-
-// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
-func (ac *AgentCreate) AddTaskIDs(ids ...uuid.UUID) *AgentCreate {
-	ac.mutation.AddTaskIDs(ids...)
-	return ac
-}
-
-// AddTasks adds the "tasks" edges to the Task entity.
-func (ac *AgentCreate) AddTasks(t ...*Task) *AgentCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
-	}
-	return ac.AddTaskIDs(ids...)
 }
 
 // Mutation returns the AgentMutation object of the builder.
@@ -223,6 +237,12 @@ func (ac *AgentCreate) check() error {
 	if _, ok := ac.mutation.Instructions(); !ok {
 		return &ValidationError{Name: "instructions", err: errors.New(`memory: missing required field "Agent.instructions"`)}
 	}
+	if _, ok := ac.mutation.DefaultModel(); !ok {
+		return &ValidationError{Name: "default_model", err: errors.New(`memory: missing required field "Agent.default_model"`)}
+	}
+	if len(ac.mutation.ModelIDs()) == 0 {
+		return &ValidationError{Name: "model", err: errors.New(`memory: missing required edge "Agent.model"`)}
+	}
 	return nil
 }
 
@@ -281,7 +301,7 @@ func (ac *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 	if nodes := ac.mutation.ModelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: true,
+			Inverse: false,
 			Table:   agent.ModelTable,
 			Columns: []string{agent.ModelColumn},
 			Bidi:    false,
@@ -292,7 +312,39 @@ func (ac *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.model_agents = &nodes[0]
+		_node.DefaultModel = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.TasksTable,
+			Columns: []string{agent.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ac.mutation.MessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   agent.MessagesTable,
+			Columns: []string{agent.MessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := ac.mutation.DelegatesIDs(); len(nodes) > 0 {
@@ -320,22 +372,6 @@ func (ac *AgentCreate) createSpec() (*Agent, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := ac.mutation.TasksIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   agent.TasksTable,
-			Columns: []string{agent.TasksColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

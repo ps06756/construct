@@ -81,6 +81,11 @@ func Instructions(v string) predicate.Agent {
 	return predicate.Agent(sql.FieldEQ(FieldInstructions, v))
 }
 
+// DefaultModel applies equality check predicate on the "default_model" field. It's identical to DefaultModelEQ.
+func DefaultModel(v uuid.UUID) predicate.Agent {
+	return predicate.Agent(sql.FieldEQ(FieldDefaultModel, v))
+}
+
 // CreateTimeEQ applies the EQ predicate on the "create_time" field.
 func CreateTimeEQ(v time.Time) predicate.Agent {
 	return predicate.Agent(sql.FieldEQ(FieldCreateTime, v))
@@ -366,12 +371,32 @@ func InstructionsContainsFold(v string) predicate.Agent {
 	return predicate.Agent(sql.FieldContainsFold(FieldInstructions, v))
 }
 
+// DefaultModelEQ applies the EQ predicate on the "default_model" field.
+func DefaultModelEQ(v uuid.UUID) predicate.Agent {
+	return predicate.Agent(sql.FieldEQ(FieldDefaultModel, v))
+}
+
+// DefaultModelNEQ applies the NEQ predicate on the "default_model" field.
+func DefaultModelNEQ(v uuid.UUID) predicate.Agent {
+	return predicate.Agent(sql.FieldNEQ(FieldDefaultModel, v))
+}
+
+// DefaultModelIn applies the In predicate on the "default_model" field.
+func DefaultModelIn(vs ...uuid.UUID) predicate.Agent {
+	return predicate.Agent(sql.FieldIn(FieldDefaultModel, vs...))
+}
+
+// DefaultModelNotIn applies the NotIn predicate on the "default_model" field.
+func DefaultModelNotIn(vs ...uuid.UUID) predicate.Agent {
+	return predicate.Agent(sql.FieldNotIn(FieldDefaultModel, vs...))
+}
+
 // HasModel applies the HasEdge predicate on the "model" edge.
 func HasModel() predicate.Agent {
 	return predicate.Agent(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, ModelTable, ModelColumn),
+			sqlgraph.Edge(sqlgraph.M2O, false, ModelTable, ModelColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -381,6 +406,52 @@ func HasModel() predicate.Agent {
 func HasModelWith(preds ...predicate.Model) predicate.Agent {
 	return predicate.Agent(func(s *sql.Selector) {
 		step := newModelStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTasks applies the HasEdge predicate on the "tasks" edge.
+func HasTasks() predicate.Agent {
+	return predicate.Agent(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TasksTable, TasksColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTasksWith applies the HasEdge predicate on the "tasks" edge with a given conditions (other predicates).
+func HasTasksWith(preds ...predicate.Task) predicate.Agent {
+	return predicate.Agent(func(s *sql.Selector) {
+		step := newTasksStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMessages applies the HasEdge predicate on the "messages" edge.
+func HasMessages() predicate.Agent {
+	return predicate.Agent(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, MessagesTable, MessagesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessagesWith applies the HasEdge predicate on the "messages" edge with a given conditions (other predicates).
+func HasMessagesWith(preds ...predicate.Message) predicate.Agent {
+	return predicate.Agent(func(s *sql.Selector) {
+		step := newMessagesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)
@@ -427,29 +498,6 @@ func HasDelegators() predicate.Agent {
 func HasDelegatorsWith(preds ...predicate.Agent) predicate.Agent {
 	return predicate.Agent(func(s *sql.Selector) {
 		step := newDelegatorsStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasTasks applies the HasEdge predicate on the "tasks" edge.
-func HasTasks() predicate.Agent {
-	return predicate.Agent(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, TasksTable, TasksColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasTasksWith applies the HasEdge predicate on the "tasks" edge with a given conditions (other predicates).
-func HasTasksWith(preds ...predicate.Task) predicate.Agent {
-	return predicate.Agent(func(s *sql.Selector) {
-		step := newTasksStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

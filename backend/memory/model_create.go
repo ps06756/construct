@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/furisto/construct/backend/memory/agent"
+	"github.com/furisto/construct/backend/memory/message"
 	"github.com/furisto/construct/backend/memory/model"
 	"github.com/furisto/construct/backend/memory/modelprovider"
 	"github.com/furisto/construct/backend/memory/schema/types"
@@ -140,6 +141,12 @@ func (mc *ModelCreate) SetNillableEnabled(b *bool) *ModelCreate {
 	return mc
 }
 
+// SetModelProviderID sets the "model_provider_id" field.
+func (mc *ModelCreate) SetModelProviderID(u uuid.UUID) *ModelCreate {
+	mc.mutation.SetModelProviderID(u)
+	return mc
+}
+
 // SetID sets the "id" field.
 func (mc *ModelCreate) SetID(u uuid.UUID) *ModelCreate {
 	mc.mutation.SetID(u)
@@ -152,25 +159,6 @@ func (mc *ModelCreate) SetNillableID(u *uuid.UUID) *ModelCreate {
 		mc.SetID(*u)
 	}
 	return mc
-}
-
-// SetModelProviderID sets the "model_provider" edge to the ModelProvider entity by ID.
-func (mc *ModelCreate) SetModelProviderID(id uuid.UUID) *ModelCreate {
-	mc.mutation.SetModelProviderID(id)
-	return mc
-}
-
-// SetNillableModelProviderID sets the "model_provider" edge to the ModelProvider entity by ID if the given value is not nil.
-func (mc *ModelCreate) SetNillableModelProviderID(id *uuid.UUID) *ModelCreate {
-	if id != nil {
-		mc = mc.SetModelProviderID(*id)
-	}
-	return mc
-}
-
-// SetModelProvider sets the "model_provider" edge to the ModelProvider entity.
-func (mc *ModelCreate) SetModelProvider(m *ModelProvider) *ModelCreate {
-	return mc.SetModelProviderID(m.ID)
 }
 
 // AddAgentIDs adds the "agents" edge to the Agent entity by IDs.
@@ -186,6 +174,26 @@ func (mc *ModelCreate) AddAgents(a ...*Agent) *ModelCreate {
 		ids[i] = a[i].ID
 	}
 	return mc.AddAgentIDs(ids...)
+}
+
+// SetModelProvider sets the "model_provider" edge to the ModelProvider entity.
+func (mc *ModelCreate) SetModelProvider(m *ModelProvider) *ModelCreate {
+	return mc.SetModelProviderID(m.ID)
+}
+
+// AddMessageIDs adds the "messages" edge to the Message entity by IDs.
+func (mc *ModelCreate) AddMessageIDs(ids ...uuid.UUID) *ModelCreate {
+	mc.mutation.AddMessageIDs(ids...)
+	return mc
+}
+
+// AddMessages adds the "messages" edges to the Message entity.
+func (mc *ModelCreate) AddMessages(m ...*Message) *ModelCreate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return mc.AddMessageIDs(ids...)
 }
 
 // Mutation returns the ModelMutation object of the builder.
@@ -306,6 +314,12 @@ func (mc *ModelCreate) check() error {
 	if _, ok := mc.mutation.Enabled(); !ok {
 		return &ValidationError{Name: "enabled", err: errors.New(`memory: missing required field "Model.enabled"`)}
 	}
+	if _, ok := mc.mutation.ModelProviderID(); !ok {
+		return &ValidationError{Name: "model_provider_id", err: errors.New(`memory: missing required field "Model.model_provider_id"`)}
+	}
+	if len(mc.mutation.ModelProviderIDs()) == 0 {
+		return &ValidationError{Name: "model_provider", err: errors.New(`memory: missing required edge "Model.model_provider"`)}
+	}
 	return nil
 }
 
@@ -381,6 +395,22 @@ func (mc *ModelCreate) createSpec() (*Model, *sqlgraph.CreateSpec) {
 		_spec.SetField(model.FieldEnabled, field.TypeBool, value)
 		_node.Enabled = value
 	}
+	if nodes := mc.mutation.AgentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   model.AgentsTable,
+			Columns: []string{model.AgentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := mc.mutation.ModelProviderIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -395,18 +425,18 @@ func (mc *ModelCreate) createSpec() (*Model, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.model_provider_models = &nodes[0]
+		_node.ModelProviderID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := mc.mutation.AgentsIDs(); len(nodes) > 0 {
+	if nodes := mc.mutation.MessagesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   model.AgentsTable,
-			Columns: []string{model.AgentsColumn},
+			Inverse: true,
+			Table:   model.MessagesTable,
+			Columns: []string{model.MessagesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(agent.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(message.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

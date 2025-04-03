@@ -2,6 +2,8 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
@@ -19,18 +21,38 @@ func (Message) Fields() []ent.Field {
 		field.JSON("content", &types.MessageContent{}),
 		field.Enum("role").GoType(types.MessageRole("")),
 		field.JSON("usage", &types.MessageUsage{}).Optional(),
+		field.Time("processed_time").Optional(),
+
+		field.UUID("task_id", uuid.UUID{}),
+		field.UUID("agent_id", uuid.UUID{}).Optional(),
+		field.UUID("model_id", uuid.UUID{}).Optional(),
 	}
 }
 
 func (Message) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("task", Task.Type).Ref("messages").Unique(),
+		edge.To("task", Task.Type).Field("task_id").Unique().Required().Annotations(
+			entsql.Annotation{
+				OnDelete: entsql.Cascade,
+			},
+		),
+		edge.To("agent", Agent.Type).Field("agent_id").Unique(),
+		edge.To("model", Model.Type).Field("model_id").Unique(),
 	}
 }
 
 func (Message) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		AgentMixin{},
 		mixin.Time{},
+	}
+}
+
+func (Message) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{
+			Checks: map[string]string{
+				"agent_model": "(agent_id IS NULL OR agent_id IS NOT NULL AND model_id IS NOT NULL)",
+			},
+		},
 	}
 }

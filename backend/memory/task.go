@@ -33,10 +33,11 @@ type Task struct {
 	CacheReadTokens int64 `json:"cache_read_tokens,omitempty"`
 	// Cost holds the value of the "cost" field.
 	Cost float64 `json:"cost,omitempty"`
+	// AgentID holds the value of the "agent_id" field.
+	AgentID uuid.UUID `json:"agent_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TaskQuery when eager-loading is set.
 	Edges        TaskEdges `json:"edges"`
-	agent_tasks  *uuid.UUID
 	selectValues sql.SelectValues
 }
 
@@ -82,10 +83,8 @@ func (*Task) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case task.FieldCreateTime, task.FieldUpdateTime:
 			values[i] = new(sql.NullTime)
-		case task.FieldID:
+		case task.FieldID, task.FieldAgentID:
 			values[i] = new(uuid.UUID)
-		case task.ForeignKeys[0]: // agent_tasks
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -149,12 +148,11 @@ func (t *Task) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				t.Cost = value.Float64
 			}
-		case task.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field agent_tasks", values[i])
-			} else if value.Valid {
-				t.agent_tasks = new(uuid.UUID)
-				*t.agent_tasks = *value.S.(*uuid.UUID)
+		case task.FieldAgentID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field agent_id", values[i])
+			} else if value != nil {
+				t.AgentID = *value
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -222,6 +220,9 @@ func (t *Task) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("cost=")
 	builder.WriteString(fmt.Sprintf("%v", t.Cost))
+	builder.WriteString(", ")
+	builder.WriteString("agent_id=")
+	builder.WriteString(fmt.Sprintf("%v", t.AgentID))
 	builder.WriteByte(')')
 	return builder.String()
 }

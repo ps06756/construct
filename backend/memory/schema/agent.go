@@ -18,15 +18,18 @@ func (Agent) Fields() []ent.Field {
 		field.String("name").NotEmpty(),
 		field.String("description").Optional(),
 		field.String("instructions"),
+
+		field.UUID("default_model", uuid.UUID{}),
 	}
 }
 
 func (Agent) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("model", Model.Type).Ref("agents").Unique(),
+		edge.To("model", Model.Type).Field("default_model").Unique().Required(),
+		edge.From("tasks", Task.Type).Ref("agent"),
+		edge.From("messages", Message.Type).Ref("agent"),
 		edge.To("delegators", Agent.Type).
 			From("delegates"),
-		edge.To("tasks", Task.Type),
 	}
 }
 

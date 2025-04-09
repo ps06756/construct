@@ -55,10 +55,7 @@ func (s *ServiceTestSetup[Request, Response]) RunServiceTests(t *testing.T, scen
 	server.Start()
 	defer server.Close()
 
-	apiClient, err := api_client.NewClient(ctx, server.API.URL)
-	if err != nil {
-		t.Fatalf("failed to create client: %v", err)
-	}
+	apiClient := api_client.NewClient(server.API.URL)
 
 	if s.Debug {
 		server.DebugSchema(ctx, t)

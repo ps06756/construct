@@ -26,6 +26,13 @@
             "program": "${workspaceFolder}/frontend/cli",
             "args": ["new"],
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Attach to Process",
+            "type": "go",
+            "request": "attach",
+            "mode": "local",
+            "processId": "0"
         }
     ]
 }

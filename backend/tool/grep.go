@@ -7,14 +7,7 @@ import (
 	"github.com/grafana/sobek"
 )
 
-type CodeActGrep func(session CodeActSession) func(call sobek.FunctionCall) sobek.Value
-
-func (f CodeActGrep) Name() string {
-	return "grep"
-}
-
-func (f CodeActGrep) Description() string {
-	return fmt.Sprintf(`
+var grepDescription = `
 # Description
 The regex_search tool performs fast text-based regex searches to find exact pattern matches within files or directories. It leverages efficient searching algorithms to quickly scan through your codebase and locate specific patterns.
 
@@ -120,16 +113,22 @@ regex_search({
   exclude_pattern: "**/node_modules/**"
 })
 %[1]s
-`, "```")
-}
+`
 
 type GrepResult struct {
 	Output string `json:"output"`
 }
 
-func (f CodeActGrep) ToolCallback(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
-	return func(call sobek.FunctionCall) sobek.Value {
+func NewGrepTool() CodeActTool {
+	return NewOnDemandTool(
+		"regex_search",
+		fmt.Sprintf(grepDescription, "```"),
+		grepCallback,
+	)
+}
 
+func grepCallback(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
+	return func(call sobek.FunctionCall) sobek.Value {
 		query := call.Argument(0).String()
 		path := call.Argument(1).String()
 		includePattern := call.Argument(2).String()
@@ -139,20 +138,17 @@ func (f CodeActGrep) ToolCallback(session CodeActSession) func(call sobek.Functi
 
 		_, err := exec.LookPath("grep")
 		if err != nil {
-			panic(fmt.Errorf("grep not found: %w", err))
+			session.Throw("grep not found: %w", err)
 		}
 
 		command := fmt.Sprintf("grep -E %s %s %s %s %v %d", query, path, includePattern, excludePattern, caseSensitive, maxResults)
 		output, err := exec.Command(command).Output()
 		if err != nil {
-			panic(fmt.Errorf("error executing command: %w", err))
+			session.Throw("error executing command: %w", err)
 		}
 
-		return session.VM().ToValue(GrepResult{
+		return session.VM.ToValue(GrepResult{
 			Output: string(output),
 		})
-
 	}
 }
-
-var _ CodeActTool = CodeActGrep(nil)

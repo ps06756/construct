@@ -7,14 +7,7 @@ import (
 	"github.com/grafana/sobek"
 )
 
-type CodeActExecuteCommand func(session CodeActSession) func(call sobek.FunctionCall) sobek.Value
-
-func (f CodeActExecuteCommand) Name() string {
-	return "execute_command"
-}
-
-func (f CodeActExecuteCommand) Description() string {
-	return fmt.Sprintf(`
+const executeCommandDescription = `
 # Description
 The execute_command tool allows you to run system commands directly from your CodeAct JavaScript program. Use this tool when you need to interact with the system environment, file operations, execute CLI tools, or perform operations that require shell access. This tool provides a bridge between your code and the underlying operating system's command line interface.
 
@@ -97,30 +90,37 @@ if (npmInstall.exitCode === 0) {
 execute_command("npm run dev", false);
 }
 %[1]s
-`, "```")
-}
+`
 
 type ExecuteCommandResult struct {
-	Stdout string `json:"stdout"`
-	Stderr string `json:"stderr"`
-	ExitCode int `json:"exitCode"`
-	Command string `json:"command"`
+	Stdout   string `json:"stdout"`
+	Stderr   string `json:"stderr"`
+	ExitCode int    `json:"exitCode"`
+	Command  string `json:"command"`
 }
 
-func (f CodeActExecuteCommand) ToolCallback(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
+func NewExecuteCommandTool() CodeActTool {
+	return NewOnDemandTool(
+		"execute_command",
+		fmt.Sprintf(executeCommandDescription, "```"),
+		executeCommandCallback,
+	)
+}
+
+func executeCommandCallback(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
 		command := call.Argument(0).String()
 
 		output, err := exec.Command(command).Output()
 		if err != nil {
-			panic(fmt.Errorf("error executing command: %w", err))
+			session.Throw("error executing command: %w", err)
 		}
 
-		return session.VM().ToValue(ExecuteCommandResult{
-			Stdout: string(output),
-			Stderr: "",
+		return session.VM.ToValue(ExecuteCommandResult{
+			Stdout:   string(output),
+			Stderr:   "",
 			ExitCode: 0,
-			Command: command,
+			Command:  command,
 		})
 	}
 }

@@ -5,16 +5,10 @@ import (
 	"os"
 
 	"github.com/grafana/sobek"
+	"github.com/spf13/afero"
 )
 
-type CodeActReadFile func(session CodeActSession) func(call sobek.FunctionCall) sobek.Value
-
-func (f CodeActReadFile) Name() string {
-	return "read_file"
-}
-
-func (f CodeActReadFile) Description() string {
-	return fmt.Sprintf(`
+const readFileDescription = `
 # Description
 Reads and returns the complete contents of a file at the specified path. This tool is essential for examining existing files when you need to understand, analyze, or extract information from them. The file content is returned as a string, making it suitable for text files such as code, configuration files, documentation, and structured data.
 
@@ -77,39 +71,56 @@ if (!csvData.error) {
   print("Found ${rows.length} user records with fields: ${headers.join(', ')}");
 }
 %[1]s
-`, "```")
-}
+`
 
 type ReadFileResult struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
 }
 
-func (f CodeActReadFile) ToolCallback(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
+func NewReadFileTool() CodeActTool {
+	return NewOnDemandTool(
+		"read_file",
+		fmt.Sprintf(readFileDescription, "```"),
+		readFileAdapter,
+	)
+}
+
+func readFileAdapter(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
 		path := call.Argument(0).String()
 
-		if _, err := os.Stat(path); err != nil {
-			if os.IsNotExist(err) {
-				panic(fmt.Errorf("file not found: %s", path))
-			}
-			if os.IsPermission(err) {
-				panic(fmt.Errorf("permission denied: %s", path))
-			}
-			panic(fmt.Errorf("error reading file %s: %w", path, err))
-		}
-
-		content, err := os.ReadFile(path)
+		result, err := readFile(session.FS, path)
 		if err != nil {
-			panic(fmt.Errorf("error reading file %s: %w", path, err))
+			session.Throw("error reading file %s: %w", path, err)
 		}
 
-		return session.VM().ToValue(ReadFileResult{
-			Path:    path,
-			Content: string(content),
-		})
+		return session.VM.ToValue(result)
 	}
 }
 
-var _ CodeActTool = CodeActReadFile(nil)
+func readFile(fs afero.Fs, path string) (*ReadFileResult, error) {
+	if _, err := fs.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return nil, &ToolError{
+				Message:    "file not found",
+				Suggestion: fmt.Sprintf("Please check if the file exists and you have read permissions: %s", path),
+			}
+		}
+		if os.IsPermission(err) {
+			return nil, fmt.Errorf("permission denied: %s", path)
+		}
+		return nil, fmt.Errorf("error reading file %s: %w", path, err)
+	}
 
+	content, err := afero.ReadFile(fs, path)
+	if err != nil {
+		return nil, fmt.Errorf("error reading file %s: %w", path, err)
+	}
+
+	return &ReadFileResult{
+		Path:    path,
+		Content: string(content),
+	}, nil
+
+}

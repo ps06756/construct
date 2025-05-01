@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -22,20 +24,21 @@ import (
 	"github.com/furisto/construct/backend/stream"
 	"github.com/furisto/construct/backend/tool"
 	"github.com/google/uuid"
+	"github.com/spf13/afero"
 	"k8s.io/client-go/util/workqueue"
 )
 
 const DefaultServerPort = 29333
 
 type RuntimeOptions struct {
-	Tools       []tool.Tool
+	Tools       []tool.CodeActTool
 	Concurrency int
 	ServerPort  int
 }
 
 func DefaultRuntimeOptions() *RuntimeOptions {
 	return &RuntimeOptions{
-		Tools:       []tool.Tool{},
+		Tools:       []tool.CodeActTool{},
 		Concurrency: 5,
 		ServerPort:  DefaultServerPort,
 	}
@@ -43,7 +46,7 @@ func DefaultRuntimeOptions() *RuntimeOptions {
 
 type RuntimeOption func(*RuntimeOptions)
 
-func WithTools(tools ...tool.Tool) RuntimeOption {
+func WithCodeActTools(tools ...tool.CodeActTool) RuntimeOption {
 	return func(o *RuntimeOptions) {
 		o.Tools = tools
 	}
@@ -65,10 +68,10 @@ type Runtime struct {
 	api         *api.Server
 	memory      *memory.Client
 	encryption  *secret.Client
-	toolbox     *tool.Toolbox
-	messageHub  *stream.MessageHub
+	messageHub  *stream.EventHub
 	concurrency int
 	queue       workqueue.TypedDelayingInterface[uuid.UUID]
+	interpreter *CodeInterpreter
 	running     atomic.Bool
 }
 
@@ -76,10 +79,6 @@ func NewRuntime(memory *memory.Client, encryption *secret.Client, opts ...Runtim
 	options := DefaultRuntimeOptions()
 	for _, opt := range opts {
 		opt(options)
-	}
-	toolbox := tool.NewToolbox()
-	for _, tool := range options.Tools {
-		toolbox.AddTool(tool)
 	}
 
 	queue := workqueue.NewTypedDelayingQueueWithConfig(workqueue.TypedDelayingQueueConfig[uuid.UUID]{
@@ -91,13 +90,16 @@ func NewRuntime(memory *memory.Client, encryption *secret.Client, opts ...Runtim
 		return nil, err
 	}
 
+	interpreter := NewCodeInterpreter(options.Tools)
+
 	runtime := &Runtime{
-		memory:      memory,
-		encryption:  encryption,
-		toolbox:     toolbox,
+		memory:     memory,
+		encryption: encryption,
+
 		messageHub:  messageHub,
 		concurrency: options.Concurrency,
 		queue:       queue,
+		interpreter: interpreter,
 	}
 
 	api := api.NewServer(runtime, options.ServerPort)
@@ -192,9 +194,9 @@ func (a *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 
 	for _, message := range messages {
 		if message.ProcessedTime.IsZero() {
-			if message.Role == types.MessageRoleUser {
+			if message.Source == types.MessageSourceUser {
 				unprocessedUserMessages = append(unprocessedUserMessages, message)
-			} else if message.Role == types.MessageRoleAssistant {
+			} else if message.Source == types.MessageSourceAssistant {
 				unprocessedAssistantMessages = append(unprocessedAssistantMessages, message)
 			}
 		} else {
@@ -225,7 +227,7 @@ func (a *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 		messageToProcess = unprocessedUserMessages[0]
 	}
 
-	modelMessages := make([]model.Message, 0, len(processedMessages))
+	modelMessages := make([]*model.Message, 0, len(processedMessages))
 	for _, msg := range processedMessages {
 		modelMsg, err := conv.ConvertMemoryMessageToModel(msg)
 		if err != nil {
@@ -240,21 +242,36 @@ func (a *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 	}
 	modelMessages = append(modelMessages, modelMsg)
 
+	var toolDescriptions strings.Builder
+	toolDescriptions.WriteString("You can use the following tools to help you answer the user's question. The tools are specified as Javascript functions." +
+		"In order to use them you have to write a javascript program and then call the code interpreter tool with the script as argument." +
+		"The only functions that are allowed for this javascript program are the ones specified in the tool descriptions." +
+		"The script will be executed in a new process, so you don't need to worry about the environment it is executed in." +
+		"If you try to call any other function that is not specified here the execution will fail." +
+		"\n\n")
+	for _, tool := range a.interpreter.Tools {
+		toolDescriptions.WriteString(fmt.Sprintf("%s: %s\n", tool.Name(), tool.Description()))
+	}
+
+	instructions := fmt.Sprintf("%s\n\n%s", agent.Instructions, toolDescriptions.String())
+	os.WriteFile("/tmp/tool_descriptions.txt", []byte(instructions), 0644)
+
 	resp, err := providerAPI.InvokeModel(
 		ctx,
 		m.Name,
-		agent.Instructions,
+		instructions,
 		modelMessages,
 		model.WithStreamHandler(func(ctx context.Context, message *model.Message) {
 			for _, block := range message.Content {
 				switch block := block.(type) {
-				case *model.TextContentBlock:
+				case *model.TextBlock:
 					fmt.Print(block.Text)
 				}
 			}
 		}),
-		model.WithTools(a.toolbox.ListTools()...),
+		model.WithTools(a.interpreter),
 	)
+
 	if err != nil {
 		return err
 	}
@@ -264,23 +281,19 @@ func (a *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 		return err
 	}
 
-	cost := float64(resp.Usage.InputTokens)*m.InputCost +
-		float64(resp.Usage.OutputTokens)*m.OutputCost +
-		float64(resp.Usage.CacheWriteTokens)*m.CacheWriteCost +
-		float64(resp.Usage.CacheReadTokens)*m.CacheReadCost
-
 	fmt.Printf("%+v\n", resp.Message.Content)
 
-	messageContent, err := conv.ConvertModelMessageToMemory(resp.Message)
+	memoryContent, err := conv.ConvertModelContentBlocksToMemory(resp.Message.Content)
 	if err != nil {
 		return err
 	}
+	cost := calculateCost(resp.Usage, m)
+
 	t := time.Now()
 	newMessage, err := a.memory.Message.Create().
 		SetTaskID(taskID).
-		SetRole(types.MessageRoleAssistant).
-		SetContent(messageContent).
-		SetCreateTime(t).
+		SetSource(types.MessageSourceAssistant).
+		SetContent(memoryContent).
 		SetProcessedTime(t).
 		SetUsage(&types.MessageUsage{
 			InputTokens:      resp.Usage.InputTokens,
@@ -307,7 +320,25 @@ func (a *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 		return err
 	}
 
+	for _, block := range resp.Message.Content {
+		switch block := block.(type) {
+		case *model.ToolCallBlock:
+			fsys := afero.NewBasePathFs(afero.NewOsFs(), "/tmp")
+			result, err := a.interpreter.Run(ctx, fsys, block.Args)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(result)
+		}
+	}
+	if err != nil {
+		return err
+	}
+
 	a.messageHub.Publish(taskID, newMessage)
+
+	a.TriggerReconciliation(taskID)
 
 	return nil
 }
@@ -324,8 +355,6 @@ func (a *Runtime) modelProviderAPI(m *memory.Model) (model.ModelProvider, error)
 		if err != nil {
 			return nil, err
 		}
-
-		slog.Info("provider auth", "auth", string(providerAuth))
 
 		var auth struct {
 			APIKey string `json:"apiKey"`
@@ -345,6 +374,13 @@ func (a *Runtime) modelProviderAPI(m *memory.Model) (model.ModelProvider, error)
 	}
 }
 
+func calculateCost(usage model.Usage, model *memory.Model) float64 {
+	return float64(usage.InputTokens)*model.InputCost +
+		float64(usage.OutputTokens)*model.OutputCost +
+		float64(usage.CacheWriteTokens)*model.CacheWriteCost +
+		float64(usage.CacheReadTokens)*model.CacheReadCost
+}
+
 func (a *Runtime) GetEncryption() *secret.Client {
 	return a.encryption
 }
@@ -357,6 +393,6 @@ func (a *Runtime) TriggerReconciliation(taskID uuid.UUID) {
 	a.queue.Add(taskID)
 }
 
-func (a *Runtime) GetMessageHub() *stream.MessageHub {
+func (a *Runtime) GetMessageHub() *stream.EventHub {
 	return a.messageHub
 }

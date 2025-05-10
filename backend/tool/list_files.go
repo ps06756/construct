@@ -6,7 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/furisto/construct/backend/tool/codeact"
 	"github.com/grafana/sobek"
+	"github.com/spf13/afero"
 )
 
 const listFilesDescription = `
@@ -108,8 +110,8 @@ try {
 %[1]s
 `
 
-func NewListFilesTool() CodeActTool {
-	return NewOnDemandTool(
+func NewListFilesTool() codeact.Tool {
+	return codeact.NewOnDemandTool(
 		"list_files",
 		fmt.Sprintf(listFilesDescription, "```"),
 		listFilesHandler,
@@ -122,10 +124,10 @@ type DirectoryEntry struct {
 	Size int64  `json:"size"`
 }
 
-func listFilesHandler(session CodeActSession) func(call sobek.FunctionCall) sobek.Value {
+func listFilesHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
 		if len(call.Arguments) != 2 {
-			session.Throw(NewCustomError("list_files requires exactly 2 arguments: path and recursive", []string{
+			session.Throw(codeact.NewCustomError("list_files requires exactly 2 arguments: path and recursive", []string{
 				"- **path** (string, required): Absolute path to the directory you want to list (e.g., \"/workspace/project/src\"). Forward slashes (/) work on all platforms.\n" +
 					"- **recursive** (boolean, required): When set to true, lists all files and directories recursively through all subdirectories. When false only lists the top-level contents of the specified directory.",
 			}))
@@ -134,7 +136,7 @@ func listFilesHandler(session CodeActSession) func(call sobek.FunctionCall) sobe
 		path := call.Argument(0).String()
 		recursive := call.Argument(1).ToBoolean()
 
-		dirEntries, err := listFiles(path, recursive)
+		dirEntries, err := listFiles(session.FS, path, recursive)
 		if err != nil {
 			session.Throw(err)
 		}
@@ -143,29 +145,29 @@ func listFilesHandler(session CodeActSession) func(call sobek.FunctionCall) sobe
 	}
 }
 
-func listFiles(path string, recursive bool) ([]DirectoryEntry, error) {
+func listFiles(fsys afero.Fs, path string, recursive bool) ([]DirectoryEntry, error) {
 	if !filepath.IsAbs(path) {
-		return nil, NewError(PathIsNotAbsolute, "path", path)
+		return nil, codeact.NewError(codeact.PathIsNotAbsolute, "path", path)
 	}
 
-	fileInfo, err := os.Stat(path)
+	fileInfo, err := fsys.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, NewError(DirectoryNotFound, "path", path)
+			return nil, codeact.NewError(codeact.DirectoryNotFound, "path", path)
 		}
 		if os.IsPermission(err) {
-			return nil, NewError(PermissionDenied, "path", path)
+			return nil, codeact.NewError(codeact.PermissionDenied, "path", path)
 		}
-		return nil, NewError(CannotStatFile, "path", path)
+		return nil, codeact.NewError(codeact.CannotStatFile, "path", path)
 	}
 
 	if !fileInfo.IsDir() {
-		return nil, NewError(PathIsNotDirectory, "path", path)
+		return nil, codeact.NewError(codeact.PathIsNotDirectory, "path", path)
 	}
 
 	var entries []DirectoryEntry
 	if recursive {
-		err = filepath.WalkDir(path, func(filePath string, entry fs.DirEntry, err error) error {
+		err = afero.Walk(fsys, path, func(filePath string, entry fs.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -184,17 +186,17 @@ func listFiles(path string, recursive bool) ([]DirectoryEntry, error) {
 
 		if err != nil {
 			if os.IsPermission(err) {
-				return nil, NewError(PermissionDenied, "path", path)
+				return nil, codeact.NewError(codeact.PermissionDenied, "path", path)
 			}
-			return nil, NewError(GenericFileError, "path", path, "error", err)
+			return nil, codeact.NewError(codeact.GenericFileError, "path", path, "error", err)
 		}
 	} else {
-		dirEntries, err := os.ReadDir(path)
+		dirEntries, err := afero.ReadDir(fsys, path)
 		if err != nil {
 			if os.IsPermission(err) {
-				return nil, NewError(PermissionDenied, "path", path)
+				return nil, codeact.NewError(codeact.PermissionDenied, "path", path)
 			}
-			return nil, NewError(GenericFileError, "path", path, "error", err)
+			return nil, codeact.NewError(codeact.GenericFileError, "path", path, "error", err)
 		}
 
 		for _, entry := range dirEntries {
@@ -209,21 +211,16 @@ func listFiles(path string, recursive bool) ([]DirectoryEntry, error) {
 	return entries, nil
 }
 
-func toDirectoryEntry(entry fs.DirEntry) (*DirectoryEntry, error) {
-	info, err := entry.Info()
-	if err != nil {
-		return nil, NewError(GenericFileError, "path", entry.Name(), "error", err)
-	}
-
-	if entry.IsDir() {
+func toDirectoryEntry(info fs.FileInfo) (*DirectoryEntry, error) {
+	if info.IsDir() {
 		return &DirectoryEntry{
-			Name: entry.Name(),
+			Name: info.Name(),
 			Type: "d",
 			Size: 0,
 		}, nil
 	} else {
 		return &DirectoryEntry{
-			Name: entry.Name(),
+			Name: info.Name(),
 			Type: "f",
 			Size: (info.Size() + 1023) / 1024, // Size in KB
 		}, nil

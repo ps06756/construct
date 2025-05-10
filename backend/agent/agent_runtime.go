@@ -24,7 +24,7 @@ import (
 	"github.com/furisto/construct/backend/model"
 	"github.com/furisto/construct/backend/secret"
 	"github.com/furisto/construct/backend/stream"
-	"github.com/furisto/construct/backend/tool"
+	"github.com/furisto/construct/backend/tool/codeact"
 	"github.com/google/uuid"
 	"github.com/spf13/afero"
 	"k8s.io/client-go/util/workqueue"
@@ -33,14 +33,14 @@ import (
 const DefaultServerPort = 29333
 
 type RuntimeOptions struct {
-	Tools       []tool.CodeActTool
+	Tools       []codeact.Tool
 	Concurrency int
 	ServerPort  int
 }
 
 func DefaultRuntimeOptions() *RuntimeOptions {
 	return &RuntimeOptions{
-		Tools:       []tool.CodeActTool{},
+		Tools:       []codeact.Tool{},
 		Concurrency: 5,
 		ServerPort:  DefaultServerPort,
 	}
@@ -48,7 +48,7 @@ func DefaultRuntimeOptions() *RuntimeOptions {
 
 type RuntimeOption func(*RuntimeOptions)
 
-func WithCodeActTools(tools ...tool.CodeActTool) RuntimeOption {
+func WithCodeActTools(tools ...codeact.Tool) RuntimeOption {
 	return func(o *RuntimeOptions) {
 		o.Tools = tools
 	}
@@ -73,8 +73,8 @@ type Runtime struct {
 	eventHub    *stream.EventHub
 	concurrency int
 	queue       workqueue.TypedDelayingInterface[uuid.UUID]
-	interpreter *CodeInterpreter
 	running     atomic.Bool
+	interpreter *codeact.Interpreter
 }
 
 func NewRuntime(memory *memory.Client, encryption *secret.Client, opts ...RuntimeOption) (*Runtime, error) {
@@ -92,11 +92,6 @@ func NewRuntime(memory *memory.Client, encryption *secret.Client, opts ...Runtim
 		return nil, err
 	}
 
-	interpreter := NewCodeInterpreter(options.Tools,
-		NewInputOutputInterceptor(),
-		InterpreterInterceptor(ToolNameInterceptor),
-	)
-
 	runtime := &Runtime{
 		memory:     memory,
 		encryption: encryption,
@@ -104,7 +99,7 @@ func NewRuntime(memory *memory.Client, encryption *secret.Client, opts ...Runtim
 		eventHub:    messageHub,
 		concurrency: options.Concurrency,
 		queue:       queue,
-		interpreter: interpreter,
+		interpreter: codeact.NewInterpreter(options.Tools...),
 	}
 
 	api := api.NewServer(runtime, options.ServerPort)
@@ -403,8 +398,8 @@ func (rt *Runtime) invokeModel(ctx context.Context, providerAPI model.ModelProvi
 	)
 }
 
-func (rt *Runtime) saveResponse(ctx context.Context, taskID uuid.UUID, messageToProcess *memory.Message, resp *model.ModelResponse, m *memory.Model) (*memory.Message, error) {
-	_, err := messageToProcess.Update().SetProcessedTime(time.Now()).Save(ctx)
+func (rt *Runtime) saveResponse(ctx context.Context, taskID uuid.UUID, processedMessage *memory.Message, resp *model.ModelResponse, m *memory.Model) (*memory.Message, error) {
+	_, err := processedMessage.Update().SetProcessedTime(time.Now()).Save(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -464,8 +459,7 @@ func (rt *Runtime) callTools(ctx context.Context, taskID uuid.UUID, content []mo
 			continue
 		}
 
-		fsys := afero.NewBasePathFs(afero.NewOsFs(), "/tmp")
-		result, err := rt.interpreter.Run(ctx, fsys, toolCall.Args)
+		result, err := rt.interpreter.Run(ctx, afero.NewBasePathFs(afero.NewOsFs(), "/tmp/repo"), toolCall.Args)
 		if err != nil {
 			return err
 		}

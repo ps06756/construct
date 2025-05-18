@@ -12,28 +12,29 @@ import (
 
 const writeFileDescription = `
 ## Description
-Creates a new file or replaces an existing file with your specified content. This tool writes the complete file in a single operation.
+Creates a new file with the specified content or completely overwrites an existing file if it already exists. This tool writes the complete file in a single operation. 
+It provides detailed error messages via exceptions on failure.
 
 ## Parameters
-- **path**: (string, required) Absolute path to the file (e.g., "/workspace/construct/src/components/button.js"). Forward slashes (/) work on all platforms. All necessary parent directories will be created automatically.
-- **content**: (string, required) ENTIRE content to write to the file. No placeholders, ellipses, or "rest of file unchanged". 
+- **path**: (string, required) Absolute path to the file beginning with a forward slash (e.g., "/workspace/construct/src/components/button.js"). Forward slashes (/) work on all platforms. All necessary parent directories will be created automatically.
+- **content**: (string, required) ENTIRE content to write to the file. Do not use placeholders, ellipses, or "rest of file unchanged". 
 
 ## Expected Output
-This tool does return whether the file already existed. If the operation fails, it will return an error message describing the issue.
-Example output:
+This tool returns whether the file already existed and was overwritten -- true if an existing file was replaced, false if a new file was created. If the operation fails, it will throw an exception describing the issue.
+Example output if the file was overwritten:
 {
-	"existed": true
+	"overwritten": true
 }
 
 ## CRITICAL REQUIREMENTS
 - **Maintain proper syntax, indentation, and structure**
-- **Include complete file content**: Always provide the entire content, including imports, exports, and all necessary code
+- **Include complete file content**: Always provide the entire content, including imports, exports, and all necessary code.
 - **Match file extension with content**: Ensure the file extension corresponds to the content type
 %[1]s
   // Correct: .jsx extension for React JSX code
   create_file("/workspace/project/components/Header.jsx", "import React from 'react';...")
 %[1]s
-- **Preserve existing structure if overwriting**: If overwriting an existing file, consider reading it first to understand its structure
+- **Preserve existing structure if overwriting**: If you intend to modify an existing file, it's best practice to first use the 'read_file' tool to understand its current structure and content. Then, when calling create_file, provide the complete new content for the file, incorporating your changes while ensuring the overall desired structure is maintained in the content you provide
 - **Verify file structure first**: Before creating a file, ensure you understand the project's file organization
 %[1]s
   // First list the directory to understand structure
@@ -47,6 +48,8 @@ Example output:
   Line two
   Line three%[2]s)
 %[1]s
+- **Always use absolute paths**: Always use absolute paths starting with "/".
+- **For text-based files**: This tool is primarily designed for creating/overwriting text-based files (e.g., source code, configuration files, JSON, XML, Markdown). It does not support creating binary files.
 
 ## When to use
 - Creating new files: When you need to generate source code files, configuration files, or documentation from scratch
@@ -59,7 +62,7 @@ Example output:
 
 ### Write a JSON file
 %[1]s
-write_file("config/settings.json",
+create_file("/project/config/settings.json",
 "{\n\
   \"apiEndpoint\": \"https://api.example.com\",\n\
   \"debugMode\": false,\n\
@@ -69,18 +72,17 @@ write_file("config/settings.json",
 
 ### Write a JavaScript file
 %[1]s
-write_file("src/components/Button.jsx", 
-"import React from \'react\';\\n\\\
-\n\
-function Button({ text, onClick }) {\n\
-  return (\n\
-	<button className=\"primary-button\" onClick={onClick}>\n\
-	  {text}\n\
-	</button>\n\
-  );\n\
-}\n\
-\n\
-export default Button;")
+create_file("/todo-app/src/components/Button.jsx", %[2]simport React from 'react';
+
+function Button({ text, onClick }) {
+  return (
+    <button className="primary-button" onClick={onClick}>
+      {text}
+    </button>
+  );
+}
+
+export default Button;%[2]s)
 %[1]s
 `
 
@@ -141,9 +143,9 @@ func createFile(fsys afero.Fs, path string, content string) (*CreateFileResult, 
 			"path", path, "error", err)
 	}
 
-	return &CreateFileResult{Existed: existed}, nil
+	return &CreateFileResult{Overwritten: existed}, nil
 }
 
 type CreateFileResult struct {
-	Existed bool `json:"existed"`
+	Overwritten bool `json:"overwritten"`
 }

@@ -201,20 +201,12 @@ func (h *MessageHandler) Subscribe(ctx context.Context, req *connect.Request[v1.
 		return apiError(connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid task ID format: %w", err)))
 	}
 
-	for m, err := range h.messageHub.Subscribe(ctx, taskID) {
+	for r, err := range h.messageHub.Subscribe(ctx, taskID) {
 		if err != nil {
 			return apiError(err)
 		}
 
-		protoMsg, err := conv.ConvertMemoryMessageToProto(m)
-		if err != nil {
-			return apiError(err)
-		}
-		stream.Send(&v1.SubscribeResponse{
-			Event: &v1.SubscribeResponse_MessageEvent{
-				MessageEvent: protoMsg,
-			},
-		})
+		stream.Send(r)
 	}
 
 	return nil

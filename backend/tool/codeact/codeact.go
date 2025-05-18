@@ -3,11 +3,13 @@ package codeact
 import (
 	"io"
 
+	"github.com/google/uuid"
 	"github.com/grafana/sobek"
 	"github.com/spf13/afero"
 )
 
 type Session struct {
+	TaskID uuid.UUID
 	VM     *sobek.Runtime
 	System io.Writer
 	User   io.Writer
@@ -15,6 +17,18 @@ type Session struct {
 
 	CurrentTool string
 	values      map[string]any
+}
+
+func NewSession(taskID uuid.UUID, vm *sobek.Runtime, system io.Writer, user io.Writer, fs afero.Fs) *Session {
+	return &Session{
+		TaskID: taskID,
+		VM:     vm,
+		System: system,
+		User:   user,
+		FS:     fs,
+
+		values: make(map[string]any),
+	}
 }
 
 func (s *Session) Throw(err error) {
@@ -29,7 +43,8 @@ func SetValue[T any](s *Session, key string, value T) {
 func GetValue[T any](s *Session, key string) (T, bool) {
 	value, ok := s.values[key]
 	if !ok {
-		return value.(T), false
+		var zero T
+		return zero, false
 	}
 	return value.(T), true
 }

@@ -5,18 +5,20 @@ import (
 	"iter"
 	"sync"
 
+	v1 "github.com/furisto/construct/api/go/v1"
 	"github.com/furisto/construct/backend/memory"
 	"github.com/furisto/construct/backend/memory/message"
 	"github.com/furisto/construct/backend/memory/schema/types"
 	"github.com/google/uuid"
 	"github.com/maypok86/otter"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type subscription struct {
-	channel chan *memory.Message
+	channel chan *v1.SubscribeResponse
 }
 
-func (s *subscription) Send(message *memory.Message) {
+func (s *subscription) Send(message *v1.SubscribeResponse) {
 	s.channel <- message
 }
 
@@ -57,12 +59,9 @@ func NewMessageHub(db *memory.Client) (*EventHub, error) {
 	}, nil
 }
 
-func (h *EventHub) Publish(taskID uuid.UUID, message *memory.Message) {
+func (h *EventHub) Publish(taskID uuid.UUID, message *v1.SubscribeResponse) {
 	h.mu.RLock()
-	var subscribers []*subscription
-	for _, subscriber := range h.subscribers[taskID] {
-		subscribers = append(subscribers, subscriber)
-	}
+	subscribers := h.subscribers[taskID]
 	h.mu.RUnlock()
 
 	for _, subscriber := range subscribers {
@@ -70,9 +69,9 @@ func (h *EventHub) Publish(taskID uuid.UUID, message *memory.Message) {
 	}
 }
 
-func (h *EventHub) Subscribe(ctx context.Context, taskID uuid.UUID) iter.Seq2[*memory.Message, error] {
+func (h *EventHub) Subscribe(ctx context.Context, taskID uuid.UUID) iter.Seq2[*v1.SubscribeResponse, error] {
 	subscription := &subscription{
-		channel: make(chan *memory.Message, 64),
+		channel: make(chan *v1.SubscribeResponse, 64),
 	}
 
 	h.mu.Lock()
@@ -90,7 +89,7 @@ func (h *EventHub) Subscribe(ctx context.Context, taskID uuid.UUID) iter.Seq2[*m
 		}
 	}
 
-	return func(yield func(*memory.Message, error) bool) {
+	return func(yield func(*v1.SubscribeResponse, error) bool) {
 		defer unsubscribe()
 
 		messages, err := h.memory.Message.Query().Where(message.TaskIDEQ(taskID)).Order(message.ByProcessedTime()).All(ctx)
@@ -101,7 +100,17 @@ func (h *EventHub) Subscribe(ctx context.Context, taskID uuid.UUID) iter.Seq2[*m
 		}
 
 		for _, m := range messages {
-			if !yield(m, nil) {
+			protoMessage, err := ConvertMemoryMessageToProto(m)
+			if err != nil {
+				if !yield(nil, err) {
+					return
+				}
+			}
+			if !yield(&v1.SubscribeResponse{
+				Event: &v1.SubscribeResponse_Message{
+					Message: protoMessage,
+				},
+			}, nil) {
 				return
 			}
 		}
@@ -117,4 +126,61 @@ func (h *EventHub) Subscribe(ctx context.Context, taskID uuid.UUID) iter.Seq2[*m
 			}
 		}
 	}
+}
+
+func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
+	var role v1.MessageRole
+	switch m.Source {
+	case types.MessageSourceUser:
+		role = v1.MessageRole_MESSAGE_ROLE_USER
+	case types.MessageSourceAssistant:
+		role = v1.MessageRole_MESSAGE_ROLE_ASSISTANT
+	default:
+		role = v1.MessageRole_MESSAGE_ROLE_UNSPECIFIED
+	}
+
+	text := ""
+	for _, block := range m.Content.Blocks {
+		if block.Kind == types.MessageBlockKindText {
+			text = block.Payload
+			break
+		}
+	}
+
+	messageUsage := &v1.MessageUsage{}
+	if m.Usage != nil {
+		messageUsage = &v1.MessageUsage{
+			InputTokens:      m.Usage.InputTokens,
+			OutputTokens:     m.Usage.OutputTokens,
+			CacheWriteTokens: m.Usage.CacheWriteTokens,
+		}
+	}
+
+	metadata := &v1.MessageMetadata{
+		TaskId:    m.TaskID.String(),
+		Role:      role,
+		Usage:     messageUsage,
+		CreatedAt: timestamppb.New(m.CreateTime),
+		UpdatedAt: timestamppb.New(m.UpdateTime),
+	}
+
+	if m.AgentID != uuid.Nil {
+		agentIDStr := m.AgentID.String()
+		metadata.AgentId = &agentIDStr
+	}
+
+	if m.ModelID != uuid.Nil {
+		modelIDStr := m.ModelID.String()
+		metadata.ModelId = &modelIDStr
+	}
+
+	return &v1.Message{
+		Id:       m.ID.String(),
+		Metadata: metadata,
+		Content: &v1.MessageContent{
+			Content: &v1.MessageContent_Text{
+				Text: text,
+			},
+		},
+	}, nil
 }

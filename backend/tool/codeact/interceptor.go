@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	v1 "github.com/furisto/construct/api/go/v1"
+	"github.com/furisto/construct/backend/stream"
 	"github.com/grafana/sobek"
 )
 
@@ -21,15 +23,15 @@ func (i InterceptorFunc) Intercept(session *Session, tool Tool, inner func(sobek
 
 var _ Interceptor = InterceptorFunc(nil)
 
-type FunctionExecution struct {
+type FunctionCall struct {
 	ToolName string
 	Input    []string
 	Output   string
 }
 
-func FunctionExecutionInterceptor(session *Session, tool Tool, inner func(sobek.FunctionCall) sobek.Value) func(sobek.FunctionCall) sobek.Value {
+func FunctionCallLogInterceptor(session *Session, tool Tool, inner func(sobek.FunctionCall) sobek.Value) func(sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		functionResult := FunctionExecution{
+		functionResult := FunctionCall{
 			ToolName: tool.Name(),
 		}
 		for _, arg := range call.Arguments {
@@ -47,9 +49,9 @@ func FunctionExecutionInterceptor(session *Session, tool Tool, inner func(sobek.
 		}
 		functionResult.Output = exported
 
-		executions, ok := GetValue[[]FunctionExecution](session, "executions")
+		executions, ok := GetValue[[]FunctionCall](session, "executions")
 		if !ok {
-			executions = []FunctionExecution{}
+			executions = []FunctionCall{}
 		}
 		executions = append(executions, functionResult)
 		SetValue(session, "executions", executions)
@@ -84,5 +86,39 @@ func ToolNameInterceptor(session *Session, tool Tool, inner func(sobek.FunctionC
 		res := inner(call)
 		session.CurrentTool = ""
 		return res
+	}
+}
+
+type FunctionResultPublisher struct {
+	EventHub *stream.EventHub
+}
+
+func (p *FunctionResultPublisher) Intercept(session *Session, tool Tool, inner func(sobek.FunctionCall) sobek.Value) func(sobek.FunctionCall) sobek.Value {
+	return func(call sobek.FunctionCall) sobek.Value {
+		result := inner(call)
+
+		arguments := make(map[string]string)
+		for _, arg := range call.Arguments {
+			exported, err := export(arg)
+			if err != nil {
+				slog.Error("failed to export argument", "error", err)
+			}
+			arguments[arg.ExportType().Name()] = exported
+		}
+
+		exported, err := export(result)
+		if err != nil {
+			slog.Error("failed to export result", "error", err)
+		}
+		p.EventHub.Publish(session.TaskID, &v1.SubscribeResponse{
+			Event: &v1.SubscribeResponse_ToolResult{
+				ToolResult: &v1.ToolResultEvent{
+					ToolName:  tool.Name(),
+					Arguments: arguments,
+					Result:    exported,
+				},
+			},
+		})
+		return result
 	}
 }

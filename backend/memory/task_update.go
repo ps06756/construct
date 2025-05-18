@@ -51,6 +51,12 @@ func (tu *TaskUpdate) SetNillableProjectDirectory(s *string) *TaskUpdate {
 	return tu
 }
 
+// ClearProjectDirectory clears the value of the "project_directory" field.
+func (tu *TaskUpdate) ClearProjectDirectory() *TaskUpdate {
+	tu.mutation.ClearProjectDirectory()
+	return tu
+}
+
 // SetInputTokens sets the "input_tokens" field.
 func (tu *TaskUpdate) SetInputTokens(i int64) *TaskUpdate {
 	tu.mutation.ResetInputTokens()
@@ -294,20 +300,7 @@ func (tu *TaskUpdate) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (tu *TaskUpdate) check() error {
-	if v, ok := tu.mutation.ProjectDirectory(); ok {
-		if err := task.ProjectDirectoryValidator(v); err != nil {
-			return &ValidationError{Name: "project_directory", err: fmt.Errorf(`memory: validator failed for field "Task.project_directory": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tu.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID))
 	if ps := tu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -321,6 +314,9 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := tu.mutation.ProjectDirectory(); ok {
 		_spec.SetField(task.FieldProjectDirectory, field.TypeString, value)
+	}
+	if tu.mutation.ProjectDirectoryCleared() {
+		_spec.ClearField(task.FieldProjectDirectory, field.TypeString)
 	}
 	if value, ok := tu.mutation.InputTokens(); ok {
 		_spec.SetField(task.FieldInputTokens, field.TypeInt64, value)
@@ -478,6 +474,12 @@ func (tuo *TaskUpdateOne) SetNillableProjectDirectory(s *string) *TaskUpdateOne 
 	if s != nil {
 		tuo.SetProjectDirectory(*s)
 	}
+	return tuo
+}
+
+// ClearProjectDirectory clears the value of the "project_directory" field.
+func (tuo *TaskUpdateOne) ClearProjectDirectory() *TaskUpdateOne {
+	tuo.mutation.ClearProjectDirectory()
 	return tuo
 }
 
@@ -737,20 +739,7 @@ func (tuo *TaskUpdateOne) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (tuo *TaskUpdateOne) check() error {
-	if v, ok := tuo.mutation.ProjectDirectory(); ok {
-		if err := task.ProjectDirectoryValidator(v); err != nil {
-			return &ValidationError{Name: "project_directory", err: fmt.Errorf(`memory: validator failed for field "Task.project_directory": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) {
-	if err := tuo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(task.Table, task.Columns, sqlgraph.NewFieldSpec(task.FieldID, field.TypeUUID))
 	id, ok := tuo.mutation.ID()
 	if !ok {
@@ -781,6 +770,9 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) 
 	}
 	if value, ok := tuo.mutation.ProjectDirectory(); ok {
 		_spec.SetField(task.FieldProjectDirectory, field.TypeString, value)
+	}
+	if tuo.mutation.ProjectDirectoryCleared() {
+		_spec.ClearField(task.FieldProjectDirectory, field.TypeString)
 	}
 	if value, ok := tuo.mutation.InputTokens(); ok {
 		_spec.SetField(task.FieldInputTokens, field.TypeInt64, value)

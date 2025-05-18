@@ -316,10 +316,11 @@ func (x *TaskUsage) GetCost() float64 {
 }
 
 type CreateTaskRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AgentId       string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AgentId          string                 `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	ProjectDirectory string                 `protobuf:"bytes,2,opt,name=project_directory,json=projectDirectory,proto3" json:"project_directory,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *CreateTaskRequest) Reset() {
@@ -355,6 +356,13 @@ func (*CreateTaskRequest) Descriptor() ([]byte, []int) {
 func (x *CreateTaskRequest) GetAgentId() string {
 	if x != nil {
 		return x.AgentId
+	}
+	return ""
+}
+
+func (x *CreateTaskRequest) GetProjectDirectory() string {
+	if x != nil {
+		return x.ProjectDirectory
 	}
 	return ""
 }
@@ -842,9 +850,10 @@ const file_construct_v1_task_proto_rawDesc = "" +
 	"\routput_tokens\x18\x02 \x01(\x03R\foutputTokens\x12,\n" +
 	"\x12cache_write_tokens\x18\x03 \x01(\x03R\x10cacheWriteTokens\x12*\n" +
 	"\x11cache_read_tokens\x18\x04 \x01(\x03R\x0fcacheReadTokens\x12\x12\n" +
-	"\x04cost\x18\x05 \x01(\x01R\x04cost\"8\n" +
+	"\x04cost\x18\x05 \x01(\x01R\x04cost\"m\n" +
 	"\x11CreateTaskRequest\x12#\n" +
-	"\bagent_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aagentId\"D\n" +
+	"\bagent_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aagentId\x123\n" +
+	"\x11project_directory\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10projectDirectory\"D\n" +
 	"\x12CreateTaskResponse\x12.\n" +
 	"\x04task\x18\x01 \x01(\v2\x12.construct.v1.TaskB\x06\xbaH\x03\xc8\x01\x01R\x04task\"*\n" +
 	"\x0eGetTaskRequest\x12\x18\n" +

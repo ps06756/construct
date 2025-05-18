@@ -236,6 +236,16 @@ func ProjectDirectoryHasSuffix(v string) predicate.Task {
 	return predicate.Task(sql.FieldHasSuffix(FieldProjectDirectory, v))
 }
 
+// ProjectDirectoryIsNil applies the IsNil predicate on the "project_directory" field.
+func ProjectDirectoryIsNil() predicate.Task {
+	return predicate.Task(sql.FieldIsNull(FieldProjectDirectory))
+}
+
+// ProjectDirectoryNotNil applies the NotNil predicate on the "project_directory" field.
+func ProjectDirectoryNotNil() predicate.Task {
+	return predicate.Task(sql.FieldNotNull(FieldProjectDirectory))
+}
+
 // ProjectDirectoryEqualFold applies the EqualFold predicate on the "project_directory" field.
 func ProjectDirectoryEqualFold(v string) predicate.Task {
 	return predicate.Task(sql.FieldEqualFold(FieldProjectDirectory, v))

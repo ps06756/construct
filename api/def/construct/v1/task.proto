@@ -50,6 +50,7 @@ message TaskUsage {
 
 message CreateTaskRequest {
   string agent_id = 1 [(buf.validate.field).string.uuid = true];
+  string project_directory = 2 [(buf.validate.field).required = true];
 }
 
 message CreateTaskResponse {

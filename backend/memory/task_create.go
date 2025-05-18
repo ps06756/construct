@@ -57,6 +57,14 @@ func (tc *TaskCreate) SetProjectDirectory(s string) *TaskCreate {
 	return tc
 }
 
+// SetNillableProjectDirectory sets the "project_directory" field if the given value is not nil.
+func (tc *TaskCreate) SetNillableProjectDirectory(s *string) *TaskCreate {
+	if s != nil {
+		tc.SetProjectDirectory(*s)
+	}
+	return tc
+}
+
 // SetInputTokens sets the "input_tokens" field.
 func (tc *TaskCreate) SetInputTokens(i int64) *TaskCreate {
 	tc.mutation.SetInputTokens(i)
@@ -231,14 +239,6 @@ func (tc *TaskCreate) check() error {
 	}
 	if _, ok := tc.mutation.UpdateTime(); !ok {
 		return &ValidationError{Name: "update_time", err: errors.New(`memory: missing required field "Task.update_time"`)}
-	}
-	if _, ok := tc.mutation.ProjectDirectory(); !ok {
-		return &ValidationError{Name: "project_directory", err: errors.New(`memory: missing required field "Task.project_directory"`)}
-	}
-	if v, ok := tc.mutation.ProjectDirectory(); ok {
-		if err := task.ProjectDirectoryValidator(v); err != nil {
-			return &ValidationError{Name: "project_directory", err: fmt.Errorf(`memory: validator failed for field "Task.project_directory": %w`, err)}
-		}
 	}
 	return nil
 }

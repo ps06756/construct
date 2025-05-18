@@ -123,7 +123,7 @@ var (
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "create_time", Type: field.TypeTime},
 		{Name: "update_time", Type: field.TypeTime},
-		{Name: "project_directory", Type: field.TypeString},
+		{Name: "project_directory", Type: field.TypeString, Nullable: true},
 		{Name: "input_tokens", Type: field.TypeInt64, Nullable: true},
 		{Name: "output_tokens", Type: field.TypeInt64, Nullable: true},
 		{Name: "cache_write_tokens", Type: field.TypeInt64, Nullable: true},

@@ -4360,9 +4360,22 @@ func (m *TaskMutation) OldProjectDirectory(ctx context.Context) (v string, err e
 	return oldValue.ProjectDirectory, nil
 }
 
+// ClearProjectDirectory clears the value of the "project_directory" field.
+func (m *TaskMutation) ClearProjectDirectory() {
+	m.project_directory = nil
+	m.clearedFields[task.FieldProjectDirectory] = struct{}{}
+}
+
+// ProjectDirectoryCleared returns if the "project_directory" field was cleared in this mutation.
+func (m *TaskMutation) ProjectDirectoryCleared() bool {
+	_, ok := m.clearedFields[task.FieldProjectDirectory]
+	return ok
+}
+
 // ResetProjectDirectory resets all changes to the "project_directory" field.
 func (m *TaskMutation) ResetProjectDirectory() {
 	m.project_directory = nil
+	delete(m.clearedFields, task.FieldProjectDirectory)
 }
 
 // SetInputTokens sets the "input_tokens" field.
@@ -5125,6 +5138,9 @@ func (m *TaskMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *TaskMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(task.FieldProjectDirectory) {
+		fields = append(fields, task.FieldProjectDirectory)
+	}
 	if m.FieldCleared(task.FieldInputTokens) {
 		fields = append(fields, task.FieldInputTokens)
 	}
@@ -5157,6 +5173,9 @@ func (m *TaskMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *TaskMutation) ClearField(name string) error {
 	switch name {
+	case task.FieldProjectDirectory:
+		m.ClearProjectDirectory()
+		return nil
 	case task.FieldInputTokens:
 		m.ClearInputTokens()
 		return nil

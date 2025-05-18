@@ -47,11 +47,6 @@ If the file doesn't exist or cannot be read, it will throw an exception describi
 - **Documentation review**: To analyze README files, specifications, or documentation
 - **Data gathering**: When collecting information stored in logs, CSVs, or other structured data files
 
-## Common Errors and Solutions
-- **"File not found"**: Verify the file path is correct and the file exists using appropriate tools
-- **"Permission denied"**: Ensure you have read permissions for the file
-- **"Path is not absolute"**: Always use paths starting with "/" (e.g., "/workspace/project/file.txt")
-
 ## Usage Examples
 
 ### Analyzing source code

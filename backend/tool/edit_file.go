@@ -46,12 +46,6 @@ Returns an object indicating success and details about changes made:
 - Feature implementation in existing files
 - Configuration changes
 - Any targeted code modifications
-
-## Common Errors and Solutions
-- **"No matches found"**: Verify "old" text matches file content exactly
-- **"Multiple matches found"**: Add more context lines for unique matching
-- **"Unexpected replacements"**: Make "old" patterns more specific
-- **"File not found"**: Verify file path before modifying
 `
 
 func NewEditFileTool() codeact.Tool {

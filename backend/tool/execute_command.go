@@ -30,6 +30,7 @@ Returns an object containing the command's output:
 ## CRITICAL REQUIREMENTS
 - **Command safety**: Always ensure commands are safe and appropriate for the user's environment
 - **Error handling**: Always check the exit code and stderr to determine if the command was successful
+- **Prefer specialized tools**: You should only use this tool if it would be impractical to use a more specialized tool.
 %[1]s
   const result = execute_command("git status");
   if (result.exitCode !== 0) {
@@ -55,22 +56,6 @@ Returns an object containing the command's output:
 - **Git operations**: For source control management
 - **Network utilities**: For ping, curl, wget, and other network tools
 - **Process management**: To start, stop, or monitor system processes
-
-## Common Errors and Solutions
-- **Command not found**: Ensure the command exists on the user's system and is in the PATH
-  - Solution: Check if the command is installed, or provide installation instructions
-- **Permission denied**: The command requires elevated privileges
-  - Solution: Inform the user they may need to run with appropriate permissions
-- **Path issues**: Specified files or directories don't exist
-  - Solution: Verify paths exist before running commands that depend on them
-%[1]s
-  // Check if directory exists before using it
-  const dirCheckResult = execute_command("test -d /path/to/dir && echo exists");
-  if (!dirCheckResult.stdout.includes("exists")) {
-    print("Directory doesn't exist, creating it...");
-    execute_command("mkdir -p /path/to/dir");
-  }
-%[1]s
 
 ## Usage Examples
 %[1]s
@@ -113,7 +98,14 @@ func executeCommandHandler(session *codeact.Session) func(call sobek.FunctionCal
 	return func(call sobek.FunctionCall) sobek.Value {
 		command := call.Argument(0).String()
 
-		cmd := exec.Command(command)
+		script := fmt.Sprintf(`#!/bin/sh
+			set -euo pipefail
+			%s
+			`,
+			command,
+		)
+
+		cmd := exec.Command("/bin/sh", "-c", script)
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			session.Throw(codeact.NewCustomError("error executing command", []string{

@@ -73,12 +73,6 @@ If the directory doesn't exist or cannot be accessed, this tool will throw an ex
 - **Structure analysis**: To analyze the organization of a project directory
 - **Before file operations**: Before reading from or writing to files to ensure correct paths
 
-## Common Errors and Solutions
-- **"Directory not found"**: Exception will be thrown if the directory doesn't exist - verify the path is correct
-- **"Permission denied"**: Exception will be thrown if you lack read permissions - check file system permissions
-- **"Not a directory"**: Exception will be thrown if the path points to a file - ensure you're using a directory path
-- **"Path is not absolute"**: Exception will be thrown if path doesn't start with "/" - always use absolute paths
-
 ## Usage Examples
 
 %[1]s

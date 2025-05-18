@@ -89,19 +89,6 @@ Returns an object containing the search results:
 - **Dependency Identification**: When finding all imports or requires of a specific module.
 - **Configuration Search**: When locating specific configuration patterns across multiple files.
 
-## Common Errors and Solutions
-- **"Invalid regex pattern"**: Ensure special characters (., +, *, ?, ^, $, (, ), [, ], {, }, |, \) are properly escaped with backslashes.
-  %[1]s
-  // Incorrect: regex_search({ query: "function doSomething()", ... })
-  // Correct: regex_search({ query: "function doSomething\\(\\)", ... })
-  %[1]s
-- **"Too many matches"**: Narrow your search with a more specific query or use include/exclude patterns.
-- **"No matches found"**: 
-  - Verify your regex pattern is correct
-  - Check if include/exclude patterns are too restrictive
-  - Try a simpler pattern first and then refine
-- **"Path not found"**: Ensure the search path exists and you have access permissions.
-
 ## Usage Examples
 
 ### Finding Function Definitions

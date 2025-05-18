@@ -55,9 +55,6 @@ Example output:
 - Saving computation results: When you need to persist data, logs, or computation results to disk
 - Building project structure: When setting up initial project organization or adding new components
 
-## Common Errors and Solutions
-- **"Path is not absolute"**: Ensure you're using an absolute path starting with "/"
-
 ## Usage examples
 
 ### Write a JSON file

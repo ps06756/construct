@@ -28,6 +28,7 @@ tmp/
 out/
 /construct
 /frontend/cli/construct
+__debug_bin*
 
 # Go debug files
 debug
@@ -37,3 +38,5 @@ __debug_bin
 construct.db
 construct.db-shm
 construct.db-wal
+
+.DS_Store

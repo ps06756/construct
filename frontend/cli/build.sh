@@ -3,4 +3,4 @@
 set -euo pipefail
 
 go build -o construct .
-cp construct /usr/local/bin/construct
+cp ./construct /usr/local/bin/construct

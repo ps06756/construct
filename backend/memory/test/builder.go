@@ -223,14 +223,14 @@ type AgentBuilder struct {
 	instructions string
 }
 
-func NewAgentBuilder(t *testing.T, db *memory.Client, defaultModel *memory.Model) *AgentBuilder {
+func NewAgentBuilder(t *testing.T, id uuid.UUID, db *memory.Client, defaultModel *memory.Model) *AgentBuilder {
 	if defaultModel == nil {
 		t.Fatal("model is required")
 	}
 
 	return &AgentBuilder{
 		entityBuilder: newEntityBuilder(t, db),
-		agentID:       AgentID(),
+		agentID:       id,
 		name:          "coder",
 		description:   "Writes code",
 		defaultModel:  defaultModel.ID,
@@ -281,10 +281,10 @@ type TaskBuilder struct {
 	agentID uuid.UUID
 }
 
-func NewTaskBuilder(t *testing.T, db *memory.Client, agent *memory.Agent) *TaskBuilder {
+func NewTaskBuilder(t *testing.T, id uuid.UUID, db *memory.Client, agent *memory.Agent) *TaskBuilder {
 	return &TaskBuilder{
 		entityBuilder: newEntityBuilder(t, db),
-		taskID:        TaskID(),
+		taskID:        id,
 		agentID:       agent.ID,
 	}
 }

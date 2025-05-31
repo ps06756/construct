@@ -27,9 +27,9 @@ func TestHandoff(t *testing.T) {
 	targetAgentID := uuid.New()
 	taskID := uuid.New()
 
-	setup := &ToolTestSetup[HandoffInput, struct{}]{
-		Call: func(ctx context.Context, db *memory.Client, input *HandoffInput) (struct{}, error) {
-			return struct{}{}, handoff(ctx, db, input)
+	setup := &ToolTestSetup[*HandoffInput, struct{}]{
+		Call: func(ctx context.Context, services *ToolTestServices, input *HandoffInput) (struct{}, error) {
+			return struct{}{}, handoff(ctx, services.DB, input)
 		},
 		QueryDatabase: func(ctx context.Context, db *memory.Client) (any, error) {
 			var result DatabaseResult
@@ -50,7 +50,7 @@ func TestHandoff(t *testing.T) {
 		},
 	}
 
-	setup.RunToolTests(t, []ToolTestScenario[HandoffInput, struct{}]{
+	setup.RunToolTests(t, []ToolTestScenario[*HandoffInput, struct{}]{
 		{
 			Name: "source agent does not exist",
 			TestInput: &HandoffInput{

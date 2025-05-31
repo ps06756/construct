@@ -10,9 +10,6 @@ import (
 
 const FilesystemToolCategory = "filesystem"
 
-type ReadFileInput struct {
-	FilePath string `json:"file_path"`
-}
 
 type WriteFileInput struct {
 	FilePath string `json:"file_path"`
@@ -39,21 +36,21 @@ type ListFilesInput struct {
 
 func FilesystemTools() []NativeTool {
 	return []NativeTool{
-		NewTool("read_file", "Read a file", FilesystemToolCategory, func(ctx context.Context, input ReadFileInput) (string, error) {
-			if input.FilePath == "" {
-				return "", fmt.Errorf("file path is required")
-			}
+		// NewTool("read_file", "Read a file", FilesystemToolCategory, func(ctx context.Context, input ReadFileInput) (string, error) {
+		// 	if input.FilePath == "" {
+		// 		return "", fmt.Errorf("file path is required")
+		// 	}
 
-			if !filepath.IsAbs(input.FilePath) {
-				return "", fmt.Errorf("file path must be absolute")
-			}
+		// 	if !filepath.IsAbs(input.FilePath) {
+		// 		return "", fmt.Errorf("file path must be absolute")
+		// 	}
 
-			content, err := os.ReadFile(input.FilePath)
-			if err != nil {
-				return "", err
-			}
-			return string(content), nil
-		}),
+		// 	content, err := os.ReadFile(input.FilePath)
+		// 	if err != nil {
+		// 		return "", err
+		// 	}
+		// 	return string(content), nil
+		// }),
 		NewTool("write_file", "Write to a file", FilesystemToolCategory, func(ctx context.Context, input WriteFileInput) (string, error) {
 			if input.FilePath == "" {
 				return "", fmt.Errorf("file path is required")

@@ -3,6 +3,7 @@ package tool
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/grafana/sobek"
 	"github.com/spf13/afero"
@@ -31,7 +32,7 @@ If the file doesn't exist or cannot be read, it will throw an exception describi
 ## IMPORTANT USAGE NOTES
 - **Check file extensions**: Ensure you're reading appropriate file types; this tool is best suited for text files
 - **Process binary files carefully**: Binary files may return unreadable content; consider specialized tools for these cases
-"- **Path format**: Always use absolute paths starting with "/". For example: /workspace/project/package.json"
+- **Path format**: Always use absolute paths starting with "/". For example: /workspace/project/package.json"
 
 ## When to use
 - **Code analysis**: When you need to understand existing code structure, imports, or implementations
@@ -68,6 +69,10 @@ try {
 %[1]s
 `
 
+type ReadFileInput struct {
+	Path string `json:"path"`
+}
+
 type ReadFileResult struct {
 	Path    string `json:"path"`
 	Content string `json:"content"`
@@ -83,9 +88,11 @@ func NewReadFileTool() codeact.Tool {
 
 func readFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		path := call.Argument(0).String()
+		input := &ReadFileInput{
+			Path: call.Argument(0).String(),
+		}
 
-		result, err := readFile(session.FS, path)
+		result, err := readFile(session.FS, input)
 		if err != nil {
 			session.Throw(err)
 		}
@@ -94,8 +101,22 @@ func readFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sob
 	}
 }
 
-func readFile(fsys afero.Fs, path string) (*ReadFileResult, error) {
-	if _, err := fsys.Stat(path); err != nil {
+func readFile(fsys afero.Fs, input *ReadFileInput) (*ReadFileResult, error) {
+	if input.Path == "" {
+		return nil, codeact.NewCustomError("path is required", []string{
+			"Please provide a valid path to the file you want to read",
+		})
+	}
+
+	if !filepath.IsAbs(input.Path) {
+		return nil, codeact.NewCustomError("path must be absolute", []string{
+			"Please provide a valid absolute path to the file you want to read",
+		})
+	}
+	path := input.Path
+
+	stat, err := fsys.Stat(path)
+	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, codeact.NewError(codeact.FileNotFound, "path", path)
 		}
@@ -103,6 +124,12 @@ func readFile(fsys afero.Fs, path string) (*ReadFileResult, error) {
 			return nil, codeact.NewError(codeact.PermissionDenied, "path", path)
 		}
 		return nil, codeact.NewError(codeact.CannotStatFile, "path", path)
+	}
+
+	if stat.IsDir() {
+		return nil, codeact.NewCustomError("path is a directory", []string{
+			"Please provide a valid path to a file",
+		}, "path", path)
 	}
 
 	content, err := afero.ReadFile(fsys, path)
@@ -116,5 +143,4 @@ func readFile(fsys afero.Fs, path string) (*ReadFileResult, error) {
 		Path:    path,
 		Content: string(content),
 	}, nil
-
 }

@@ -26,19 +26,19 @@ Returns an object containing an array of directory entries. A file is identified
   "path": "/absolute/path/to/listed/directory", 
   "entries": [
     {
-      "n": "file.js", 
+      "n": "/absolute/path/to/listed/directory/file.js", 
       "t": "f", 
-      "s": 12340 
+      "s": 8 
     },
     {
-      "n": "images", 
+      "n": "/absolute/path/to/listed/directory/images", 
       "t": "d",
       "s": 0 
     },
     {
-      "n": "images/logo.png", 
+      "n": "/absolute/path/to/listed/directory/images/logo.png", 
       "t": "f", 
-      "s": 102499 
+      "s": 5 
     }
   ]
 }
@@ -47,11 +47,11 @@ Returns an object containing an array of directory entries. A file is identified
 **Details:**
 -   The %[2]spath%[2]s field in the response object will be the same absolute path provided in the %[2]spath%[2]s parameter.
 -   %[2]sentries%[2]s: An array of objects, each representing a file or directory.
-    -   %[2]sn%[2]s (name): The name of the file or subdirectory. If recursive is true and the entry is within a subdirectory, n includes the path relative to the initially specified path.
+    -   %[2]sn%[2]s (name): The name of the file or subdirectory. This will always be an absolute path.
     -   %[2]st%[2]s (type): A character code indicating the entry type:
         -   %[2]s'f'%[2]s: Represents a regular file.
         -   %[2]s'd'%[2]s: Represents a directory.
-    -   %[2]ss%[2]s (size): The size of the entry **in bytes**. For directories, the size is reported as 0.
+    -   %[2]ss%[2]s (size): The size of the entry **in kilobytes**. For directories, the size is reported as 0.
 -   If the target directory is empty, %[2]sentries%[2]s will be an empty array (%[2]s[]%[2]s).
 -   If the specified %[2]spath%[2]s does not exist, is not a directory, or cannot be accessed due to permissions or other issues, the tool will throw an exception with a descriptive error message.
 
@@ -124,10 +124,20 @@ func NewListFilesTool() codeact.Tool {
 	)
 }
 
+type ListFilesInput struct {
+	Path      string
+	Recursive bool
+}
+
+type ListFilesResult struct {
+	Path    string           `json:"path"`
+	Entries []DirectoryEntry `json:"entries"`
+}
+
 type DirectoryEntry struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Size int64  `json:"size"`
+	Name string `json:"n"`
+	Type string `json:"t"`
+	Size int64  `json:"s"`
 }
 
 func listFilesHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
@@ -142,19 +152,23 @@ func listFilesHandler(session *codeact.Session) func(call sobek.FunctionCall) so
 		path := call.Argument(0).String()
 		recursive := call.Argument(1).ToBoolean()
 
-		dirEntries, err := listFiles(session.FS, path, recursive)
+		result, err := listFiles(session.FS, &ListFilesInput{
+			Path:      path,
+			Recursive: recursive,
+		})
 		if err != nil {
 			session.Throw(err)
 		}
 
-		return session.VM.ToValue(dirEntries)
+		return session.VM.ToValue(result)
 	}
 }
 
-func listFiles(fsys afero.Fs, path string, recursive bool) ([]DirectoryEntry, error) {
-	if !filepath.IsAbs(path) {
-		return nil, codeact.NewError(codeact.PathIsNotAbsolute, "path", path)
+func listFiles(fsys afero.Fs, input *ListFilesInput) (*ListFilesResult, error) {
+	if !filepath.IsAbs(input.Path) {
+		return nil, codeact.NewError(codeact.PathIsNotAbsolute, "path", input.Path)
 	}
+	path := input.Path
 
 	fileInfo, err := fsys.Stat(path)
 	if err != nil {
@@ -171,8 +185,8 @@ func listFiles(fsys afero.Fs, path string, recursive bool) ([]DirectoryEntry, er
 		return nil, codeact.NewError(codeact.PathIsNotDirectory, "path", path)
 	}
 
-	var entries []DirectoryEntry
-	if recursive {
+	entries := []DirectoryEntry{}
+	if input.Recursive {
 		err = afero.Walk(fsys, path, func(filePath string, entry fs.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -182,7 +196,7 @@ func listFiles(fsys afero.Fs, path string, recursive bool) ([]DirectoryEntry, er
 				return nil
 			}
 
-			dirEntry, err := toDirectoryEntry(entry)
+			dirEntry, err := toDirectoryEntry(filePath, entry)
 			if err != nil {
 				return err
 			}
@@ -206,7 +220,8 @@ func listFiles(fsys afero.Fs, path string, recursive bool) ([]DirectoryEntry, er
 		}
 
 		for _, entry := range dirEntries {
-			dirEntry, err := toDirectoryEntry(entry)
+			entryPath := filepath.Join(path, entry.Name())
+			dirEntry, err := toDirectoryEntry(entryPath, entry)
 			if err != nil {
 				return nil, err
 			}
@@ -214,19 +229,22 @@ func listFiles(fsys afero.Fs, path string, recursive bool) ([]DirectoryEntry, er
 		}
 	}
 
-	return entries, nil
+	return &ListFilesResult{
+		Path:    path,
+		Entries: entries,
+	}, nil
 }
 
-func toDirectoryEntry(info fs.FileInfo) (*DirectoryEntry, error) {
+func toDirectoryEntry(path string, info fs.FileInfo) (*DirectoryEntry, error) {
 	if info.IsDir() {
 		return &DirectoryEntry{
-			Name: info.Name(),
+			Name: path,
 			Type: "d",
 			Size: 0,
 		}, nil
 	} else {
 		return &DirectoryEntry{
-			Name: info.Name(),
+			Name: path,
 			Type: "f",
 			Size: (info.Size() + 1023) / 1024, // Size in KB
 		}, nil

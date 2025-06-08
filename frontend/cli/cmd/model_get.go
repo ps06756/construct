@@ -7,14 +7,15 @@ import (
 )
 
 var modelGetOptions struct {
-	Id string
+	Id            string
+	FormatOptions FormatOptions
 }
 
 var modelGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a model by ID",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient()
+		client := getAPIClient(cmd.Context())
 
 		req := &connect.Request[v1.GetModelRequest]{
 			Msg: &v1.GetModelRequest{Id: modelGetOptions.Id},
@@ -27,12 +28,12 @@ var modelGetCmd = &cobra.Command{
 
 		displayModel := ConvertModelToDisplay(resp.Msg.Model)
 
-		return DisplayResources([]*ModelDisplay{displayModel}, formatOptions.Output)
+		return getFormatter(cmd.Context()).Display([]*ModelDisplay{displayModel}, modelGetOptions.FormatOptions.Output)
 	},
 }
 
 func init() {
-	addFormatOptions(modelGetCmd)
+	addFormatOptions(modelGetCmd, &modelGetOptions.FormatOptions)
 	modelGetCmd.Flags().StringVarP(&modelGetOptions.Id, "id", "i", "", "The ID of the model to get")
 	modelGetCmd.MarkFlagRequired("id")
 	modelCmd.AddCommand(modelGetCmd)

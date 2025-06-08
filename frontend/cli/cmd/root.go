@@ -10,11 +10,13 @@ import (
 	"syscall"
 
 	"entgo.io/ent/dialect"
+	"github.com/common-nighthawk/go-figure"
 	"github.com/furisto/construct/backend/agent"
 	"github.com/furisto/construct/backend/memory"
 	"github.com/furisto/construct/backend/secret"
 	"github.com/furisto/construct/backend/tool"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/tink-crypto/tink-go/keyset"
 
@@ -26,7 +28,9 @@ var globalOptions struct {
 }
 
 var rootCmd = &cobra.Command{
-	Use: "construct",
+	Use:   "construct",
+	Short: "Construct: Build intelligent agents.",
+	Long:  figure.NewColorFigure("construct", "standard", "blue", true).String(),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 			Level: slog.LevelDebug,
@@ -34,12 +38,30 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+func NewRootCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "construct",
+		Short: "Construct: Build intelligent agents.",
+		Long:  figure.NewColorFigure("construct", "standard", "blue", true).String(),
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+				Level: slog.LevelDebug,
+			})))
+		},
+	}
+
+	cmd.PersistentFlags().BoolVarP(&globalOptions.Verbose, "verbose", "v", false, "verbose output")
+
+	cmd.AddCommand(NewAgentCmd())
+	return cmd
+}
+
 func Execute() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
+	rootCmd := NewRootCmd()
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		slog.Error("failed to execute command", "error", err)
 		os.Exit(1)
 	}
 }
@@ -87,8 +109,30 @@ func RunAgent(ctx context.Context) error {
 	return runtime.Run(ctx)
 }
 
-func getAPIClient() *api.Client {
+type ContextKey string
+
+const (
+	ContextKeyAPI        ContextKey = "api"
+	ContextKeyFileSystem ContextKey = "filesystem"
+	ContextKeyFormatter  ContextKey = "formatter"
+)
+
+func getAPIClient(ctx context.Context) *api.Client {
+	apiTestClient := ctx.Value(ContextKeyAPI)
+	if apiTestClient != nil {
+		return apiTestClient.(*api.Client)
+	}
+
 	return api.NewClient("http://localhost:29333/api")
+}
+
+func getFileSystem(ctx context.Context) *afero.Afero {
+	fs := ctx.Value(ContextKeyFileSystem)
+	if fs != nil {
+		return fs.(*afero.Afero)
+	}
+
+	return &afero.Afero{Fs: afero.NewOsFs()}
 }
 
 func getEncryptionClient() (*secret.Client, error) {
@@ -124,6 +168,11 @@ func getEncryptionClient() (*secret.Client, error) {
 	return secret.NewClient(keyHandle)
 }
 
-func init() {
-	rootCmd.PersistentFlags().BoolVarP(&globalOptions.Verbose, "verbose", "v", false, "verbose output")
+func getFormatter(ctx context.Context) ResourceFormatter {
+	printer := ctx.Value(ContextKeyFormatter)
+	if printer != nil {
+		return printer.(ResourceFormatter)
+	}
+
+	return &DefaultResourceFormatter{}
 }

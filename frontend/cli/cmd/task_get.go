@@ -7,14 +7,15 @@ import (
 )
 
 var taskGetOptions struct {
-	Id string
+	Id            string
+	FormatOptions FormatOptions
 }
 
 var taskGetCmd = &cobra.Command{
 	Use:  "get",
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient()
+		client := getAPIClient(cmd.Context())
 
 		resp, err := client.Task().GetTask(cmd.Context(), &connect.Request[v1.GetTaskRequest]{
 			Msg: &v1.GetTaskRequest{Id: args[0]},
@@ -24,10 +25,11 @@ var taskGetCmd = &cobra.Command{
 			return err
 		}
 
-		return DisplayResources([]*DisplayTask{ConvertTaskToDisplay(resp.Msg.Task)}, formatOptions.Output)
+		return getFormatter(cmd.Context()).Display([]*DisplayTask{ConvertTaskToDisplay(resp.Msg.Task)}, taskGetOptions.FormatOptions.Output)
 	},
 }
 
 func init() {
+	addFormatOptions(taskGetCmd, &taskGetOptions.FormatOptions)
 	taskCmd.AddCommand(taskGetCmd)
 }

@@ -6,11 +6,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var modelProviderListOptions struct {
+	FormatOptions FormatOptions
+}
+
 var modelProviderListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List model providers",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient()
+		client := getAPIClient(cmd.Context())
 
 		resp, err := client.ModelProvider().ListModelProviders(cmd.Context(), &connect.Request[v1.ListModelProvidersRequest]{})
 		if err != nil {
@@ -22,11 +26,11 @@ var modelProviderListCmd = &cobra.Command{
 			modelProviders[i] = ConvertModelProviderToDisplay(modelProvider)
 		}
 
-		return DisplayResources(modelProviders, formatOptions.Output)
+		return getFormatter(cmd.Context()).Display(modelProviders, modelProviderListOptions.FormatOptions.Output)
 	},
 }
 
 func init() {
-	addFormatOptions(modelProviderListCmd)
+	addFormatOptions(modelProviderListCmd, &modelProviderListOptions.FormatOptions)
 	modelProviderCmd.AddCommand(modelProviderListCmd)
 }

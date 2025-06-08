@@ -7,14 +7,15 @@ import (
 )
 
 var modelProviderGetOptions struct {
-	Id string
+	Id            string
+	FormatOptions FormatOptions
 }
 
 var modelProviderGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a model provider",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient()
+		client := getAPIClient(cmd.Context())
 
 		resp, err := client.ModelProvider().GetModelProvider(cmd.Context(), &connect.Request[v1.GetModelProviderRequest]{
 			Msg: &v1.GetModelProviderRequest{Id: modelProviderGetOptions.Id},
@@ -24,11 +25,11 @@ var modelProviderGetCmd = &cobra.Command{
 			return err
 		}
 
-		return DisplayResources([]*ModelProviderDisplay{ConvertModelProviderToDisplay(resp.Msg.ModelProvider)}, formatOptions.Output)
+		return getFormatter(cmd.Context()).Display([]*ModelProviderDisplay{ConvertModelProviderToDisplay(resp.Msg.ModelProvider)}, modelProviderGetOptions.FormatOptions.Output)
 	},
 }
 
 func init() {
-	addFormatOptions(modelProviderGetCmd)
+	addFormatOptions(modelProviderGetCmd, &modelProviderGetOptions.FormatOptions)
 	modelProviderGetCmd.Flags().StringVarP(&modelProviderGetOptions.Id, "id", "i", "", "The ID of the model provider to get")
 }

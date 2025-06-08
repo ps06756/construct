@@ -7,13 +7,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var messageCmd = &cobra.Command{
-	Use:   "message",
-	Short: "Manage messages",
-}
+func NewMessageCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "message",
+		Short: "Manage messages",
+	}
 
-func init() {
-	rootCmd.AddCommand(messageCmd)
+	cmd.AddCommand(NewMessageCreateCmd())
+	cmd.AddCommand(NewMessageGetCmd())
+	cmd.AddCommand(NewMessageListCmd())
+	cmd.AddCommand(NewMessageDeleteCmd())
+
+	return cmd
 }
 
 type DisplayMessage struct {

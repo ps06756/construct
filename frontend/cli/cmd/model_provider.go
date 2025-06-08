@@ -7,13 +7,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var modelProviderCmd = &cobra.Command{
-	Use:   "modelprovider",
-	Short: "Manage model providers",
-}
+func NewModelProviderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "modelprovider",
+		Short: "Manage model providers",
+	}
 
-func init() {
-	rootCmd.AddCommand(modelProviderCmd)
+	cmd.AddCommand(NewModelProviderCreateCmd())
+	cmd.AddCommand(NewModelProviderGetCmd())
+	cmd.AddCommand(NewModelProviderListCmd())
+	cmd.AddCommand(NewModelProviderDeleteCmd())
+
+	return cmd
 }
 
 // https://stackoverflow.com/questions/50824554/permitted-flag-values-for-cobra

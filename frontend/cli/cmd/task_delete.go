@@ -6,23 +6,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var taskDeleteOptions struct {
-	Id string
-}
+func NewTaskDeleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete <task-id>",
+		Short: "Delete a task",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-var taskDeleteCmd = &cobra.Command{
-	Use: "delete",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+			_, err := client.Task().DeleteTask(cmd.Context(), &connect.Request[v1.DeleteTaskRequest]{
+				Msg: &v1.DeleteTaskRequest{Id: args[0]},
+			})
 
-		_, err := client.Task().DeleteTask(cmd.Context(), &connect.Request[v1.DeleteTaskRequest]{
-			Msg: &v1.DeleteTaskRequest{Id: args[0]},
-		})
+			return err
+		},
+	}
 
-		return err
-	},
-}
-
-func init() {
-	taskCmd.AddCommand(taskDeleteCmd)
+	return cmd
 }

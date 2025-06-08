@@ -6,30 +6,47 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var taskListOptions struct {
+type taskListOptions struct {
+	AgentId       string
 	FormatOptions FormatOptions
 }
 
-var taskListCmd = &cobra.Command{
-	Use: "list",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewTaskListCmd() *cobra.Command {
+	var options taskListOptions
 
-		resp, err := client.Task().ListTasks(cmd.Context(), &connect.Request[v1.ListTasksRequest]{})
-		if err != nil {
-			return err
-		}
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "List tasks",
+		Aliases: []string{"ls"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		tasks := make([]*DisplayTask, len(resp.Msg.Tasks))
-		for i, task := range resp.Msg.Tasks {
-			tasks[i] = ConvertTaskToDisplay(task)
-		}
+			filter := &v1.ListTasksRequest_Filter{}
+			if options.AgentId != "" {
+				filter.AgentId = &options.AgentId
+			}
 
-		return getFormatter(cmd.Context()).Display(tasks, taskListOptions.FormatOptions.Output)
-	},
-}
+			req := &connect.Request[v1.ListTasksRequest]{
+				Msg: &v1.ListTasksRequest{
+					Filter: filter,
+				},
+			}
 
-func init() {
-	addFormatOptions(taskListCmd, &taskListOptions.FormatOptions)
-	taskCmd.AddCommand(taskListCmd)
+			resp, err := client.Task().ListTasks(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			displayTasks := make([]*DisplayTask, len(resp.Msg.Tasks))
+			for i, task := range resp.Msg.Tasks {
+				displayTasks[i] = ConvertTaskToDisplay(task)
+			}
+
+			return getFormatter(cmd.Context()).Display(displayTasks, options.FormatOptions.Output)
+		},
+	}
+
+	cmd.Flags().StringVarP(&options.AgentId, "agent-id", "a", "", "Filter by agent ID")
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

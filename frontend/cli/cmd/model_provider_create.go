@@ -1,49 +1,54 @@
 package cmd
 
 import (
+	"fmt"
+
 	"connectrpc.com/connect"
 
 	v1 "github.com/furisto/construct/api/go/v1"
 	"github.com/spf13/cobra"
 )
 
-var modelProviderCreateOptions struct {
+type modelProviderCreateOptions struct {
 	Name   string
 	ApiKey string
 	Type   ModelProviderType
 }
 
-var modelProviderCreateCmd = &cobra.Command{
-	Use:   "create",
-	Short: "Create a new model provider",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewModelProviderCreateCmd() *cobra.Command {
+	var options modelProviderCreateOptions
 
-		providerType, err := modelProviderCreateOptions.Type.ToAPI()
-		if err != nil {
-			return err
-		}
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create a new model provider",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		_, err = client.ModelProvider().CreateModelProvider(cmd.Context(), &connect.Request[v1.CreateModelProviderRequest]{
-			Msg: &v1.CreateModelProviderRequest{
-				Name:           modelProviderCreateOptions.Name,
-				ProviderType:   providerType,
-				Authentication: &v1.CreateModelProviderRequest_ApiKey{ApiKey: modelProviderCreateOptions.ApiKey},
-			},
-		})
+			providerType, err := options.Type.ToAPI()
+			if err != nil {
+				return err
+			}
 
-		if err != nil {
-			return err
-		}
+			resp, err := client.ModelProvider().CreateModelProvider(cmd.Context(), &connect.Request[v1.CreateModelProviderRequest]{
+				Msg: &v1.CreateModelProviderRequest{
+					Name:           options.Name,
+					ProviderType:   providerType,
+					Authentication: &v1.CreateModelProviderRequest_ApiKey{ApiKey: options.ApiKey},
+				},
+			})
 
-		return nil
-	},
-}
+			if err != nil {
+				return err
+			}
 
-func init() {
-	modelProviderCreateCmd.Flags().StringVarP(&modelProviderCreateOptions.Name, "name", "n", "", "The name of the model provider")
-	modelProviderCreateCmd.Flags().StringVarP(&modelProviderCreateOptions.ApiKey, "api-key", "k", "", "The API key for the model provider")
-	modelProviderCreateCmd.Flags().VarP(&modelProviderCreateOptions.Type, "type", "t", "The type of the model provider")
+			fmt.Fprintln(cmd.OutOrStdout(), resp.Msg.ModelProvider.Id)
+			return nil
+		},
+	}
 
-	modelProviderCmd.AddCommand(modelProviderCreateCmd)
+	cmd.Flags().StringVarP(&options.Name, "name", "n", "", "The name of the model provider")
+	cmd.Flags().StringVarP(&options.ApiKey, "api-key", "k", "", "The API key for the model provider")
+	cmd.Flags().VarP(&options.Type, "type", "t", "The type of the model provider")
+
+	return cmd
 }

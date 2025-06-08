@@ -5,9 +5,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var modelCmd = &cobra.Command{
-	Use:   "model",
-	Short: "Manage models",
+func NewModelCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "model",
+		Short: "Manage models",
+	}
+
+	cmd.AddCommand(NewModelCreateCmd())
+	cmd.AddCommand(NewModelGetCmd())
+	cmd.AddCommand(NewModelListCmd())
+	cmd.AddCommand(NewModelDeleteCmd())
+
+	return cmd
 }
 
 type ModelDisplay struct {
@@ -32,8 +41,4 @@ func ConvertModelToDisplay(model *v1.Model) *ModelDisplay {
 		Enabled:         model.Enabled,
 		Capabilities:    capabilities,
 	}
-}
-
-func init() {
-	rootCmd.AddCommand(modelCmd)
 }

@@ -53,6 +53,10 @@ func NewRootCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&globalOptions.Verbose, "verbose", "v", false, "verbose output")
 
 	cmd.AddCommand(NewAgentCmd())
+	cmd.AddCommand(NewTaskCmd())
+	cmd.AddCommand(NewMessageCmd())
+	cmd.AddCommand(NewModelCmd())
+	cmd.AddCommand(NewModelProviderCmd())
 	return cmd
 }
 

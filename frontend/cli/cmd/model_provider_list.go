@@ -6,31 +6,48 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var modelProviderListOptions struct {
+type modelProviderListOptions struct {
+	ShowDisabled  bool
 	FormatOptions FormatOptions
 }
 
-var modelProviderListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List model providers",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewModelProviderListCmd() *cobra.Command {
+	var options modelProviderListOptions
 
-		resp, err := client.ModelProvider().ListModelProviders(cmd.Context(), &connect.Request[v1.ListModelProvidersRequest]{})
-		if err != nil {
-			return err
-		}
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "List model providers",
+		Aliases: []string{"ls"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		modelProviders := make([]*ModelProviderDisplay, len(resp.Msg.ModelProviders))
-		for i, modelProvider := range resp.Msg.ModelProviders {
-			modelProviders[i] = ConvertModelProviderToDisplay(modelProvider)
-		}
+			filter := &v1.ListModelProvidersRequest_Filter{}
+			if !options.ShowDisabled {
+				enabled := true
+				filter.Enabled = &enabled
+			}
 
-		return getFormatter(cmd.Context()).Display(modelProviders, modelProviderListOptions.FormatOptions.Output)
-	},
-}
+			req := &connect.Request[v1.ListModelProvidersRequest]{
+				Msg: &v1.ListModelProvidersRequest{
+					Filter: filter,
+				},
+			}
 
-func init() {
-	addFormatOptions(modelProviderListCmd, &modelProviderListOptions.FormatOptions)
-	modelProviderCmd.AddCommand(modelProviderListCmd)
+			resp, err := client.ModelProvider().ListModelProviders(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			displayModelProviders := make([]*ModelProviderDisplay, len(resp.Msg.ModelProviders))
+			for i, modelProvider := range resp.Msg.ModelProviders {
+				displayModelProviders[i] = ConvertModelProviderToDisplay(modelProvider)
+			}
+
+			return getFormatter(cmd.Context()).Display(displayModelProviders, options.FormatOptions.Output)
+		},
+	}
+
+	cmd.Flags().BoolVar(&options.ShowDisabled, "show-disabled", false, "Show disabled model providers")
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

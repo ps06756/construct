@@ -6,62 +6,67 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var messageListOptions struct {
+type messageListOptions struct {
 	TaskId        string
 	AgentId       string
 	Role          string
 	FormatOptions FormatOptions
 }
 
-var messageListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List messages",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewMessageListCmd() *cobra.Command {
+	var options messageListOptions
 
-		filter := &v1.ListMessagesRequest_Filter{}
-		if messageListOptions.TaskId != "" {
-			filter.TaskId = &messageListOptions.TaskId
-		}
-		if messageListOptions.AgentId != "" {
-			filter.AgentId = &messageListOptions.AgentId
-		}
-		if messageListOptions.Role != "" {
-			var role v1.MessageRole
-			switch messageListOptions.Role {
-			case "user":
-				role = v1.MessageRole_MESSAGE_ROLE_USER
-			case "assistant":
-				role = v1.MessageRole_MESSAGE_ROLE_ASSISTANT
-			default:
-				role = v1.MessageRole_MESSAGE_ROLE_UNSPECIFIED
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "List messages",
+		Aliases: []string{"ls"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
+
+			filter := &v1.ListMessagesRequest_Filter{}
+
+			if options.TaskId != "" {
+				filter.TaskId = &options.TaskId
 			}
-			filter.Role = &role
-		}
 
-		resp, err := client.Message().ListMessages(cmd.Context(), &connect.Request[v1.ListMessagesRequest]{
-			Msg: &v1.ListMessagesRequest{
-				Filter: filter,
-			},
-		})
+			if options.AgentId != "" {
+				filter.AgentId = &options.AgentId
+			}
 
-		if err != nil {
-			return err
-		}
+			if options.Role != "" {
+				switch options.Role {
+				case "user":
+					role := v1.MessageRole_MESSAGE_ROLE_USER
+					filter.Role = &role
+				case "assistant":
+					role := v1.MessageRole_MESSAGE_ROLE_ASSISTANT
+					filter.Role = &role
+				}
+			}
 
-		messages := make([]*DisplayMessage, len(resp.Msg.Messages))
-		for i, message := range resp.Msg.Messages {
-			messages[i] = ConvertMessageToDisplay(message)
-		}
+			req := &connect.Request[v1.ListMessagesRequest]{
+				Msg: &v1.ListMessagesRequest{
+					Filter: filter,
+				},
+			}
 
-		return getFormatter(cmd.Context()).Display(messages, messageListOptions.FormatOptions.Output)
-	},
-}
+			resp, err := client.Message().ListMessages(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
 
-func init() {
-	messageListCmd.Flags().StringVarP(&messageListOptions.TaskId, "task-id", "t", "", "Filter messages by task ID")
-	messageListCmd.Flags().StringVarP(&messageListOptions.AgentId, "agent-id", "a", "", "Filter messages by agent ID")
-	messageListCmd.Flags().StringVarP(&messageListOptions.Role, "role", "r", "", "Filter messages by role (user, assistant)")
-	addFormatOptions(messageListCmd, &messageListOptions.FormatOptions)
-	messageCmd.AddCommand(messageListCmd)
+			displayMessages := make([]*DisplayMessage, len(resp.Msg.Messages))
+			for i, message := range resp.Msg.Messages {
+				displayMessages[i] = ConvertMessageToDisplay(message)
+			}
+
+			return getFormatter(cmd.Context()).Display(displayMessages, options.FormatOptions.Output)
+		},
+	}
+
+	cmd.Flags().StringVarP(&options.TaskId, "task-id", "t", "", "Filter by task ID")
+	cmd.Flags().StringVarP(&options.AgentId, "agent-id", "a", "", "Filter by agent ID")
+	cmd.Flags().StringVarP(&options.Role, "role", "r", "", "Filter by role (user or assistant)")
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

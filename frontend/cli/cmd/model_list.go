@@ -7,52 +7,55 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var modelListOptions struct {
+type modelListOptions struct {
 	ModelProviderID string
 	Enabled         bool
 	ShowDisabled    bool
 	FormatOptions   FormatOptions
 }
 
-var modelListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List models",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewModelListCmd() *cobra.Command {
+	var options modelListOptions
 
-		filter := &v1.ListModelsRequest_Filter{}
-		if modelListOptions.ModelProviderID != "" {
-			filter.ModelProviderId = &modelListOptions.ModelProviderID
-		}
+	cmd := &cobra.Command{
+		Use:     "list",
+		Short:   "List models",
+		Aliases: []string{"ls"},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		if !modelListOptions.ShowDisabled {
-			enabled := true
-			filter.Enabled = &enabled
-		}
+			filter := &v1.ListModelsRequest_Filter{}
+			if options.ModelProviderID != "" {
+				filter.ModelProviderId = &options.ModelProviderID
+			}
 
-		req := &connect.Request[v1.ListModelsRequest]{
-			Msg: &v1.ListModelsRequest{
-				Filter: filter,
-			},
-		}
+			if !options.ShowDisabled {
+				enabled := true
+				filter.Enabled = &enabled
+			}
 
-		resp, err := client.Model().ListModels(cmd.Context(), req)
-		if err != nil {
-			return err
-		}
+			req := &connect.Request[v1.ListModelsRequest]{
+				Msg: &v1.ListModelsRequest{
+					Filter: filter,
+				},
+			}
 
-		displayModels := make([]*ModelDisplay, len(resp.Msg.Models))
-		for i, model := range resp.Msg.Models {
-			displayModels[i] = ConvertModelToDisplay(model)
-		}
+			resp, err := client.Model().ListModels(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
 
-		return getFormatter(cmd.Context()).Display(displayModels, modelListOptions.FormatOptions.Output)
-	},
-}
+			displayModels := make([]*ModelDisplay, len(resp.Msg.Models))
+			for i, model := range resp.Msg.Models {
+				displayModels[i] = ConvertModelToDisplay(model)
+			}
 
-func init() {
-	addFormatOptions(modelListCmd, &modelListOptions.FormatOptions)
-	modelListCmd.Flags().StringVarP(&modelListOptions.ModelProviderID, "model-provider-id", "p", "", "Filter by model provider ID")
-	modelListCmd.Flags().BoolVar(&modelListOptions.ShowDisabled, "show-disabled", false, "Show disabled models")
-	modelCmd.AddCommand(modelListCmd)
+			return getFormatter(cmd.Context()).Display(displayModels, options.FormatOptions.Output)
+		},
+	}
+
+	cmd.Flags().StringVarP(&options.ModelProviderID, "model-provider-id", "p", "", "Filter by model provider ID")
+	cmd.Flags().BoolVar(&options.ShowDisabled, "show-disabled", false, "Show disabled models")
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

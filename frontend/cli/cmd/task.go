@@ -7,13 +7,18 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var taskCmd = &cobra.Command{
-	Use:   "task",
-	Short: "Manage tasks",
-}
+func NewTaskCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "task",
+		Short: "Manage tasks",
+	}
 
-func init() {
-	rootCmd.AddCommand(taskCmd)
+	cmd.AddCommand(NewTaskCreateCmd())
+	cmd.AddCommand(NewTaskGetCmd())
+	cmd.AddCommand(NewTaskListCmd())
+	cmd.AddCommand(NewTaskDeleteCmd())
+
+	return cmd
 }
 
 type DisplayTask struct {

@@ -6,30 +6,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var messageGetOptions struct {
+type messageGetOptions struct {
 	FormatOptions FormatOptions
 }
 
-var messageGetCmd = &cobra.Command{
-	Use:   "get",
-	Short: "Get a message",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewMessageGetCmd() *cobra.Command {
+	var options messageGetOptions
 
-		resp, err := client.Message().GetMessage(cmd.Context(), &connect.Request[v1.GetMessageRequest]{
-			Msg: &v1.GetMessageRequest{Id: args[0]},
-		})
+	cmd := &cobra.Command{
+		Use:   "get <message-id>",
+		Short: "Get a message",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		if err != nil {
-			return err
-		}
+			resp, err := client.Message().GetMessage(cmd.Context(), &connect.Request[v1.GetMessageRequest]{
+				Msg: &v1.GetMessageRequest{Id: args[0]},
+			})
 
-		return getFormatter(cmd.Context()).Display([]*DisplayMessage{ConvertMessageToDisplay(resp.Msg.Message)}, messageGetOptions.FormatOptions.Output)
-	},
-}
+			if err != nil {
+				return err
+			}
 
-func init() {
-	addFormatOptions(messageGetCmd, &messageGetOptions.FormatOptions)
-	messageCmd.AddCommand(messageGetCmd)
+			displayMessage := ConvertMessageToDisplay(resp.Msg.Message)
+			return getFormatter(cmd.Context()).Display(displayMessage, options.FormatOptions.Output)
+		},
+	}
+
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

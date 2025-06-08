@@ -6,30 +6,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var taskGetOptions struct {
-	Id            string
+type taskGetOptions struct {
 	FormatOptions FormatOptions
 }
 
-var taskGetCmd = &cobra.Command{
-	Use:  "get",
-	Args: cobra.MinimumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewTaskGetCmd() *cobra.Command {
+	var options taskGetOptions
 
-		resp, err := client.Task().GetTask(cmd.Context(), &connect.Request[v1.GetTaskRequest]{
-			Msg: &v1.GetTaskRequest{Id: args[0]},
-		})
+	cmd := &cobra.Command{
+		Use:   "get <task-id>",
+		Short: "Get a task",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		if err != nil {
-			return err
-		}
+			resp, err := client.Task().GetTask(cmd.Context(), &connect.Request[v1.GetTaskRequest]{
+				Msg: &v1.GetTaskRequest{Id: args[0]},
+			})
 
-		return getFormatter(cmd.Context()).Display([]*DisplayTask{ConvertTaskToDisplay(resp.Msg.Task)}, taskGetOptions.FormatOptions.Output)
-	},
-}
+			if err != nil {
+				return err
+			}
 
-func init() {
-	addFormatOptions(taskGetCmd, &taskGetOptions.FormatOptions)
-	taskCmd.AddCommand(taskGetCmd)
+			displayTask := ConvertTaskToDisplay(resp.Msg.Task)
+			return getFormatter(cmd.Context()).Display(displayTask, options.FormatOptions.Output)
+		},
+	}
+
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

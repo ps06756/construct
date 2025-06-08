@@ -6,30 +6,33 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var modelProviderGetOptions struct {
-	Id            string
+type modelProviderGetOptions struct {
 	FormatOptions FormatOptions
 }
 
-var modelProviderGetCmd = &cobra.Command{
-	Use:   "get",
-	Short: "Get a model provider",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewModelProviderGetCmd() *cobra.Command {
+	var options modelProviderGetOptions
 
-		resp, err := client.ModelProvider().GetModelProvider(cmd.Context(), &connect.Request[v1.GetModelProviderRequest]{
-			Msg: &v1.GetModelProviderRequest{Id: modelProviderGetOptions.Id},
-		})
+	cmd := &cobra.Command{
+		Use:   "get <model-provider-id>",
+		Short: "Get a model provider",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		if err != nil {
-			return err
-		}
+			resp, err := client.ModelProvider().GetModelProvider(cmd.Context(), &connect.Request[v1.GetModelProviderRequest]{
+				Msg: &v1.GetModelProviderRequest{Id: args[0]},
+			})
 
-		return getFormatter(cmd.Context()).Display([]*ModelProviderDisplay{ConvertModelProviderToDisplay(resp.Msg.ModelProvider)}, modelProviderGetOptions.FormatOptions.Output)
-	},
-}
+			if err != nil {
+				return err
+			}
 
-func init() {
-	addFormatOptions(modelProviderGetCmd, &modelProviderGetOptions.FormatOptions)
-	modelProviderGetCmd.Flags().StringVarP(&modelProviderGetOptions.Id, "id", "i", "", "The ID of the model provider to get")
+			displayModelProvider := ConvertModelProviderToDisplay(resp.Msg.ModelProvider)
+			return getFormatter(cmd.Context()).Display(displayModelProvider, options.FormatOptions.Output)
+		},
+	}
+
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

@@ -8,34 +8,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var messageCreateOptions struct {
+type messageCreateOptions struct {
 	FormatOptions FormatOptions
 }
 
-var messageCreateCmd = &cobra.Command{
-	Use:   "create <task-id> <content>",
-	Short: "Create a new message",
-	Args:  cobra.ExactArgs(2),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewMessageCreateCmd() *cobra.Command {
+	var options messageCreateOptions
 
-		resp, err := client.Message().CreateMessage(cmd.Context(), &connect.Request[v1.CreateMessageRequest]{
-			Msg: &v1.CreateMessageRequest{
-				TaskId:  args[0],
-				Content: args[1],
-			},
-		})
+	cmd := &cobra.Command{
+		Use:   "create <task-id> <content>",
+		Short: "Create a new message",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		if err != nil {
-			return err
-		}
+			resp, err := client.Message().CreateMessage(cmd.Context(), &connect.Request[v1.CreateMessageRequest]{
+				Msg: &v1.CreateMessageRequest{
+					TaskId:  args[0],
+					Content: args[1],
+				},
+			})
 
-		fmt.Println(resp.Msg.Message.Id)
-		return nil
-	},
-}
+			if err != nil {
+				return err
+			}
 
-func init() {
-	addFormatOptions(messageCreateCmd, &messageCreateOptions.FormatOptions)
-	messageCmd.AddCommand(messageCreateCmd)
+			fmt.Fprintln(cmd.OutOrStdout(), resp.Msg.Message.Id)
+			return nil
+		},
+	}
+
+	addFormatOptions(cmd, &options.FormatOptions)
+	return cmd
 }

@@ -6,26 +6,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var modelDeleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "Delete a model by ID",
-	Args:  cobra.MinimumNArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		client := getAPIClient(cmd.Context())
+func NewModelDeleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete <model-id>",
+		Short: "Delete a model by ID",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client := getAPIClient(cmd.Context())
 
-		for _, id := range args {
 			_, err := client.Model().DeleteModel(cmd.Context(), &connect.Request[v1.DeleteModelRequest]{
-				Msg: &v1.DeleteModelRequest{Id: id},
+				Msg: &v1.DeleteModelRequest{Id: args[0]},
 			})
-			if err != nil {
-				return err
-			}
-		}
 
-		return nil
-	},
-}
+			return err
+		},
+	}
 
-func init() {
-	modelCmd.AddCommand(modelDeleteCmd)
+	return cmd
 }

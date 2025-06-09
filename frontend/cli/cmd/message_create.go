@@ -18,7 +18,10 @@ func NewMessageCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create <task-id> <content>",
 		Short: "Create a new message",
-		Args:  cobra.ExactArgs(2),
+		Long:  `Create a new message for a task by specifying the task ID and message content.`,
+		Example: `  # Create a message for a task
+  construct message create "123e4567-e89b-12d3-a456-426614174000" "Please implement a hello world function""`,
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -30,7 +33,7 @@ func NewMessageCreateCmd() *cobra.Command {
 			})
 
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to create message: %w", err)
 			}
 
 			fmt.Fprintln(cmd.OutOrStdout(), resp.Msg.Message.Id)

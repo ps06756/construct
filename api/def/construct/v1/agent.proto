@@ -6,8 +6,8 @@ syntax = "proto3";
 package construct.v1;
 
 import "buf/validate/validate.proto";
-import "google/protobuf/timestamp.proto";
 import "construct/v1/common.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/furisto/construct/api/go/v1";
 
@@ -17,20 +17,20 @@ option go_package = "github.com/furisto/construct/api/go/v1";
 service AgentService {
   // CreateAgent creates a new agent with the specified configuration.
   rpc CreateAgent(CreateAgentRequest) returns (CreateAgentResponse) {}
-  
+
   // GetAgent retrieves a specific agent by its unique identifier.
   rpc GetAgent(GetAgentRequest) returns (GetAgentResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
-  
+
   // ListAgents retrieves a list of agents with optional filtering and pagination.
   rpc ListAgents(ListAgentsRequest) returns (ListAgentsResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
-  
+
   // UpdateAgent modifies an existing agent's configuration.
   rpc UpdateAgent(UpdateAgentRequest) returns (UpdateAgentResponse) {}
-  
+
   // DeleteAgent removes an agent from the system.
   rpc DeleteAgent(DeleteAgentRequest) returns (DeleteAgentResponse) {}
 }
@@ -47,10 +47,10 @@ message Agent {
 message AgentMetadata {
   // id is the unique identifier for the agent (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  
+
   // created_at is the timestamp when the agent was created.
   google.protobuf.Timestamp created_at = 2 [(buf.validate.field).required = true];
-  
+
   // updated_at is the timestamp when the agent was last modified.
   google.protobuf.Timestamp updated_at = 3 [(buf.validate.field).required = true];
 }
@@ -58,20 +58,20 @@ message AgentMetadata {
 // AgentSpec defines the user-configurable specification of an agent.
 message AgentSpec {
   // name is the human-readable name of the agent (1-255 characters).
-  string name = 1 [ 
+  string name = 1 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
-  // description provides a brief summary of the agent's purpose (max 1000 characters).
-  string description = 2 [(buf.validate.field).string.max_len = 1000];
-  
+
+  // description provides a brief summary of the agent's purpose (max 2048 characters).
+  string description = 2 [(buf.validate.field).string.max_len = 2048];
+
   // instructions define the agent's behavior and capabilities (1-10000 characters).
-  string instructions = 3 [ 
+  string instructions = 3 [
     (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 10000
+    (buf.validate.field).string.max_len = 65536
   ];
-  
+
   // model_id references the AI model that powers this agent (UUID format).
   string model_id = 4 [(buf.validate.field).string.uuid = true];
 }
@@ -83,16 +83,16 @@ message CreateAgentRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
-  // description provides a brief summary of the agent's purpose (max 1000 characters).
-  string description = 2 [(buf.validate.field).string.max_len = 1000];
-  
-  // instructions define the agent's behavior and capabilities (1-10000 characters).
+
+  // description provides a brief summary of the agent's purpose (max 2048 characters).
+  string description = 2 [(buf.validate.field).string.max_len = 2048];
+
+  // instructions define the agent's behavior and capabilities (1-65536 characters).
   string instructions = 3 [
     (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 10000
+    (buf.validate.field).string.max_len = 65536
   ];
-  
+
   // model_id references the AI model that will power this agent (UUID format).
   string model_id = 4 [(buf.validate.field).string.uuid = true];
 }
@@ -127,22 +127,22 @@ message ListAgentsRequest {
       (buf.validate.field).repeated.unique = true
     ];
   }
-  
+
   // filter specifies criteria for narrowing the results.
   Filter filter = 1;
-  
+
   // page_size limits the number of agents returned per page (1-100).
   optional int32 page_size = 2 [
     (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 100
   ];
-  
+
   // page_token is used for pagination to retrieve subsequent pages.
   string page_token = 3 [(buf.validate.field).string.max_len = 255];
 
   // sort_field specifies which field to sort results by.
   optional SortField sort_field = 4 [(buf.validate.field).enum.defined_only = true];
-  
+
   // sort_order specifies the sorting direction (ascending or descending).
   optional SortOrder sort_order = 5 [(buf.validate.field).enum.defined_only = true];
 }
@@ -151,7 +151,7 @@ message ListAgentsRequest {
 message ListAgentsResponse {
   // agents is the list of agents matching the filter criteria.
   repeated Agent agents = 1;
-  
+
   // next_page_token is used to retrieve the next page of results (empty if no more pages).
   string next_page_token = 2;
 }
@@ -160,22 +160,22 @@ message ListAgentsResponse {
 message UpdateAgentRequest {
   // id is the unique identifier of the agent to update (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  
+
   // name is the new name for the agent (1-255 characters, optional).
   optional string name = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
+
   // description is the new description for the agent (max 1000 characters, optional).
   optional string description = 3 [(buf.validate.field).string.max_len = 1000];
-  
+
   // instructions are the new instructions for the agent (1-10000 characters, optional).
   optional string instructions = 4 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 10000
   ];
-  
+
   // model_id is the new model reference for the agent (UUID format, optional).
   optional string model_id = 5 [(buf.validate.field).string.uuid = true];
 }
@@ -194,4 +194,3 @@ message DeleteAgentRequest {
 
 // DeleteAgentResponse confirms the agent deletion (empty response).
 message DeleteAgentResponse {}
-

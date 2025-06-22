@@ -7,9 +7,9 @@ syntax = "proto3";
 package construct.v1;
 
 import "buf/validate/validate.proto";
+import "construct/v1/common.proto";
 import "google/protobuf/timestamp.proto";
 import "google/type/decimal.proto";
-import "construct/v1/common.proto";
 
 option go_package = "github.com/furisto/construct/api/go/v1";
 
@@ -19,20 +19,20 @@ option go_package = "github.com/furisto/construct/api/go/v1";
 service ModelService {
   // CreateModel creates a new AI model with specified capabilities and pricing.
   rpc CreateModel(CreateModelRequest) returns (CreateModelResponse) {}
-  
+
   // GetModel retrieves a specific model by its unique identifier.
   rpc GetModel(GetModelRequest) returns (GetModelResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
-  
+
   // ListModels retrieves a list of models with optional filtering and pagination.
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
-  
+
   // UpdateModel modifies an existing model's configuration, capabilities, or pricing.
   rpc UpdateModel(UpdateModelRequest) returns (UpdateModelResponse) {}
-  
+
   // DeleteModel removes a model from the system.
   rpc DeleteModel(DeleteModelRequest) returns (DeleteModelResponse) {}
 }
@@ -41,13 +41,13 @@ service ModelService {
 message ModelMetadata {
   // id is the unique identifier for the model (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  
+
   // created_at is the timestamp when the model was created.
   google.protobuf.Timestamp created_at = 2 [(buf.validate.field).required = true];
-  
+
   // updated_at is the timestamp when the model was last modified.
   google.protobuf.Timestamp updated_at = 3 [(buf.validate.field).required = true];
-  
+
   // model_provider_id references the provider that supplies this model (UUID format).
   string model_provider_id = 4 [(buf.validate.field).string.uuid = true];
 }
@@ -59,16 +59,16 @@ message ModelSpec {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
+
   // capabilities lists the special abilities this model supports.
   repeated ModelCapability capabilities = 2;
-  
+
   // pricing defines the cost structure for using this model.
   ModelPricing pricing = 3;
-  
+
   // context_window is the maximum number of tokens the model can process (must be > 0).
   int64 context_window = 4 [(buf.validate.field).int64.gt = 0];
-  
+
   // enabled indicates whether this model is currently available for use.
   bool enabled = 5;
 }
@@ -77,16 +77,16 @@ message ModelSpec {
 enum ModelCapability {
   // MODEL_CAPABILITY_UNSPECIFIED indicates an unknown or unset capability.
   MODEL_CAPABILITY_UNSPECIFIED = 0;
-  
+
   // MODEL_CAPABILITY_IMAGE indicates the model can process and understand images.
   MODEL_CAPABILITY_IMAGE = 1;
-  
+
   // MODEL_CAPABILITY_COMPUTER_USE indicates the model can interact with computer interfaces.
   MODEL_CAPABILITY_COMPUTER_USE = 2;
-  
+
   // MODEL_CAPABILITY_PROMPT_CACHE indicates the model supports prompt caching for efficiency.
   MODEL_CAPABILITY_PROMPT_CACHE = 3;
-  
+
   // MODEL_CAPABILITY_THINKING indicates the model supports visible reasoning/thinking processes.
   MODEL_CAPABILITY_THINKING = 4;
 }
@@ -95,13 +95,13 @@ enum ModelCapability {
 message ModelPricing {
   // input_cost is the cost per input token (typically per 1000 tokens).
   google.type.Decimal input_cost = 1;
-  
+
   // output_cost is the cost per output token (typically per 1000 tokens).
   google.type.Decimal output_cost = 2;
-  
+
   // cache_write_cost is the cost per token when writing to cache (typically per 1000 tokens).
   google.type.Decimal cache_write_cost = 3;
-  
+
   // cache_read_cost is the cost per token when reading from cache (typically per 1000 tokens).
   google.type.Decimal cache_read_cost = 4;
 }
@@ -110,7 +110,7 @@ message ModelPricing {
 message Model {
   // metadata contains system-managed, immutable information about the model.
   ModelMetadata metadata = 1;
-  
+
   // spec contains the user-configurable specification of the model.
   ModelSpec spec = 2;
 }
@@ -122,16 +122,16 @@ message CreateModelRequest {
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
+
   // model_provider_id references the provider that supplies this model (UUID format).
   string model_provider_id = 2 [(buf.validate.field).string.uuid = true];
-  
+
   // capabilities lists the special abilities this model supports.
   repeated ModelCapability capabilities = 3;
-  
+
   // pricing defines the cost structure for using this model.
   ModelPricing pricing = 4;
-  
+
   // context_window is the maximum number of tokens the model can process (must be > 0).
   int64 context_window = 5 [(buf.validate.field).int64.gt = 0];
 }
@@ -165,29 +165,29 @@ message ListModelsRequest {
       (buf.validate.field).repeated.max_items = 64,
       (buf.validate.field).repeated.unique = true
     ];
-    
+
     // model_provider_id filters models by their provider (UUID format, optional).
     optional string model_provider_id = 2 [(buf.validate.field).string.uuid = true];
-    
+
     // enabled filters models by their enabled status.
     optional bool enabled = 3;
   }
-  
+
   // filter specifies criteria for narrowing the results.
   Filter filter = 1;
-  
-   // page_size limits the number of model providers returned per page (1-100).
-   optional int32 page_size = 2 [
+
+  // page_size limits the number of model providers returned per page (1-100).
+  optional int32 page_size = 2 [
     (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 100
   ];
-  
+
   // page_token is used for pagination to retrieve subsequent pages.
   string page_token = 3 [(buf.validate.field).string.max_len = 255];
 
   // sort_field specifies which field to sort results by.
   optional SortField sort_field = 4 [(buf.validate.field).enum.defined_only = true];
-  
+
   // sort_order specifies the sorting direction (ascending or descending).
   optional SortOrder sort_order = 5 [(buf.validate.field).enum.defined_only = true];
 }
@@ -196,7 +196,7 @@ message ListModelsRequest {
 message ListModelsResponse {
   // models is the list of models matching the filter criteria.
   repeated Model models = 1;
-  
+
   // next_page_token is used to retrieve the next page of results (empty if no more pages).
   string next_page_token = 2;
 }
@@ -205,25 +205,25 @@ message ListModelsResponse {
 message UpdateModelRequest {
   // id is the unique identifier of the model to update (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  
+
   // name is the new name for the model (1-255 characters, optional).
   optional string name = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
+
   // model_provider_id is the new provider reference for the model (UUID format, optional).
   optional string model_provider_id = 3 [(buf.validate.field).string.uuid = true];
-  
+
   // capabilities are the new capabilities for the model (optional).
   repeated ModelCapability capabilities = 4;
-  
+
   // pricing is the new pricing structure for the model (optional).
   optional ModelPricing pricing = 5;
-  
+
   // context_window is the new maximum token limit for the model (must be > 0, optional).
   optional int64 context_window = 6 [(buf.validate.field).int64.gt = 0];
-  
+
   // enabled is the new availability status for the model (optional).
   optional bool enabled = 7;
 }

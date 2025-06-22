@@ -151,7 +151,7 @@ type AgentSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// name is the human-readable name of the agent (1-255 characters).
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// description provides a brief summary of the agent's purpose (max 1000 characters).
+	// description provides a brief summary of the agent's purpose (max 2048 characters).
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
 	// instructions define the agent's behavior and capabilities (1-10000 characters).
 	Instructions string `protobuf:"bytes,3,opt,name=instructions,proto3" json:"instructions,omitempty"`
@@ -224,9 +224,9 @@ type CreateAgentRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// name is the human-readable name for the new agent (1-255 characters).
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// description provides a brief summary of the agent's purpose (max 1000 characters).
+	// description provides a brief summary of the agent's purpose (max 2048 characters).
 	Description string `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	// instructions define the agent's behavior and capabilities (1-10000 characters).
+	// instructions define the agent's behavior and capabilities (1-65536 characters).
 	Instructions string `protobuf:"bytes,3,opt,name=instructions,proto3" json:"instructions,omitempty"`
 	// model_id references the AI model that will power this agent (UUID format).
 	ModelId       string `protobuf:"bytes,4,opt,name=model_id,json=modelId,proto3" json:"model_id,omitempty"`
@@ -837,20 +837,18 @@ const file_construct_v1_agent_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt\x12A\n" +
 	"\n" +
-	"updated_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedAt\"\xac\x01\n" +
+	"updated_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedAt\"\xad\x01\n" +
 	"\tAgentSpec\x12\x1e\n" +
 	"\x04name\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\xff\x01R\x04name\x12*\n" +
-	"\vdescription\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aR\vdescription\x12.\n" +
-	"\finstructions\x18\x03 \x01(\tB\n" +
-	"\xbaH\ar\x05\x10\x01\x18\x90NR\finstructions\x12#\n" +
-	"\bmodel_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amodelId\"\xb5\x01\n" +
+	"\vdescription\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\vdescription\x12/\n" +
+	"\finstructions\x18\x03 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\finstructions\x12#\n" +
+	"\bmodel_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amodelId\"\xb6\x01\n" +
 	"\x12CreateAgentRequest\x12\x1e\n" +
 	"\x04name\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\xff\x01R\x04name\x12*\n" +
-	"\vdescription\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aR\vdescription\x12.\n" +
-	"\finstructions\x18\x03 \x01(\tB\n" +
-	"\xbaH\ar\x05\x10\x01\x18\x90NR\finstructions\x12#\n" +
+	"\vdescription\x18\x02 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\vdescription\x12/\n" +
+	"\finstructions\x18\x03 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\finstructions\x12#\n" +
 	"\bmodel_id\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\amodelId\"H\n" +
 	"\x13CreateAgentResponse\x121\n" +
 	"\x05agent\x18\x01 \x01(\v2\x13.construct.v1.AgentB\x06\xbaH\x03\xc8\x01\x01R\x05agent\"+\n" +

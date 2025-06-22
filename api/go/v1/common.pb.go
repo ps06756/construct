@@ -26,27 +26,23 @@ type SortField int32
 const (
 	// SORT_FIELD_UNSPECIFIED indicates no specific sort field is selected.
 	SortField_SORT_FIELD_UNSPECIFIED SortField = 0
-	// SORT_FIELD_NAME sorts results by the name field alphabetically.
-	SortField_SORT_FIELD_NAME SortField = 1
 	// SORT_FIELD_CREATED_AT sorts results by creation timestamp.
-	SortField_SORT_FIELD_CREATED_AT SortField = 2
+	SortField_SORT_FIELD_CREATED_AT SortField = 1
 	// SORT_FIELD_UPDATED_AT sorts results by last modification timestamp.
-	SortField_SORT_FIELD_UPDATED_AT SortField = 3
+	SortField_SORT_FIELD_UPDATED_AT SortField = 2
 )
 
 // Enum value maps for SortField.
 var (
 	SortField_name = map[int32]string{
 		0: "SORT_FIELD_UNSPECIFIED",
-		1: "SORT_FIELD_NAME",
-		2: "SORT_FIELD_CREATED_AT",
-		3: "SORT_FIELD_UPDATED_AT",
+		1: "SORT_FIELD_CREATED_AT",
+		2: "SORT_FIELD_UPDATED_AT",
 	}
 	SortField_value = map[string]int32{
 		"SORT_FIELD_UNSPECIFIED": 0,
-		"SORT_FIELD_NAME":        1,
-		"SORT_FIELD_CREATED_AT":  2,
-		"SORT_FIELD_UPDATED_AT":  3,
+		"SORT_FIELD_CREATED_AT":  1,
+		"SORT_FIELD_UPDATED_AT":  2,
 	}
 )
 
@@ -134,12 +130,11 @@ var File_construct_v1_common_proto protoreflect.FileDescriptor
 
 const file_construct_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x19construct/v1/common.proto\x12\fconstruct.v1*r\n" +
+	"\x19construct/v1/common.proto\x12\fconstruct.v1*]\n" +
 	"\tSortField\x12\x1a\n" +
-	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fSORT_FIELD_NAME\x10\x01\x12\x19\n" +
-	"\x15SORT_FIELD_CREATED_AT\x10\x02\x12\x19\n" +
-	"\x15SORT_FIELD_UPDATED_AT\x10\x03*P\n" +
+	"\x16SORT_FIELD_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SORT_FIELD_CREATED_AT\x10\x01\x12\x19\n" +
+	"\x15SORT_FIELD_UPDATED_AT\x10\x02*P\n" +
 	"\tSortOrder\x12\x1a\n" +
 	"\x16SORT_ORDER_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eSORT_ORDER_ASC\x10\x01\x12\x13\n" +

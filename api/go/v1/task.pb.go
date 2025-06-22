@@ -220,7 +220,9 @@ type TaskSpec struct {
 	// project_directory is the file system path where the task will be executed.
 	ProjectDirectory string `protobuf:"bytes,2,opt,name=project_directory,json=projectDirectory,proto3" json:"project_directory,omitempty"`
 	// phase is the desired operational state of the task.
-	DesiredPhase  TaskPhase `protobuf:"varint,3,opt,name=desired_phase,json=desiredPhase,proto3,enum=construct.v1.TaskPhase" json:"desired_phase,omitempty"`
+	DesiredPhase TaskPhase `protobuf:"varint,3,opt,name=desired_phase,json=desiredPhase,proto3,enum=construct.v1.TaskPhase" json:"desired_phase,omitempty"`
+	// description is a brief description of the task.
+	Description   string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -274,6 +276,13 @@ func (x *TaskSpec) GetDesiredPhase() TaskPhase {
 		return x.DesiredPhase
 	}
 	return TaskPhase_TASK_PHASE_UNSPECIFIED
+}
+
+func (x *TaskSpec) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
 }
 
 // TaskStatus contains the observed state and usage information of the task.
@@ -420,8 +429,10 @@ type CreateTaskRequest struct {
 	AgentId string `protobuf:"bytes,1,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
 	// project_directory is the file system path where the task will be executed.
 	ProjectDirectory string `protobuf:"bytes,2,opt,name=project_directory,json=projectDirectory,proto3" json:"project_directory,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// description is a brief description of the task.
+	Description   string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateTaskRequest) Reset() {
@@ -464,6 +475,13 @@ func (x *CreateTaskRequest) GetAgentId() string {
 func (x *CreateTaskRequest) GetProjectDirectory() string {
 	if x != nil {
 		return x.ProjectDirectory
+	}
+	return ""
+}
+
+func (x *CreateTaskRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
 	}
 	return ""
 }
@@ -1181,11 +1199,12 @@ const file_construct_v1_task_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tcreatedAt\x12A\n" +
 	"\n" +
-	"updated_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedAt\"\xbe\x01\n" +
+	"updated_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\tupdatedAt\"\xea\x01\n" +
 	"\bTaskSpec\x12(\n" +
 	"\bagent_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\aagentId\x88\x01\x01\x123\n" +
 	"\x11project_directory\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10projectDirectory\x12F\n" +
-	"\rdesired_phase\x18\x03 \x01(\x0e2\x17.construct.v1.TaskPhaseB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdesiredPhaseB\v\n" +
+	"\rdesired_phase\x18\x03 \x01(\x0e2\x17.construct.v1.TaskPhaseB\b\xbaH\x05\x82\x01\x02\x10\x01R\fdesiredPhase\x12*\n" +
+	"\vdescription\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\vdescriptionB\v\n" +
 	"\t_agent_id\"t\n" +
 	"\n" +
 	"TaskStatus\x12-\n" +
@@ -1196,10 +1215,11 @@ const file_construct_v1_task_proto_rawDesc = "" +
 	"\routput_tokens\x18\x02 \x01(\x03R\foutputTokens\x12,\n" +
 	"\x12cache_write_tokens\x18\x03 \x01(\x03R\x10cacheWriteTokens\x12*\n" +
 	"\x11cache_read_tokens\x18\x04 \x01(\x03R\x0fcacheReadTokens\x12\x12\n" +
-	"\x04cost\x18\x05 \x01(\x01R\x04cost\"m\n" +
+	"\x04cost\x18\x05 \x01(\x01R\x04cost\"\x99\x01\n" +
 	"\x11CreateTaskRequest\x12#\n" +
 	"\bagent_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\aagentId\x123\n" +
-	"\x11project_directory\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10projectDirectory\"D\n" +
+	"\x11project_directory\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x10projectDirectory\x12*\n" +
+	"\vdescription\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x10R\vdescription\"D\n" +
 	"\x12CreateTaskResponse\x12.\n" +
 	"\x04task\x18\x01 \x01(\v2\x12.construct.v1.TaskB\x06\xbaH\x03\xc8\x01\x01R\x04task\"*\n" +
 	"\x0eGetTaskRequest\x12\x18\n" +

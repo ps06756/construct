@@ -6,8 +6,8 @@ syntax = "proto3";
 package construct.v1;
 
 import "buf/validate/validate.proto";
-import "google/protobuf/timestamp.proto";
 import "construct/v1/common.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/furisto/construct/api/go/v1";
 
@@ -17,20 +17,20 @@ option go_package = "github.com/furisto/construct/api/go/v1";
 service ModelProviderService {
   // CreateModelProvider creates a new model provider with authentication credentials.
   rpc CreateModelProvider(CreateModelProviderRequest) returns (CreateModelProviderResponse) {}
-  
+
   // GetModelProvider retrieves a specific model provider by its unique identifier.
   rpc GetModelProvider(GetModelProviderRequest) returns (GetModelProviderResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
-  
+
   // ListModelProviders retrieves a list of model providers with optional filtering and pagination.
   rpc ListModelProviders(ListModelProvidersRequest) returns (ListModelProvidersResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
-  
+
   // UpdateModelProvider modifies an existing model provider's configuration or credentials.
   rpc UpdateModelProvider(UpdateModelProviderRequest) returns (UpdateModelProviderResponse) {}
-  
+
   // DeleteModelProvider removes a model provider from the system.
   rpc DeleteModelProvider(DeleteModelProviderRequest) returns (DeleteModelProviderResponse) {}
 }
@@ -66,13 +66,13 @@ message CreateModelProviderResponse {
 message ModelProviderMetadata {
   // id is the unique identifier for the model provider (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  
+
   // created_at is the timestamp when the model provider was created.
   google.protobuf.Timestamp created_at = 2 [(buf.validate.field).required = true];
-  
+
   // updated_at is the timestamp when the model provider was last modified.
   google.protobuf.Timestamp updated_at = 3 [(buf.validate.field).required = true];
-  
+
   // provider_type specifies which AI service this provider represents.
   ModelProviderType provider_type = 4 [(buf.validate.field).enum.defined_only = true];
 }
@@ -93,7 +93,7 @@ message ModelProviderSpec {
 message ModelProvider {
   // metadata contains system-managed, immutable information about the model provider.
   ModelProviderMetadata metadata = 1;
-  
+
   // spec contains the user-configurable specification of the model provider.
   ModelProviderSpec spec = 2;
 }
@@ -116,29 +116,29 @@ message ListModelProvidersRequest {
   message Filter {
     // enabled filters model providers by their enabled status.
     optional bool enabled = 1;
-    
+
     // provider_types filters model providers by their types (max 10 unique types).
     repeated ModelProviderType provider_types = 2 [
       (buf.validate.field).repeated.max_items = 10,
       (buf.validate.field).repeated.unique = true
     ];
   }
-  
+
   // filter specifies criteria for narrowing the results.
   Filter filter = 1;
-  
+
   // page_size limits the number of model providers returned per page (1-100).
   optional int32 page_size = 2 [
     (buf.validate.field).int32.gte = 1,
     (buf.validate.field).int32.lte = 100
   ];
-  
+
   // page_token is used for pagination to retrieve subsequent pages.
   string page_token = 3 [(buf.validate.field).string.max_len = 255];
 
   // sort_field specifies which field to sort results by.
   optional SortField sort_field = 4 [(buf.validate.field).enum.defined_only = true];
-  
+
   // sort_order specifies the sorting direction (ascending or descending).
   optional SortOrder sort_order = 5 [(buf.validate.field).enum.defined_only = true];
 }
@@ -147,7 +147,7 @@ message ListModelProvidersRequest {
 message ListModelProvidersResponse {
   // model_providers is the list of model providers matching the filter criteria.
   repeated ModelProvider model_providers = 1;
-  
+
   // next_page_token is used to retrieve the next page of results (empty if no more pages).
   string next_page_token = 2;
 }
@@ -156,13 +156,13 @@ message ListModelProvidersResponse {
 message UpdateModelProviderRequest {
   // id is the unique identifier of the model provider to update (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  
+
   // name is the new name for the model provider (1-255 characters, optional).
   optional string name = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  
+
   // authentication contains updated credentials for the provider.
   oneof authentication {
     // api_key is the updated API key for authenticating with the model provider (1-255 characters).
@@ -171,7 +171,7 @@ message UpdateModelProviderRequest {
       (buf.validate.field).string.max_len = 255
     ];
   }
-  
+
   // enabled is the new enabled status for the model provider (optional).
   optional bool enabled = 30;
 }
@@ -195,10 +195,10 @@ message DeleteModelProviderResponse {}
 enum ModelProviderType {
   // MODEL_PROVIDER_TYPE_UNSPECIFIED indicates an unknown or unset provider type.
   MODEL_PROVIDER_TYPE_UNSPECIFIED = 0;
-  
+
   // MODEL_PROVIDER_TYPE_ANTHROPIC represents Anthropic's AI models (Claude, etc.).
   MODEL_PROVIDER_TYPE_ANTHROPIC = 1;
-  
+
   // MODEL_PROVIDER_TYPE_OPENAI represents OpenAI's AI models (GPT, etc.).
   MODEL_PROVIDER_TYPE_OPENAI = 2;
 }

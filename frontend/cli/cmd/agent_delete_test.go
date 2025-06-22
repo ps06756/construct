@@ -113,7 +113,7 @@ func TestAgentDelete(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"nonexistent"},
+								Names: []string{"nonexistent"},
 							},
 						},
 					},
@@ -138,7 +138,7 @@ func TestAgentDelete(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"nonexistent"},
+								Names: []string{"nonexistent"},
 							},
 						},
 					},
@@ -161,7 +161,7 @@ func setupAgentListMock(mockClient *api_client.MockClient, agentName, agentID st
 		&connect.Request[v1.ListAgentsRequest]{
 			Msg: &v1.ListAgentsRequest{
 				Filter: &v1.ListAgentsRequest_Filter{
-					Name: []string{agentName},
+					Names: []string{agentName},
 				},
 			},
 		},
@@ -169,8 +169,10 @@ func setupAgentListMock(mockClient *api_client.MockClient, agentName, agentID st
 		Msg: &v1.ListAgentsResponse{
 			Agents: []*v1.Agent{
 				{
-					Id: agentID,
 					Metadata: &v1.AgentMetadata{
+						Id: agentID,
+					},
+					Spec: &v1.AgentSpec{
 						Name: agentName,
 					},
 				},

@@ -104,7 +104,7 @@ func TestAgentGet(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"nonexistent"},
+								Names: []string{"nonexistent"},
 							},
 						},
 					},
@@ -127,7 +127,7 @@ func TestAgentGet(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"duplicate"},
+								Names: []string{"duplicate"},
 							},
 						},
 					},
@@ -135,14 +135,18 @@ func TestAgentGet(t *testing.T) {
 					Msg: &v1.ListAgentsResponse{
 						Agents: []*v1.Agent{
 							{
-								Id: agentID1,
 								Metadata: &v1.AgentMetadata{
+									Id: agentID1,
+								},
+								Spec: &v1.AgentSpec{
 									Name: "duplicate",
 								},
 							},
 							{
-								Id: agentID2,
 								Metadata: &v1.AgentMetadata{
+									Id: agentID2,
+								},
+								Spec: &v1.AgentSpec{
 									Name: "duplicate",
 								},
 							},
@@ -178,7 +182,7 @@ func TestAgentGet(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"coder"},
+								Names: []string{"coder"},
 							},
 						},
 					},
@@ -197,7 +201,7 @@ func setupAgentLookupForGetMock(mockClient *api_client.MockClient, agentName, ag
 		&connect.Request[v1.ListAgentsRequest]{
 			Msg: &v1.ListAgentsRequest{
 				Filter: &v1.ListAgentsRequest_Filter{
-					Name: []string{agentName},
+					Names: []string{agentName},
 				},
 			},
 		},
@@ -205,8 +209,10 @@ func setupAgentLookupForGetMock(mockClient *api_client.MockClient, agentName, ag
 		Msg: &v1.ListAgentsResponse{
 			Agents: []*v1.Agent{
 				{
-					Id: agentID,
 					Metadata: &v1.AgentMetadata{
+						Id: agentID,
+					},
+					Spec: &v1.AgentSpec{
 						Name: agentName,
 					},
 				},
@@ -217,19 +223,18 @@ func setupAgentLookupForGetMock(mockClient *api_client.MockClient, agentName, ag
 
 func setupAgentGetMock(mockClient *api_client.MockClient, agentID, name, instructions, description, modelID string, delegateIDs []string) {
 	agent := &v1.Agent{
-		Id: agentID,
 		Metadata: &v1.AgentMetadata{
-			Name: name,
+			Id: agentID,
 		},
 		Spec: &v1.AgentSpec{
+			Name:         name,
 			Instructions: instructions,
 			ModelId:      modelID,
-			DelegateIds:  delegateIDs,
 		},
 	}
 
 	if description != "" {
-		agent.Metadata.Description = description
+		agent.Spec.Description = description
 	}
 
 	mockClient.Agent.EXPECT().GetAgent(

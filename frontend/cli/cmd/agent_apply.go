@@ -128,7 +128,7 @@ func createAgentFromSpec(ctx context.Context, client *api.Client, spec *AgentSpe
 	}
 
 	fmt.Fprintf(cmd.OutOrStdout(), "agent.construct.ai/%s created\n", spec.Name)
-	fmt.Fprintf(cmd.OutOrStdout(), "ID: %s\n", agentResp.Msg.Agent.Id)
+	fmt.Fprintf(cmd.OutOrStdout(), "ID: %s\n", agentResp.Msg.Agent.Metadata.Id)
 	return nil
 }
 
@@ -166,10 +166,10 @@ func updateAgentFromSpec(ctx context.Context, client *api.Client, spec *AgentSpe
 	}
 
 	// Check what fields have changed and set them in the update request
-	if spec.Name != currentAgent.Metadata.Name {
+	if spec.Name != currentAgent.Spec.Name {
 		updateReq.Name = &spec.Name
 	}
-	if spec.Description != currentAgent.Metadata.Description {
+	if spec.Description != currentAgent.Spec.Description {
 		updateReq.Description = &spec.Description
 	}
 	if spec.Instructions != currentAgent.Spec.Instructions {

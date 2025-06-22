@@ -102,7 +102,7 @@ func TestModelDelete(t *testing.T) {
 					&connect.Request[v1.ListModelsRequest]{
 						Msg: &v1.ListModelsRequest{
 							Filter: &v1.ListModelsRequest_Filter{
-								Name: api_client.Ptr("nonexistent"),
+								Names: []string{"nonexistent"},
 							},
 						},
 					},
@@ -158,7 +158,7 @@ func TestModelDelete(t *testing.T) {
 					&connect.Request[v1.ListModelsRequest]{
 						Msg: &v1.ListModelsRequest{
 							Filter: &v1.ListModelsRequest_Filter{
-								Name: api_client.Ptr("gpt-4"),
+								Names: []string{"gpt-4"},
 							},
 						},
 					},
@@ -177,7 +177,7 @@ func setupModelLookupForDeleteMock(mockClient *api_client.MockClient, modelName,
 		&connect.Request[v1.ListModelsRequest]{
 			Msg: &v1.ListModelsRequest{
 				Filter: &v1.ListModelsRequest_Filter{
-					Name: api_client.Ptr(modelName),
+					Names: []string{modelName},
 				},
 			},
 		},
@@ -185,12 +185,16 @@ func setupModelLookupForDeleteMock(mockClient *api_client.MockClient, modelName,
 		Msg: &v1.ListModelsResponse{
 			Models: []*v1.Model{
 				{
-					Id:              modelID,
-					Name:            modelName,
-					ModelProviderId: uuid.New().String(),
-					ContextWindow:   8192,
-					Enabled:         true,
-					Capabilities:    []v1.ModelCapability{v1.ModelCapability_MODEL_CAPABILITY_IMAGE},
+					Metadata: &v1.ModelMetadata{
+						Id:              modelID,
+						ModelProviderId: uuid.New().String(),
+					},
+					Spec: &v1.ModelSpec{
+						Name:          modelName,
+						ContextWindow: 8192,
+						Enabled:       true,
+						Capabilities:  []v1.ModelCapability{v1.ModelCapability_MODEL_CAPABILITY_IMAGE},
+					},
 				},
 			},
 		},

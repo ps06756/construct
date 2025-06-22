@@ -103,10 +103,14 @@ func setupModelProviderCreationMock(mockClient *api_client.MockClient, name stri
 	).Return(&connect.Response[v1.CreateModelProviderResponse]{
 		Msg: &v1.CreateModelProviderResponse{
 			ModelProvider: &v1.ModelProvider{
-				Id:           providerID,
-				Name:         name,
-				ProviderType: providerType,
-				Enabled:      true,
+				Metadata: &v1.ModelProviderMetadata{
+					Id:           providerID,
+					ProviderType: providerType,
+				},
+				Spec: &v1.ModelProviderSpec{
+					Name:    name,
+					Enabled: true,
+				},
 			},
 		},
 	}, nil)

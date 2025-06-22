@@ -24,22 +24,34 @@ func TestModelProviderList(t *testing.T) {
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderListMock(mockClient, nil, []*v1.ModelProvider{
 					{
-						Id:           modelProviderID1,
-						Name:         "anthropic-dev",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID1,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-dev",
+							Enabled: true,
+						},
 					},
 					{
-						Id:           modelProviderID2,
-						Name:         "openai-prod",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID2,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "openai-prod",
+							Enabled: true,
+						},
 					},
 					{
-						Id:           modelProviderID3,
-						Name:         "anthropic-disabled",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      false,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID3,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-disabled",
+							Enabled: false,
+						},
 					},
 				})
 			},
@@ -74,16 +86,24 @@ func TestModelProviderList(t *testing.T) {
 					v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
 				}, []*v1.ModelProvider{
 					{
-						Id:           modelProviderID1,
-						Name:         "anthropic-dev",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      true,
+							Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID1,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-dev",
+							Enabled: true,
+						},
 					},
 					{
-						Id:           modelProviderID3,
-						Name:         "anthropic-disabled",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      false,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID3,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-disabled",
+							Enabled: false,
+						},
 					},
 				})
 			},
@@ -113,16 +133,24 @@ func TestModelProviderList(t *testing.T) {
 					v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
 				}, []*v1.ModelProvider{
 					{
-						Id:           modelProviderID1,
-						Name:         "anthropic-dev",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID1,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-dev",
+							Enabled: true,
+						},
 					},
 					{
-						Id:           modelProviderID2,
-						Name:         "openai-prod",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID2,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "openai-prod",
+							Enabled: true,
+						},
 					},
 				})
 			},
@@ -152,16 +180,24 @@ func TestModelProviderList(t *testing.T) {
 					v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
 				}, []*v1.ModelProvider{
 					{
-						Id:           modelProviderID1,
-						Name:         "anthropic-dev",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID1,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-dev",
+							Enabled: true,
+						},
 					},
 					{
-						Id:           modelProviderID2,
-						Name:         "openai-prod",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID2,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "openai-prod",
+							Enabled: true,
+						},
 					},
 				})
 			},
@@ -190,10 +226,14 @@ func TestModelProviderList(t *testing.T) {
 					v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
 				}, []*v1.ModelProvider{
 					{
-						Id:           modelProviderID2,
-						Name:         "openai-prod",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID2,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "openai-prod",
+							Enabled: true,
+						},
 					},
 				})
 			},
@@ -214,10 +254,14 @@ func TestModelProviderList(t *testing.T) {
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderListMock(mockClient, nil, []*v1.ModelProvider{
 					{
-						Id:           modelProviderID1,
-						Name:         "anthropic-dev",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           modelProviderID1,
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "anthropic-dev",
+							Enabled: true,
+						},
 					},
 				})
 			},

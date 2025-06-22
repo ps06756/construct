@@ -31,16 +31,16 @@ type ModelDisplay struct {
 }
 
 func ConvertModelToDisplay(model *v1.Model) *ModelDisplay {
-	capabilities := make([]string, len(model.Capabilities))
-	for i, cap := range model.Capabilities {
+	capabilities := make([]string, len(model.Spec.Capabilities))
+	for i, cap := range model.Spec.Capabilities {
 		capabilities[i] = cap.String()
 	}
 	return &ModelDisplay{
-		Id:            model.Id,
-		Name:          model.Name,
-		ModelProvider: model.ModelProviderId,
-		ContextWindow: model.ContextWindow,
-		Enabled:       model.Enabled,
+		Id:            model.Metadata.Id,
+		Name:          model.Spec.Name,
+		ModelProvider: model.Metadata.ModelProviderId,
+		ContextWindow: model.Spec.ContextWindow,
+		Enabled:       model.Spec.Enabled,
 		Capabilities:  capabilities,
 	}
 }

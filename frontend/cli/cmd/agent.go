@@ -48,11 +48,12 @@ func ConvertAgentToDisplay(agent *v1.Agent, modelName string) *AgentDisplay {
 	}
 
 	return &AgentDisplay{
-		ID:           agent.Id,
-		Name:         agent.Metadata.Name,
-		Description:  agent.Metadata.Description,
+		ID:           agent.Metadata.Id,
+		Name:         agent.Spec.Name,
+		Description:  agent.Spec.Description,
 		Instructions: agent.Spec.Instructions,
 		Model:        modelName,
+		CreatedAt:    agent.Metadata.CreatedAt.AsTime().Format("2006-01-02 15:04:05"),
 	}
 }
 
@@ -65,7 +66,7 @@ func getAgentID(ctx context.Context, client *api.Client, idOrName string) (strin
 	agentResp, err := client.Agent().ListAgents(ctx, &connect.Request[v1.ListAgentsRequest]{
 		Msg: &v1.ListAgentsRequest{
 			Filter: &v1.ListAgentsRequest_Filter{
-				Name: []string{idOrName},
+				Names: []string{idOrName},
 			},
 		},
 	})
@@ -82,7 +83,7 @@ func getAgentID(ctx context.Context, client *api.Client, idOrName string) (strin
 		return "", fmt.Errorf("multiple agents found for %s", idOrName)
 	}
 
-	return agentResp.Msg.Agents[0].Id, nil
+	return agentResp.Msg.Agents[0].Metadata.Id, nil
 }
 
 func getModelID(ctx context.Context, client *api.Client, idOrName string) (string, error) {
@@ -95,7 +96,7 @@ func getModelID(ctx context.Context, client *api.Client, idOrName string) (strin
 	modelResp, err := client.Model().ListModels(ctx, &connect.Request[v1.ListModelsRequest]{
 		Msg: &v1.ListModelsRequest{
 			Filter: &v1.ListModelsRequest_Filter{
-				Name: api.Ptr(idOrName),
+				Names: []string{idOrName},
 			},
 		},
 	})
@@ -112,5 +113,5 @@ func getModelID(ctx context.Context, client *api.Client, idOrName string) (strin
 		return "", fmt.Errorf("multiple models found for %s", idOrName)
 	}
 
-	return modelResp.Msg.Models[0].Id, nil
+	return modelResp.Msg.Models[0].Metadata.Id, nil
 }

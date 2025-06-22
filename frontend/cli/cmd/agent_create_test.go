@@ -126,20 +126,28 @@ func TestAgentCreate(t *testing.T) {
 					&connect.Request[v1.ListModelsRequest]{
 						Msg: &v1.ListModelsRequest{
 							Filter: &v1.ListModelsRequest_Filter{
-								Name: api_client.Ptr("gpt"),
+								Names: []string{"gpt"},
 							},
 						},
 					},
 				).Return(&connect.Response[v1.ListModelsResponse]{
-					Msg: &v1.ListModelsResponse{
+					Msg: &v1.ListModelsResponse{	
 						Models: []*v1.Model{
 							{
-								Id:   uuid.New().String(),
-								Name: "gpt-3.5-turbo",
+								Metadata: &v1.ModelMetadata{
+									Id: uuid.New().String(),
+								},
+								Spec: &v1.ModelSpec{
+									Name: "gpt-3.5-turbo",
+								},
 							},
 							{
-								Id:   uuid.New().String(),
-								Name: "gpt-4",
+								Metadata: &v1.ModelMetadata{
+									Id: uuid.New().String(),
+								},
+								Spec: &v1.ModelSpec{
+									Name: "gpt-4",
+								},
 							},
 						},
 					},
@@ -175,7 +183,7 @@ func setupModelLookupMock(mockClient *api_client.MockClient, modelName, modelID 
 		&connect.Request[v1.ListModelsRequest]{
 			Msg: &v1.ListModelsRequest{
 				Filter: &v1.ListModelsRequest_Filter{
-					Name: api_client.Ptr(modelName),
+					Names: []string{modelName},
 				},
 			},
 		},
@@ -183,8 +191,12 @@ func setupModelLookupMock(mockClient *api_client.MockClient, modelName, modelID 
 		Msg: &v1.ListModelsResponse{
 			Models: []*v1.Model{
 				{
-					Id:   modelID,
-					Name: modelName,
+					Metadata: &v1.ModelMetadata{
+						Id: modelID,
+					},
+					Spec: &v1.ModelSpec{
+						Name: modelName,
+					},
 				},
 			},
 		},

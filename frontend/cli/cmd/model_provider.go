@@ -139,10 +139,10 @@ type ModelProviderDisplay struct {
 
 func ConvertModelProviderToDisplay(modelProvider *v1.ModelProvider) *ModelProviderDisplay {
 	return &ModelProviderDisplay{
-		Id:           modelProvider.Id,
-		Name:         modelProvider.Name,
-		ProviderType: ConvertModelProviderTypeToDisplay(modelProvider.ProviderType),
-		Enabled:      modelProvider.Enabled,
+		Id:           modelProvider.Metadata.Id,
+		Name:         modelProvider.Spec.Name,
+		ProviderType: ConvertModelProviderTypeToDisplay(modelProvider.Metadata.ProviderType),
+		Enabled:      modelProvider.Spec.Enabled,
 	}
 }
 
@@ -162,7 +162,7 @@ func getModelProviderID(ctx context.Context, client *api.Client, idOrName string
 
 	var matches []*v1.ModelProvider
 	for _, mp := range resp.Msg.ModelProviders {
-		if mp.Name == idOrName {
+		if mp.Spec.Name == idOrName {
 			matches = append(matches, mp)
 		}
 	}
@@ -175,5 +175,5 @@ func getModelProviderID(ctx context.Context, client *api.Client, idOrName string
 		return "", fmt.Errorf("multiple model providers found for %s", idOrName)
 	}
 
-	return matches[0].Id, nil
+	return matches[0].Metadata.Id, nil
 }

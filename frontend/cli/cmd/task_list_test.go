@@ -162,7 +162,7 @@ func TestTaskList(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"nonexistent"},
+								Names: []string{"nonexistent"},
 							},
 						},
 					},
@@ -222,7 +222,7 @@ func setupAgentLookupForTaskListMock(mockClient *api_client.MockClient, agentNam
 		&connect.Request[v1.ListAgentsRequest]{
 			Msg: &v1.ListAgentsRequest{
 				Filter: &v1.ListAgentsRequest_Filter{
-					Name: []string{agentName},
+					Names: []string{agentName},
 				},
 			},
 		},
@@ -230,8 +230,10 @@ func setupAgentLookupForTaskListMock(mockClient *api_client.MockClient, agentNam
 		Msg: &v1.ListAgentsResponse{
 			Agents: []*v1.Agent{
 				{
-					Id: agentID,
 					Metadata: &v1.AgentMetadata{
+						Id: agentID,
+					},
+					Spec: &v1.AgentSpec{
 						Name: agentName,
 					},
 				},
@@ -242,8 +244,8 @@ func setupAgentLookupForTaskListMock(mockClient *api_client.MockClient, agentNam
 
 func createTestTask(taskID, agentID string, createdAt, updatedAt time.Time) *v1.Task {
 	return &v1.Task{
-		Id: taskID,
 		Metadata: &v1.TaskMetadata{
+			Id:        taskID,
 			CreatedAt: timestamppb.New(createdAt),
 			UpdatedAt: timestamppb.New(updatedAt),
 		},

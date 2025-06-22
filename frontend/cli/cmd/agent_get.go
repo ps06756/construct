@@ -60,7 +60,7 @@ func NewAgentGetCmd() *cobra.Command {
 					return fmt.Errorf("failed to get model %s: %w", agentResp.Msg.Agent.Spec.ModelId, err)
 				}
 
-				modelName = modelResp.Msg.Model.Name
+				modelName = modelResp.Msg.Model.Spec.Name
 			}
 
 			displayAgent := ConvertAgentToDisplay(agentResp.Msg.Agent, modelName)

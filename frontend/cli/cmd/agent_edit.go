@@ -77,11 +77,11 @@ changes to an agent in a single operation.`,
 
 			// Convert to editable spec
 			editSpec := &AgentEditSpec{
-				ID:           agentResp.Msg.Agent.Id,
-				Name:         agentResp.Msg.Agent.Metadata.Name,
-				Description:  agentResp.Msg.Agent.Metadata.Description,
+				ID:           agentResp.Msg.Agent.Metadata.Id,
+				Name:         agentResp.Msg.Agent.Spec.Name,
+				Description:  agentResp.Msg.Agent.Spec.Description,
 				Instructions: agentResp.Msg.Agent.Spec.Instructions,
-				Model:        modelResp.Msg.Model.Name,
+				Model:        modelResp.Msg.Model.Spec.Name,
 			}
 
 			// Save original spec for comparison
@@ -226,14 +226,14 @@ func applyAgentChanges(ctx context.Context, client *api.Client, currentAgent *v1
 
 	// Build update request
 	updateReq := &v1.UpdateAgentRequest{
-		Id: currentAgent.Id,
+		Id: currentAgent.Metadata.Id,
 	}
 
 	// Check what fields have changed and set them in the update request
-	if editedSpec.Name != currentAgent.Metadata.Name {
+	if editedSpec.Name != currentAgent.Spec.Name {
 		updateReq.Name = &editedSpec.Name
 	}
-	if editedSpec.Description != currentAgent.Metadata.Description {
+	if editedSpec.Description != currentAgent.Spec.Description {
 		updateReq.Description = &editedSpec.Description
 	}
 	if editedSpec.Instructions != currentAgent.Spec.Instructions {

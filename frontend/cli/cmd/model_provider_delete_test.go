@@ -25,7 +25,7 @@ func TestModelProviderDelete(t *testing.T) {
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderLookupForDeleteMock(mockClient, "anthropic-dev", modelProviderID1)
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "claude-3-5-sonnet"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "claude-3-5-sonnet"}},
 				})
 				setupModelDeleteMock(mockClient, modelID1)
 				setupModelProviderDeleteMock(mockClient, modelProviderID1)
@@ -37,8 +37,8 @@ func TestModelProviderDelete(t *testing.T) {
 			Command: []string{"modelprovider", "delete", "--force", modelProviderID1},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "gpt-4"},
-					{Id: modelID2, Name: "gpt-3.5-turbo"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "gpt-4"}},
+					{Metadata: &v1.ModelMetadata{Id: modelID2}, Spec: &v1.ModelSpec{Name: "gpt-3.5-turbo"}},
 				})
 				setupModelDeleteMock(mockClient, modelID1)
 				setupModelDeleteMock(mockClient, modelID2)
@@ -60,16 +60,24 @@ func TestModelProviderDelete(t *testing.T) {
 					Msg: &v1.ListModelProvidersResponse{
 						ModelProviders: []*v1.ModelProvider{
 							{
-								Id:           modelProviderID1,
-								Name:         "anthropic-dev",
-								ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-								Enabled:      true,
+								Metadata: &v1.ModelProviderMetadata{
+									Id:           modelProviderID1,
+									ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+								},
+								Spec: &v1.ModelProviderSpec{
+									Name:    "anthropic-dev",
+									Enabled: true,
+								},
 							},
 							{
-								Id:           modelProviderID2,
-								Name:         "openai-prod",
-								ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-								Enabled:      true,
+								Metadata: &v1.ModelProviderMetadata{
+									Id:           modelProviderID2,
+									ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+								},
+								Spec: &v1.ModelProviderSpec{
+									Name:    "openai-prod",
+									Enabled: true,
+								},
 							},
 						},
 					},
@@ -77,14 +85,14 @@ func TestModelProviderDelete(t *testing.T) {
 
 				// Setup for first provider (anthropic-dev)
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "claude-3-5-sonnet"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "claude-3-5-sonnet"}},
 				})
 				setupModelDeleteMock(mockClient, modelID1)
 				setupModelProviderDeleteMock(mockClient, modelProviderID1)
 
 				// Setup for second provider (openai-prod)
 				setupModelListForDeleteMock(mockClient, modelProviderID2, []*v1.Model{
-					{Id: modelID2, Name: "gpt-4"},
+					{Metadata: &v1.ModelMetadata{Id: modelID2}, Spec: &v1.ModelSpec{Name: "gpt-4"}},
 				})
 				setupModelDeleteMock(mockClient, modelID2)
 				setupModelProviderDeleteMock(mockClient, modelProviderID2)
@@ -108,7 +116,7 @@ func TestModelProviderDelete(t *testing.T) {
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderLookupForDeleteMock(mockClient, "anthropic-dev", modelProviderID1)
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "claude-3-5-sonnet"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "claude-3-5-sonnet"}},
 				})
 				setupModelDeleteMock(mockClient, modelID1)
 				setupModelProviderDeleteMock(mockClient, modelProviderID1)
@@ -144,16 +152,24 @@ func TestModelProviderDelete(t *testing.T) {
 					Msg: &v1.ListModelProvidersResponse{
 						ModelProviders: []*v1.ModelProvider{
 							{
-								Id:           modelProviderID1,
-								Name:         "anthropic-dev",
-								ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-								Enabled:      true,
+								Metadata: &v1.ModelProviderMetadata{
+									Id:           modelProviderID1,
+									ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+								},
+								Spec: &v1.ModelProviderSpec{
+									Name:    "anthropic-dev",
+									Enabled: true,
+								},
 							},
 							{
-								Id:           modelProviderID2,
-								Name:         "openai-prod",
-								ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-								Enabled:      true,
+								Metadata: &v1.ModelProviderMetadata{
+									Id:           modelProviderID2,
+									ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+								},
+								Spec: &v1.ModelProviderSpec{
+									Name:    "openai-prod",
+									Enabled: true,
+								},
 							},
 						},
 					},
@@ -161,14 +177,14 @@ func TestModelProviderDelete(t *testing.T) {
 
 				// Setup for first provider (anthropic-dev)
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "claude-3-5-sonnet"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "claude-3-5-sonnet"}},
 				})
 				setupModelDeleteMock(mockClient, modelID1)
 				setupModelProviderDeleteMock(mockClient, modelProviderID1)
 
 				// Setup for second provider (openai-prod)
 				setupModelListForDeleteMock(mockClient, modelProviderID2, []*v1.Model{
-					{Id: modelID2, Name: "gpt-4"},
+					{Metadata: &v1.ModelMetadata{Id: modelID2}, Spec: &v1.ModelSpec{Name: "gpt-4"}},
 				})
 				setupModelDeleteMock(mockClient, modelID2)
 				setupModelProviderDeleteMock(mockClient, modelProviderID2)
@@ -202,7 +218,7 @@ func TestModelProviderDelete(t *testing.T) {
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderLookupForDeleteMock(mockClient, "anthropic-dev", modelProviderID1)
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "claude-3-5-sonnet"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "claude-3-5-sonnet"}},
 				})
 				mockClient.Model.EXPECT().DeleteModel(
 					gomock.Any(),
@@ -221,7 +237,7 @@ func TestModelProviderDelete(t *testing.T) {
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderLookupForDeleteMock(mockClient, "anthropic-dev", modelProviderID1)
 				setupModelListForDeleteMock(mockClient, modelProviderID1, []*v1.Model{
-					{Id: modelID1, Name: "claude-3-5-sonnet"},
+					{Metadata: &v1.ModelMetadata{Id: modelID1}, Spec: &v1.ModelSpec{Name: "claude-3-5-sonnet"}},
 				})
 				setupModelDeleteMock(mockClient, modelID1)
 				mockClient.ModelProvider.EXPECT().DeleteModelProvider(
@@ -248,10 +264,14 @@ func setupModelProviderLookupForDeleteMock(mockClient *api_client.MockClient, mo
 		Msg: &v1.ListModelProvidersResponse{
 			ModelProviders: []*v1.ModelProvider{
 				{
-					Id:           modelProviderID,
-					Name:         modelProviderName,
-					ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-					Enabled:      true,
+					Metadata: &v1.ModelProviderMetadata{
+						Id:           modelProviderID,
+						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+					},
+					Spec: &v1.ModelProviderSpec{
+						Name:    modelProviderName,
+						Enabled: true,
+					},
 				},
 			},
 		},

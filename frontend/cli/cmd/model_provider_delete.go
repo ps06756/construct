@@ -54,10 +54,10 @@ func NewModelProviderDeleteCmd() *cobra.Command {
 
 				for _, model := range models.Msg.Models {
 					_, err = client.Model().DeleteModel(cmd.Context(), &connect.Request[v1.DeleteModelRequest]{
-						Msg: &v1.DeleteModelRequest{Id: model.Id},
+						Msg: &v1.DeleteModelRequest{Id: model.Metadata.Id},
 					})
 					if err != nil {
-						return fmt.Errorf("failed to delete model %s for model provider %s: %w", model.Name, idOrName, err)
+						return fmt.Errorf("failed to delete model %s for model provider %s: %w", model.Spec.Name, idOrName, err)
 					}
 				}
 				_, err = client.ModelProvider().DeleteModelProvider(cmd.Context(), &connect.Request[v1.DeleteModelProviderRequest]{

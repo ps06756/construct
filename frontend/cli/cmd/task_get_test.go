@@ -13,9 +13,7 @@ import (
 )
 
 func TestTaskGet(t *testing.T) {
-	setup := &TestSetup{
-		
-	}
+	setup := &TestSetup{}
 
 	taskID1 := uuid.New().String()
 	agentID1 := uuid.New().String()
@@ -124,8 +122,8 @@ func setupTaskGetMock(mockClient *api_client.MockClient, taskID, agentID string,
 	).Return(&connect.Response[v1.GetTaskResponse]{
 		Msg: &v1.GetTaskResponse{
 			Task: &v1.Task{
-				Id: taskID,
 				Metadata: &v1.TaskMetadata{
+					Id:        taskID,
 					CreatedAt: timestamppb.New(createdAt),
 					UpdatedAt: timestamppb.New(updatedAt),
 				},

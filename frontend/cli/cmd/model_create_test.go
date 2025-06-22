@@ -120,12 +120,16 @@ func setupModelCreateMock(mockClient *api_client.MockClient, name, modelProvider
 	).Return(&connect.Response[v1.CreateModelResponse]{
 		Msg: &v1.CreateModelResponse{
 			Model: &v1.Model{
-				Id:              modelID,
-				Name:            name,
-				ModelProviderId: modelProviderID,
-				ContextWindow:   contextWindow,
-				Enabled:         true,
-				Capabilities:    []v1.ModelCapability{v1.ModelCapability_MODEL_CAPABILITY_IMAGE},
+				Metadata: &v1.ModelMetadata{
+					Id:              modelID,
+					ModelProviderId: modelProviderID,
+				},
+				Spec: &v1.ModelSpec{
+					Name: name,
+					ContextWindow: contextWindow,
+					Enabled:       true,
+					Capabilities:  []v1.ModelCapability{v1.ModelCapability_MODEL_CAPABILITY_IMAGE},
+				},
 			},
 		},
 	}, nil)
@@ -141,10 +145,14 @@ func setupModelProviderLookupForCreateMock(mockClient *api_client.MockClient, pr
 		Msg: &v1.ListModelProvidersResponse{
 			ModelProviders: []*v1.ModelProvider{
 				{
-					Id:           providerID,
-					Name:         providerName,
-					ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-					Enabled:      true,
+					Metadata: &v1.ModelProviderMetadata{
+						Id:           providerID,
+						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+					},
+					Spec: &v1.ModelProviderSpec{
+						Name:    providerName,
+						Enabled: true,
+					},
 				},
 			},
 		},

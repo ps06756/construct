@@ -97,16 +97,24 @@ func TestModelProviderGet(t *testing.T) {
 					Msg: &v1.ListModelProvidersResponse{
 						ModelProviders: []*v1.ModelProvider{
 							{
-								Id:           modelProviderID1,
-								Name:         "duplicate",
-								ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-								Enabled:      true,
+								Metadata: &v1.ModelProviderMetadata{
+									Id:           modelProviderID1,
+									ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+								},
+								Spec: &v1.ModelProviderSpec{
+									Name:    "duplicate",
+									Enabled: true,
+								},
 							},
 							{
-								Id:           modelProviderID2,
-								Name:         "duplicate",
-								ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-								Enabled:      true,
+								Metadata: &v1.ModelProviderMetadata{
+									Id:           modelProviderID2,
+									ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+								},
+								Spec: &v1.ModelProviderSpec{
+									Name:    "duplicate",
+									Enabled: true,
+								},
 							},
 						},
 					},
@@ -144,10 +152,14 @@ func setupModelProviderLookupForGetMock(mockClient *api_client.MockClient, model
 		Msg: &v1.ListModelProvidersResponse{
 			ModelProviders: []*v1.ModelProvider{
 				{
-					Id:           modelProviderID,
-					Name:         modelProviderName,
-					ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-					Enabled:      true,
+					Metadata: &v1.ModelProviderMetadata{
+						Id:           modelProviderID,
+						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+					},
+					Spec: &v1.ModelProviderSpec{
+						Name:    modelProviderName,
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -163,10 +175,14 @@ func setupModelProviderGetMock(mockClient *api_client.MockClient, modelProviderI
 	).Return(&connect.Response[v1.GetModelProviderResponse]{
 		Msg: &v1.GetModelProviderResponse{
 			ModelProvider: &v1.ModelProvider{
-				Id:           modelProviderID,
-				Name:         name,
-				ProviderType: providerType,
-				Enabled:      enabled,
+				Metadata: &v1.ModelProviderMetadata{
+					Id:           modelProviderID,
+					ProviderType: providerType,
+				},
+				Spec: &v1.ModelProviderSpec{
+					Name:    name,
+					Enabled: enabled,
+				},
 			},
 		},
 	}, nil)

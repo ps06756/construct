@@ -249,10 +249,14 @@ func setupModelProviderLookupForListMock(mockClient *api_client.MockClient, prov
 		Msg: &v1.ListModelProvidersResponse{
 			ModelProviders: []*v1.ModelProvider{
 				{
-					Id:           providerID,
-					Name:         providerName,
-					ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
-					Enabled:      true,
+					Metadata: &v1.ModelProviderMetadata{
+						Id:           providerID,
+						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
+					},
+					Spec: &v1.ModelProviderSpec{
+						Name:    providerName,
+						Enabled: true,
+					},
 				},
 			},
 		},
@@ -261,11 +265,15 @@ func setupModelProviderLookupForListMock(mockClient *api_client.MockClient, prov
 
 func createTestModel(modelID, name, modelProviderID string, contextWindow int64, enabled bool) *v1.Model {
 	return &v1.Model{
-		Id:              modelID,
-		Name:            name,
-		ModelProviderId: modelProviderID,
-		ContextWindow:   contextWindow,
-		Enabled:         enabled,
-		Capabilities:    []v1.ModelCapability{v1.ModelCapability_MODEL_CAPABILITY_IMAGE},
+		Metadata: &v1.ModelMetadata{
+			Id:              modelID,
+			ModelProviderId: modelProviderID,
+		},
+		Spec: &v1.ModelSpec{
+			Name:          name,
+			ContextWindow: contextWindow,
+			Enabled:       enabled,
+			Capabilities:  []v1.ModelCapability{v1.ModelCapability_MODEL_CAPABILITY_IMAGE},
+		},
 	}
 }

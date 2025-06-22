@@ -1,3 +1,7 @@
+// Model API provides CRUD operations for managing AI models within Construct.
+// Models represent specific AI language models from providers (like GPT-4, Claude) with
+// their capabilities, pricing information, and configuration. Each model is associated
+// with a model provider and defines the AI capabilities available to agents.
 syntax = "proto3";
 
 package construct.v1;
@@ -5,112 +9,236 @@ package construct.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 import "google/type/decimal.proto";
+import "construct/v1/common.proto";
 
 option go_package = "github.com/furisto/construct/api/go/v1";
 
+// ModelService provides operations for managing AI models.
+// Models represent specific AI language models (like GPT-4, Claude-3) that agents can use.
+// Each model defines capabilities, pricing, and performance characteristics.
 service ModelService {
+  // CreateModel creates a new AI model with specified capabilities and pricing.
   rpc CreateModel(CreateModelRequest) returns (CreateModelResponse) {}
+  
+  // GetModel retrieves a specific model by its unique identifier.
   rpc GetModel(GetModelRequest) returns (GetModelResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+  
+  // ListModels retrieves a list of models with optional filtering and pagination.
   rpc ListModels(ListModelsRequest) returns (ListModelsResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+  
+  // UpdateModel modifies an existing model's configuration, capabilities, or pricing.
   rpc UpdateModel(UpdateModelRequest) returns (UpdateModelResponse) {}
+  
+  // DeleteModel removes a model from the system.
   rpc DeleteModel(DeleteModelRequest) returns (DeleteModelResponse) {}
 }
 
+// ModelMetadata contains system-managed, immutable information about a model.
 message ModelMetadata {
-  google.protobuf.Timestamp created_at = 1 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_at = 2 [(buf.validate.field).required = true];
-}
-
-enum ModelCapability {
-  MODEL_CAPABILITY_UNSPECIFIED = 0;
-  MODEL_CAPABILITY_IMAGE = 1;
-  MODEL_CAPABILITY_COMPUTER_USE = 2;
-  MODEL_CAPABILITY_PROMPT_CACHE = 3;
-  MODEL_CAPABILITY_THINKING = 4;
-}
-
-message ModelPricing {
-  google.type.Decimal input_cost = 1;
-  google.type.Decimal output_cost = 2;
-  google.type.Decimal cache_write_cost = 3;
-  google.type.Decimal cache_read_cost = 4;
-}
-
-message Model {
+  // id is the unique identifier for the model (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
-  ModelMetadata metadata = 2;
-  string name = 3 [
-    (buf.validate.field).string.min_len = 1,
-    (buf.validate.field).string.max_len = 255
-  ];
+  
+  // created_at is the timestamp when the model was created.
+  google.protobuf.Timestamp created_at = 2 [(buf.validate.field).required = true];
+  
+  // updated_at is the timestamp when the model was last modified.
+  google.protobuf.Timestamp updated_at = 3 [(buf.validate.field).required = true];
+  
+  // model_provider_id references the provider that supplies this model (UUID format).
   string model_provider_id = 4 [(buf.validate.field).string.uuid = true];
-  repeated ModelCapability capabilities = 5;
-  ModelPricing pricing = 6;
-  int64 context_window = 7 [(buf.validate.field).int64.gt = 0];
-  bool enabled = 8;
 }
 
-message CreateModelRequest {
+// ModelSpec defines the user-configurable specification of a model.
+message ModelSpec {
+  // name is the human-readable name of the model (1-255 characters).
   string name = 1 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
+  
+  // capabilities lists the special abilities this model supports.
+  repeated ModelCapability capabilities = 2;
+  
+  // pricing defines the cost structure for using this model.
+  ModelPricing pricing = 3;
+  
+  // context_window is the maximum number of tokens the model can process (must be > 0).
+  int64 context_window = 4 [(buf.validate.field).int64.gt = 0];
+  
+  // enabled indicates whether this model is currently available for use.
+  bool enabled = 5;
+}
+
+// ModelCapability represents special abilities that a model may support beyond basic text generation.
+enum ModelCapability {
+  // MODEL_CAPABILITY_UNSPECIFIED indicates an unknown or unset capability.
+  MODEL_CAPABILITY_UNSPECIFIED = 0;
+  
+  // MODEL_CAPABILITY_IMAGE indicates the model can process and understand images.
+  MODEL_CAPABILITY_IMAGE = 1;
+  
+  // MODEL_CAPABILITY_COMPUTER_USE indicates the model can interact with computer interfaces.
+  MODEL_CAPABILITY_COMPUTER_USE = 2;
+  
+  // MODEL_CAPABILITY_PROMPT_CACHE indicates the model supports prompt caching for efficiency.
+  MODEL_CAPABILITY_PROMPT_CACHE = 3;
+  
+  // MODEL_CAPABILITY_THINKING indicates the model supports visible reasoning/thinking processes.
+  MODEL_CAPABILITY_THINKING = 4;
+}
+
+// ModelPricing defines the cost structure for using a model, with prices per token type.
+message ModelPricing {
+  // input_cost is the cost per input token (typically per 1000 tokens).
+  google.type.Decimal input_cost = 1;
+  
+  // output_cost is the cost per output token (typically per 1000 tokens).
+  google.type.Decimal output_cost = 2;
+  
+  // cache_write_cost is the cost per token when writing to cache (typically per 1000 tokens).
+  google.type.Decimal cache_write_cost = 3;
+  
+  // cache_read_cost is the cost per token when reading from cache (typically per 1000 tokens).
+  google.type.Decimal cache_read_cost = 4;
+}
+
+// Model represents a complete model entity with metadata and specification.
+message Model {
+  // metadata contains system-managed, immutable information about the model.
+  ModelMetadata metadata = 1;
+  
+  // spec contains the user-configurable specification of the model.
+  ModelSpec spec = 2;
+}
+
+// CreateModelRequest contains the parameters needed to create a new model.
+message CreateModelRequest {
+  // name is the human-readable name for the new model (1-255 characters).
+  string name = 1 [
+    (buf.validate.field).string.min_len = 1,
+    (buf.validate.field).string.max_len = 255
+  ];
+  
+  // model_provider_id references the provider that supplies this model (UUID format).
   string model_provider_id = 2 [(buf.validate.field).string.uuid = true];
+  
+  // capabilities lists the special abilities this model supports.
   repeated ModelCapability capabilities = 3;
+  
+  // pricing defines the cost structure for using this model.
   ModelPricing pricing = 4;
+  
+  // context_window is the maximum number of tokens the model can process (must be > 0).
   int64 context_window = 5 [(buf.validate.field).int64.gt = 0];
 }
 
+// CreateModelResponse contains the newly created model.
 message CreateModelResponse {
+  // model is the newly created model instance.
   Model model = 1 [(buf.validate.field).required = true];
 }
 
+// GetModelRequest specifies which model to retrieve.
 message GetModelRequest {
+  // id is the unique identifier of the model to retrieve (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
+// GetModelResponse contains the requested model.
 message GetModelResponse {
+  // model is the requested model instance.
   Model model = 1 [(buf.validate.field).required = true];
 }
 
+// ListModelsRequest specifies parameters for listing models with optional filtering and pagination.
 message ListModelsRequest {
+  // Filter specifies criteria for narrowing the list of returned models.
   message Filter {
-    optional string model_provider_id = 1 [(buf.validate.field).string.uuid = true];
-    optional bool enabled = 2;
-    optional string name = 3 [(buf.validate.field).string.min_len = 1, (buf.validate.field).string.max_len = 255];
+    // names filters models by their names (max 64 unique names, each 1-255 characters).
+    repeated string names = 1 [
+      (buf.validate.field).repeated.items.string.min_len = 1,
+      (buf.validate.field).repeated.items.string.max_len = 255,
+      (buf.validate.field).repeated.max_items = 64,
+      (buf.validate.field).repeated.unique = true
+    ];
+    
+    // model_provider_id filters models by their provider (UUID format, optional).
+    optional string model_provider_id = 2 [(buf.validate.field).string.uuid = true];
+    
+    // enabled filters models by their enabled status.
+    optional bool enabled = 3;
   }
+  
+  // filter specifies criteria for narrowing the results.
   Filter filter = 1;
-  string page_token = 2 [(buf.validate.field).string.max_len = 255];
+  
+   // page_size limits the number of model providers returned per page (1-100).
+   optional int32 page_size = 2 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100
+  ];
+  
+  // page_token is used for pagination to retrieve subsequent pages.
+  string page_token = 3 [(buf.validate.field).string.max_len = 255];
+
+  // sort_field specifies which field to sort results by.
+  optional SortField sort_field = 4 [(buf.validate.field).enum.defined_only = true];
+  
+  // sort_order specifies the sorting direction (ascending or descending).
+  optional SortOrder sort_order = 5 [(buf.validate.field).enum.defined_only = true];
 }
 
+// ListModelsResponse contains the list of models matching the request criteria.
 message ListModelsResponse {
+  // models is the list of models matching the filter criteria.
   repeated Model models = 1;
+  
+  // next_page_token is used to retrieve the next page of results (empty if no more pages).
   string next_page_token = 2;
 }
 
+// UpdateModelRequest specifies which model to update and the new values for its fields.
 message UpdateModelRequest {
+  // id is the unique identifier of the model to update (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
+  
+  // name is the new name for the model (1-255 characters, optional).
   optional string name = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
+  
+  // model_provider_id is the new provider reference for the model (UUID format, optional).
   optional string model_provider_id = 3 [(buf.validate.field).string.uuid = true];
+  
+  // capabilities are the new capabilities for the model (optional).
   repeated ModelCapability capabilities = 4;
+  
+  // pricing is the new pricing structure for the model (optional).
   optional ModelPricing pricing = 5;
+  
+  // context_window is the new maximum token limit for the model (must be > 0, optional).
   optional int64 context_window = 6 [(buf.validate.field).int64.gt = 0];
+  
+  // enabled is the new availability status for the model (optional).
   optional bool enabled = 7;
 }
 
+// UpdateModelResponse contains the updated model.
 message UpdateModelResponse {
+  // model is the updated model instance.
   Model model = 1 [(buf.validate.field).required = true];
 }
 
+// DeleteModelRequest specifies which model to delete.
 message DeleteModelRequest {
+  // id is the unique identifier of the model to delete (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
+// DeleteModelResponse confirms the model deletion (empty response).
 message DeleteModelResponse {}

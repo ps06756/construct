@@ -1,105 +1,204 @@
+// ModelProvider API provides CRUD operations for managing AI model providers within Construct.
+// Model providers represent external AI services (like OpenAI, Anthropic) that supply
+// language models for agents to use.
 syntax = "proto3";
 
 package construct.v1;
 
 import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
+import "construct/v1/common.proto";
 
 option go_package = "github.com/furisto/construct/api/go/v1";
 
+// ModelProviderService provides operations for managing AI model providers.
+// Model providers are external services that supply language models for agents,
+// such as OpenAI, Anthropic, and other AI service providers.
 service ModelProviderService {
+  // CreateModelProvider creates a new model provider with authentication credentials.
   rpc CreateModelProvider(CreateModelProviderRequest) returns (CreateModelProviderResponse) {}
+  
+  // GetModelProvider retrieves a specific model provider by its unique identifier.
   rpc GetModelProvider(GetModelProviderRequest) returns (GetModelProviderResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+  
+  // ListModelProviders retrieves a list of model providers with optional filtering and pagination.
   rpc ListModelProviders(ListModelProvidersRequest) returns (ListModelProvidersResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
+  
+  // UpdateModelProvider modifies an existing model provider's configuration or credentials.
   rpc UpdateModelProvider(UpdateModelProviderRequest) returns (UpdateModelProviderResponse) {}
+  
+  // DeleteModelProvider removes a model provider from the system.
   rpc DeleteModelProvider(DeleteModelProviderRequest) returns (DeleteModelProviderResponse) {}
 }
 
+// CreateModelProviderRequest contains the parameters needed to create a new model provider.
 message CreateModelProviderRequest {
+  // name is the human-readable name for the model provider (1-255 characters).
   string name = 1 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
 
+  // authentication contains the credentials needed to authenticate with the provider.
   oneof authentication {
+    // api_key is the API key for authenticating with the model provider (1-255 characters).
     string api_key = 2 [
       (buf.validate.field).string.min_len = 1,
       (buf.validate.field).string.max_len = 255
     ];
   }
 
+  // provider_type specifies which AI service this provider represents.
   ModelProviderType provider_type = 30 [(buf.validate.field).enum.defined_only = true];
 }
 
+// CreateModelProviderResponse contains the newly created model provider.
 message CreateModelProviderResponse {
+  // model_provider is the newly created model provider instance.
   ModelProvider model_provider = 1 [(buf.validate.field).required = true];
 }
 
-message ModelProvider {
+// ModelProviderMetadata contains system-managed, immutable information about a model provider.
+message ModelProviderMetadata {
+  // id is the unique identifier for the model provider (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
+  
+  // created_at is the timestamp when the model provider was created.
+  google.protobuf.Timestamp created_at = 2 [(buf.validate.field).required = true];
+  
+  // updated_at is the timestamp when the model provider was last modified.
+  google.protobuf.Timestamp updated_at = 3 [(buf.validate.field).required = true];
+  
+  // provider_type specifies which AI service this provider represents.
+  ModelProviderType provider_type = 4 [(buf.validate.field).enum.defined_only = true];
+}
+
+// ModelProviderSpec defines the user-configurable specification of a model provider.
+message ModelProviderSpec {
+  // name is the human-readable name of the model provider (1-255 characters).
   string name = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
-  ModelProviderType provider_type = 3 [(buf.validate.field).enum.defined_only = true];
-  bool enabled = 4 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp created_at = 5 [(buf.validate.field).required = true];
-  google.protobuf.Timestamp updated_at = 6 [(buf.validate.field).required = true];
+
+  // enabled indicates whether this model provider is currently active and available for use.
+  bool enabled = 3 [(buf.validate.field).required = true];
 }
 
+// ModelProvider represents a complete model provider entity with metadata and specification.
+message ModelProvider {
+  // metadata contains system-managed, immutable information about the model provider.
+  ModelProviderMetadata metadata = 1;
+  
+  // spec contains the user-configurable specification of the model provider.
+  ModelProviderSpec spec = 2;
+}
+
+// GetModelProviderRequest specifies which model provider to retrieve.
 message GetModelProviderRequest {
+  // id is the unique identifier of the model provider to retrieve (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
+// GetModelProviderResponse contains the requested model provider.
 message GetModelProviderResponse {
+  // model_provider is the requested model provider instance.
   ModelProvider model_provider = 1 [(buf.validate.field).required = true];
 }
 
+// ListModelProvidersRequest specifies parameters for listing model providers with optional filtering and pagination.
 message ListModelProvidersRequest {
+  // Filter specifies criteria for narrowing the list of returned model providers.
   message Filter {
+    // enabled filters model providers by their enabled status.
     optional bool enabled = 1;
-    repeated ModelProviderType provider_types = 2 [(buf.validate.field).repeated.max_items = 10];
+    
+    // provider_types filters model providers by their types (max 10 unique types).
+    repeated ModelProviderType provider_types = 2 [
+      (buf.validate.field).repeated.max_items = 10,
+      (buf.validate.field).repeated.unique = true
+    ];
   }
+  
+  // filter specifies criteria for narrowing the results.
   Filter filter = 1;
-  string page_token = 2 [(buf.validate.field).string.max_len = 255];
+  
+  // page_size limits the number of model providers returned per page (1-100).
+  optional int32 page_size = 2 [
+    (buf.validate.field).int32.gte = 1,
+    (buf.validate.field).int32.lte = 100
+  ];
+  
+  // page_token is used for pagination to retrieve subsequent pages.
+  string page_token = 3 [(buf.validate.field).string.max_len = 255];
+
+  // sort_field specifies which field to sort results by.
+  optional SortField sort_field = 4 [(buf.validate.field).enum.defined_only = true];
+  
+  // sort_order specifies the sorting direction (ascending or descending).
+  optional SortOrder sort_order = 5 [(buf.validate.field).enum.defined_only = true];
 }
 
+// ListModelProvidersResponse contains the list of model providers matching the request criteria.
 message ListModelProvidersResponse {
+  // model_providers is the list of model providers matching the filter criteria.
   repeated ModelProvider model_providers = 1;
+  
+  // next_page_token is used to retrieve the next page of results (empty if no more pages).
   string next_page_token = 2;
 }
 
+// UpdateModelProviderRequest specifies which model provider to update and the new values for its fields.
 message UpdateModelProviderRequest {
+  // id is the unique identifier of the model provider to update (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
+  
+  // name is the new name for the model provider (1-255 characters, optional).
   optional string name = 2 [
     (buf.validate.field).string.min_len = 1,
     (buf.validate.field).string.max_len = 255
   ];
+  
+  // authentication contains updated credentials for the provider.
   oneof authentication {
+    // api_key is the updated API key for authenticating with the model provider (1-255 characters).
     string api_key = 3 [
       (buf.validate.field).string.min_len = 1,
       (buf.validate.field).string.max_len = 255
     ];
   }
+  
+  // enabled is the new enabled status for the model provider (optional).
   optional bool enabled = 30;
 }
 
+// UpdateModelProviderResponse contains the updated model provider.
 message UpdateModelProviderResponse {
+  // model_provider is the updated model provider instance.
   ModelProvider model_provider = 1 [(buf.validate.field).required = true];
 }
 
+// DeleteModelProviderRequest specifies which model provider to delete.
 message DeleteModelProviderRequest {
+  // id is the unique identifier of the model provider to delete (UUID format).
   string id = 1 [(buf.validate.field).string.uuid = true];
 }
 
+// DeleteModelProviderResponse confirms the model provider deletion (empty response).
 message DeleteModelProviderResponse {}
 
+// ModelProviderType represents the different AI service providers supported by the system.
 enum ModelProviderType {
+  // MODEL_PROVIDER_TYPE_UNSPECIFIED indicates an unknown or unset provider type.
   MODEL_PROVIDER_TYPE_UNSPECIFIED = 0;
+  
+  // MODEL_PROVIDER_TYPE_ANTHROPIC represents Anthropic's AI models (Claude, etc.).
   MODEL_PROVIDER_TYPE_ANTHROPIC = 1;
+  
+  // MODEL_PROVIDER_TYPE_OPENAI represents OpenAI's AI models (GPT, etc.).
   MODEL_PROVIDER_TYPE_OPENAI = 2;
 }

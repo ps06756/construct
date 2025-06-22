@@ -16,8 +16,19 @@ import (
 
 func NewNewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "new",
-		Short: "Create a new task and begin an interactive conversation",
+		Use:   "new [flags]",
+		Short: "Start a new interactive conversation",
+		Long: `Start a new interactive conversation.
+
+Examples:
+  # Start a new conversation with the default agent
+  construct new
+
+  # Start with a specific agent
+  construct new --agent coder
+
+  # Sandbox another directory
+  construct new --workspace /workspace/repo/hello/world`,
 		GroupID: "core",
 		Run: func(cmd *cobra.Command, args []string) {
 			tempFile, err := os.CreateTemp("", "construct-new-*")
@@ -67,6 +78,9 @@ func NewNewCmd() *cobra.Command {
 			}
 		},
 	}
+
+	cmd.Flags().String("agent", "", "Use a specific agent (default: last used or configured default)")
+	cmd.Flags().String("workspace", "", "The sandbox in which the agent can operate. It cannot see outside of the sandbox. If not specified the current directory is used")
 
 	return cmd
 }

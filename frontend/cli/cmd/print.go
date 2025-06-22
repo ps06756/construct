@@ -46,7 +46,7 @@ func (e *OutputFormat) Set(v string) error {
 }
 
 func (e *OutputFormat) Type() string {
-	return "outputformat"
+	return "format"
 }
 
 func WithCardFormat(options *RenderOptions) *RenderOptions {

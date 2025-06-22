@@ -27,7 +27,7 @@ func NewModelListCmd() *cobra.Command {
   construct model list
 
   # List models by provider name
-  construct model list --model-provider "anthropic-dev"
+  construct model list --provider "anthropic-dev"
 
   # List all models including disabled ones
   construct model list --show-disabled`,
@@ -69,7 +69,7 @@ func NewModelListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.ModelProvider, "model-provider", "p", "", "Filter by model provider name or ID")
+	cmd.Flags().StringVarP(&options.ModelProvider, "provider", "p", "", "Filter by model provider name or ID")
 	cmd.Flags().BoolVarP(&options.ShowDisabled, "show-disabled", "d", false, "Show disabled models")
 	addRenderOptions(cmd, &options.RenderOptions)
 	return cmd

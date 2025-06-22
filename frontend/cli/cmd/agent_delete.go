@@ -17,6 +17,7 @@ func NewAgentDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "delete <id-or-name>...",
 		Short: "Delete one or more agents by their IDs or names",
+		Aliases: []string{"rm"},
 		Example: `  # Delete multiple agents
   construct agent delete coder architect debugger
 

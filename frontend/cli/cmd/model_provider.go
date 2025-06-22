@@ -15,8 +15,15 @@ import (
 
 func NewModelProviderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "modelprovider",
-		Short:   "Configure providers like OpenAI and Anthropic",
+		Use:   "modelprovider",
+		Short: "Configure providers like OpenAI and Anthropic",
+		Long: `Manage integrations to AI model providers to access their language models for your agents.
+
+Providers require API credentials and offer different model capabilities. At least one provider must be configured before creating agents.
+
+Supported providers:
+- OpenAI: Access to GPT models (gpt-4, gpt-3.5-turbo, etc.)
+- Anthropic: Access to Claude models (claude-3-5-sonnet, claude-3-haiku, etc.)`,
 		Aliases: []string{"modelproviders", "mp"},
 		GroupID: "resource",
 	}

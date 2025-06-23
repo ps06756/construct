@@ -130,25 +130,33 @@ func setupMessageGetMock(mockClient *api_client.MockClient, messageID, taskID, a
 	).Return(&connect.Response[v1.GetMessageResponse]{
 		Msg: &v1.GetMessageResponse{
 			Message: &v1.Message{
-				Id: messageID,
 				Metadata: &v1.MessageMetadata{
+					Id:        messageID,
 					TaskId:    taskID,
 					AgentId:   &agentID,
 					ModelId:   &modelID,
 					Role:      role,
 					CreatedAt: timestamppb.New(createdAt),
 					UpdatedAt: timestamppb.New(updatedAt),
+				},
+				Spec: &v1.MessageSpec{
+					Content: []*v1.MessagePart{
+						{
+							Data: &v1.MessagePart_Text_{
+								Text: &v1.MessagePart_Text{
+									Content: content,
+								},
+							},
+						},
+					},
+				},
+				Status: &v1.MessageStatus{
 					Usage: &v1.MessageUsage{
 						InputTokens:      100,
 						OutputTokens:     50,
 						CacheWriteTokens: 10,
 						CacheReadTokens:  5,
 						Cost:             0.01,
-					},
-				},
-				Content: &v1.MessageContent{
-					Content: &v1.MessageContent_Text{
-						Text: content,
 					},
 				},
 			},

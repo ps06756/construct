@@ -246,10 +246,14 @@ func setupConnectionCheckMock(mockClient *api_client.MockClient, success bool) {
 			Msg: &v1.ListModelProvidersResponse{
 				ModelProviders: []*v1.ModelProvider{
 					{
-						Id:           uuid.New().String(),
-						Name:         "openai",
-						ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
-						Enabled:      true,
+						Metadata: &v1.ModelProviderMetadata{
+							Id:           uuid.New().String(),
+							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_OPENAI,
+						},
+						Spec: &v1.ModelProviderSpec{
+							Name:    "openai",
+							Enabled: true,
+						},
 					},
 				},
 			},

@@ -73,12 +73,10 @@ func TestAgentList(t *testing.T) {
 			},
 		},
 		{
-			Name:    "success - filter agents by model ID",
+			Name:    "success - filter agents by model ID (client-side filtering)",
 			Command: []string{"agent", "list", "--model", modelID1},
 			SetupMocks: func(mockClient *api_client.MockClient) {
-				filter := &v1.ListAgentsRequest_Filter{
-					ModelIds: []string{modelID1},
-				}
+				filter := &v1.ListAgentsRequest_Filter{}
 				setupAgentListRequestMock(mockClient, filter, []*v1.Agent{
 					createTestAgent(agentID1, "coder", "A helpful coding assistant", "Description for coder", modelID1),
 				})
@@ -102,9 +100,7 @@ func TestAgentList(t *testing.T) {
 			Command: []string{"agent", "list", "--model", "claude-4"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelLookupMock(mockClient, "claude-4", modelID1)
-				filter := &v1.ListAgentsRequest_Filter{
-					ModelIds: []string{modelID1},
-				}
+				filter := &v1.ListAgentsRequest_Filter{}
 				setupAgentListRequestMock(mockClient, filter, []*v1.Agent{
 					createTestAgent(agentID1, "coder", "A helpful coding assistant", "Description for coder", modelID1),
 				})
@@ -128,9 +124,7 @@ func TestAgentList(t *testing.T) {
 			Command: []string{"agent", "list", "--model", modelID1, "--model", "claude-4"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelLookupMock(mockClient, "claude-4", modelID2)
-				filter := &v1.ListAgentsRequest_Filter{
-					ModelIds: []string{modelID1, modelID2},
-				}
+				filter := &v1.ListAgentsRequest_Filter{}
 				setupAgentListRequestMock(mockClient, filter, []*v1.Agent{
 					createTestAgent(agentID1, "coder", "A helpful coding assistant", "Description for coder", modelID1),
 					createTestAgent(agentID2, "reviewer", "A code reviewer", "Description for reviewer", modelID2),
@@ -162,7 +156,7 @@ func TestAgentList(t *testing.T) {
 			Command: []string{"agent", "list", "--name", "coder"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				filter := &v1.ListAgentsRequest_Filter{
-					Name: []string{"coder"},
+					Names: []string{"coder"},
 				}
 				setupAgentListRequestMock(mockClient, filter, []*v1.Agent{
 					createTestAgent(agentID1, "coder", "A helpful coding assistant", "Description for coder", modelID1),
@@ -187,7 +181,7 @@ func TestAgentList(t *testing.T) {
 			Command: []string{"agent", "list", "--name", "coder", "--name", "reviewer"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				filter := &v1.ListAgentsRequest_Filter{
-					Name: []string{"coder", "reviewer"},
+					Names: []string{"coder", "reviewer"},
 				}
 				setupAgentListRequestMock(mockClient, filter, []*v1.Agent{
 					createTestAgent(agentID1, "coder", "A helpful coding assistant", "Description for coder", modelID1),
@@ -220,8 +214,7 @@ func TestAgentList(t *testing.T) {
 			Command: []string{"agent", "list", "--model", modelID1, "--name", "coder"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				filter := &v1.ListAgentsRequest_Filter{
-					ModelIds: []string{modelID1},
-					Name:     []string{"coder"},
+					Names: []string{"coder"},
 				}
 				setupAgentListRequestMock(mockClient, filter, []*v1.Agent{
 					createTestAgent(agentID1, "coder", "A helpful coding assistant", "Description for coder", modelID1),
@@ -279,7 +272,7 @@ func TestAgentList(t *testing.T) {
 					&connect.Request[v1.ListModelsRequest]{
 						Msg: &v1.ListModelsRequest{
 							Filter: &v1.ListModelsRequest_Filter{
-								Name: api_client.Ptr("nonexistent-model"),
+								Names: []string{"nonexistent-model"},
 							},
 						},
 					},
@@ -302,15 +295,21 @@ func TestAgentList(t *testing.T) {
 					&connect.Request[v1.ListModelsRequest]{
 						Msg: &v1.ListModelsRequest{
 							Filter: &v1.ListModelsRequest_Filter{
-								Name: api_client.Ptr("duplicate-model"),
+								Names: []string{"duplicate-model"},
 							},
 						},
 					},
 				).Return(&connect.Response[v1.ListModelsResponse]{
 					Msg: &v1.ListModelsResponse{
 						Models: []*v1.Model{
-							{Id: modelID1, Name: "duplicate-model"},
-							{Id: modelID2, Name: "duplicate-model"},
+							{
+								Metadata: &v1.ModelMetadata{Id: modelID1},
+								Spec:     &v1.ModelSpec{Name: "duplicate-model"},
+							},
+							{
+								Metadata: &v1.ModelMetadata{Id: modelID2},
+								Spec:     &v1.ModelSpec{Name: "duplicate-model"},
+							},
 						},
 					},
 				}, nil)
@@ -328,7 +327,7 @@ func TestAgentList(t *testing.T) {
 					&connect.Request[v1.ListModelsRequest]{
 						Msg: &v1.ListModelsRequest{
 							Filter: &v1.ListModelsRequest_Filter{
-								Name: api_client.Ptr("claude-4"),
+								Names: []string{"claude-4"},
 							},
 						},
 					},
@@ -362,18 +361,18 @@ func setupAgentListRequestMock(mockClient *api_client.MockClient, filter *v1.Lis
 
 func createTestAgent(id, name, instructions, description, modelID string) *v1.Agent {
 	agent := &v1.Agent{
-		Id: id,
 		Metadata: &v1.AgentMetadata{
-			Name: name,
+			Id: id,
 		},
 		Spec: &v1.AgentSpec{
+			Name:         name,
 			Instructions: instructions,
 			ModelId:      modelID,
 		},
 	}
 
 	if description != "" {
-		agent.Metadata.Description = description
+		agent.Spec.Description = description
 	}
 
 	return agent

@@ -64,17 +64,23 @@ func setupMessageCreateMock(mockClient *api_client.MockClient, taskID, content, 
 	).Return(&connect.Response[v1.CreateMessageResponse]{
 		Msg: &v1.CreateMessageResponse{
 			Message: &v1.Message{
-				Id: messageID,
 				Metadata: &v1.MessageMetadata{
+					Id:        messageID,
 					TaskId:    taskIDResponse,
 					AgentId:   &agentID,
 					Role:      v1.MessageRole_MESSAGE_ROLE_USER,
 					CreatedAt: timestamppb.New(createdAt),
 					UpdatedAt: timestamppb.New(createdAt),
 				},
-				Content: &v1.MessageContent{
-					Content: &v1.MessageContent_Text{
-						Text: content,
+				Spec: &v1.MessageSpec{
+					Content: []*v1.MessagePart{
+						{
+							Data: &v1.MessagePart_Text_{
+								Text: &v1.MessagePart_Text{
+									Content: content,
+								},
+							},
+						},
 					},
 				},
 			},

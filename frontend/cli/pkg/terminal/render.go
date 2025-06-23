@@ -58,7 +58,7 @@ func NewModel(ctx context.Context, apiClient *api_client.Client, task *v1.Task, 
 		spinner:      sp,
 		apiClient:    apiClient,
 		messages:     []message{},
-		activeAgent:  agent.Metadata.Name,
+		activeAgent:  agent.Spec.Name,
 		task:         task,
 		eventChannel: make(chan *v1.SubscribeResponse, 100),
 		ctx:          ctx,
@@ -68,14 +68,14 @@ func NewModel(ctx context.Context, apiClient *api_client.Client, task *v1.Task, 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.EnterAltScreen,
-		eventSubscriber(m.ctx, m.apiClient, m.eventChannel, m.task.Id),
+		eventSubscriber(m.ctx, m.apiClient, m.eventChannel, m.task.Metadata.Id),
 		eventBridge(m.eventChannel),
 	)
 }
 
 func eventSubscriber(ctx context.Context, client *api_client.Client, eventChannel chan<- *v1.SubscribeResponse, taskId string) tea.Cmd {
 	return func() tea.Msg {
-		sub, err := client.Message().Subscribe(ctx, &connect.Request[v1.SubscribeRequest]{
+		sub, err := client.Task().Subscribe(ctx, &connect.Request[v1.SubscribeRequest]{
 			Msg: &v1.SubscribeRequest{
 				TaskId: taskId,
 			},
@@ -103,9 +103,9 @@ func eventBridge(eventChannel <-chan *v1.SubscribeResponse) tea.Cmd {
 	return func() tea.Msg {
 		msg := <-eventChannel
 		switch msg.GetEvent().(type) {
-		case *v1.SubscribeResponse_MessageEvent:
-			slog.Info("received message event", "message", msg.GetMessageEvent())
-			return msg.GetMessageEvent()
+		// case *v1.SubscribeResponse_MessageEvent:
+		// 	slog.Info("received message event", "message", msg.GetMessageEvent())
+		// 	return msg.GetMessageEvent()
 		default:
 			slog.Error("unknown event", "event", msg.GetEvent())
 		}
@@ -135,7 +135,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case *v1.Message:
 		slog.Info("processing message", "message", msg)
-		m.messages = append(m.messages, &userMessage{content: msg.Content.GetText()})
+		// m.messages = append(m.messages, &userMessage{content: msg.Spec.Content.GetText()})
 		m.updateViewportContent()
 		slog.Info("updated viewport content")
 	}
@@ -182,7 +182,7 @@ func (m *model) onTextInput(msg tea.KeyMsg) tea.Cmd {
 
 		_, err := m.apiClient.Message().CreateMessage(context.Background(), &connect.Request[v1.CreateMessageRequest]{
 			Msg: &v1.CreateMessageRequest{
-				TaskId:  m.task.Id,
+				TaskId:  m.task.Metadata.Id,
 				Content: userInput,
 			},
 		})
@@ -223,10 +223,10 @@ func (m *model) View() string {
 	footer := footerStyle.Render("\nTab: switch agent| PgUp/PgDown: scroll | Ctrl+C: quit")
 
 	m.viewport.Width = Max(5, m.width-6)
-	m.viewport.Height = Max(5, m.height-4-lipgloss.Height(m.input.View()) - lipgloss.Height(footer))
+	m.viewport.Height = Max(5, m.height-4-lipgloss.Height(m.input.View())-lipgloss.Height(footer))
 	viewport := viewportStyle.Render(m.viewport.View())
 	slog.Info("viewport", "viewport", viewport)
-	
+
 	return appStyle.Render(lipgloss.JoinVertical(lipgloss.Center,
 		viewport,
 		textInput),

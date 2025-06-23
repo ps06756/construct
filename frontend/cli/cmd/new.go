@@ -49,7 +49,7 @@ Examples:
 			agentResp, err := apiClient.Agent().ListAgents(cmd.Context(), &connect.Request[v1.ListAgentsRequest]{
 				Msg: &v1.ListAgentsRequest{
 					Filter: &v1.ListAgentsRequest_Filter{
-						ModelIds: []string{"d3feed80-bb09-41b1-8cc7-b39022941565"},
+						// ModelIds: []string{"d3feed80-bb09-41b1-8cc7-b39022941565"},
 					},
 				},
 			})
@@ -62,7 +62,7 @@ Examples:
 
 			resp, err := apiClient.Task().CreateTask(cmd.Context(), &connect.Request[v1.CreateTaskRequest]{
 				Msg: &v1.CreateTaskRequest{
-					AgentId: agent.Id,
+					AgentId: agent.Metadata.Id,
 				},
 			})
 

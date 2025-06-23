@@ -69,9 +69,9 @@ func TestCreateTask(t *testing.T) {
 					Task: &v1.Task{
 						Metadata: &v1.TaskMetadata{},
 						Spec: &v1.TaskSpec{
-							AgentId:          strPtr(agentID.String()),
-							ProjectDirectory: "/tmp/test",
-							DesiredPhase:     v1.TaskPhase_TASK_PHASE_IDLE,
+							AgentId:      strPtr(agentID.String()),
+							Workspace:    "/tmp/test",
+							DesiredPhase: v1.TaskPhase_TASK_PHASE_IDLE,
 						},
 						Status: &v1.TaskStatus{
 							Usage: &v1.TaskUsage{},

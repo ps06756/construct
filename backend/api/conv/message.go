@@ -25,9 +25,13 @@ func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
 			Role:      convertRole(m.Source),
 		},
 		Spec: &v1.MessageSpec{
-			Content: &v1.MessageContent{
-				Content: &v1.MessageContent_Text{
-					Text: convertContent(m.Content),
+			Content: []*v1.MessagePart{
+				{
+					Data: &v1.MessagePart_Text_{
+						Text: &v1.MessagePart_Text{
+							Content: convertContent(m.Content),
+						},
+					},
 				},
 			},
 		},

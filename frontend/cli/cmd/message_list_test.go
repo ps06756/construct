@@ -279,7 +279,7 @@ func TestMessageList(t *testing.T) {
 					&connect.Request[v1.ListAgentsRequest]{
 						Msg: &v1.ListAgentsRequest{
 							Filter: &v1.ListAgentsRequest_Filter{
-								Name: []string{"nonexistent"},
+								Names: []string{"nonexistent"},
 							},
 						},
 					},
@@ -316,13 +316,13 @@ func TestMessageList(t *testing.T) {
 func setupMessageListMock(mockClient *api_client.MockClient, taskID, agentID *string, role *v1.MessageRole, messages []*v1.Message) {
 	filter := &v1.ListMessagesRequest_Filter{}
 	if taskID != nil {
-		filter.TaskId = taskID
+		filter.TaskIds = taskID
 	}
 	if agentID != nil {
-		filter.AgentId = agentID
+		filter.AgentIds = agentID
 	}
 	if role != nil {
-		filter.Role = role
+		filter.Roles = role
 	}
 
 	mockClient.Message.EXPECT().ListMessages(
@@ -345,7 +345,7 @@ func setupAgentLookupForMessageListMock(mockClient *api_client.MockClient, agent
 		&connect.Request[v1.ListAgentsRequest]{
 			Msg: &v1.ListAgentsRequest{
 				Filter: &v1.ListAgentsRequest_Filter{
-					Name: []string{agentName},
+					Names: []string{agentName},
 				},
 			},
 		},
@@ -353,8 +353,10 @@ func setupAgentLookupForMessageListMock(mockClient *api_client.MockClient, agent
 		Msg: &v1.ListAgentsResponse{
 			Agents: []*v1.Agent{
 				{
-					Id: agentID,
 					Metadata: &v1.AgentMetadata{
+						Id:   agentID,
+					},
+					Spec: &v1.AgentSpec{
 						Name: agentName,
 					},
 				},
@@ -365,25 +367,33 @@ func setupAgentLookupForMessageListMock(mockClient *api_client.MockClient, agent
 
 func createTestMessage(messageID, taskID, agentID, modelID, content string, role v1.MessageRole, createdAt, updatedAt time.Time) *v1.Message {
 	return &v1.Message{
-		Id: messageID,
 		Metadata: &v1.MessageMetadata{
+			Id:        messageID,
 			TaskId:    taskID,
 			AgentId:   &agentID,
 			ModelId:   &modelID,
 			Role:      role,
 			CreatedAt: timestamppb.New(createdAt),
 			UpdatedAt: timestamppb.New(updatedAt),
+		},
+		Spec: &v1.MessageSpec{
+			Content: []*v1.MessagePart{
+				{
+					Data: &v1.MessagePart_Text_{
+						Text: &v1.MessagePart_Text{
+							Content: content,
+						},
+					},
+				},
+			},
+		},
+		Status: &v1.MessageStatus{
 			Usage: &v1.MessageUsage{
 				InputTokens:      100,
 				OutputTokens:     50,
 				CacheWriteTokens: 10,
 				CacheReadTokens:  5,
 				Cost:             0.01,
-			},
-		},
-		Content: &v1.MessageContent{
-			Content: &v1.MessageContent_Text{
-				Text: content,
 			},
 		},
 	}

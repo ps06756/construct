@@ -28,9 +28,9 @@ func ConvertTaskMetadataToProto(t *memory.Task) *v1.TaskMetadata {
 
 func ConvertTaskSpecToProto(t *memory.Task) (*v1.TaskSpec, error) {
 	return &v1.TaskSpec{
-		AgentId:          strPtr(t.AgentID.String()),
-		ProjectDirectory: t.ProjectDirectory,
-		DesiredPhase:     v1.TaskPhase_TASK_PHASE_IDLE, // Default to idle phase
+		AgentId:      strPtr(t.AgentID.String()),
+		Workspace:    t.ProjectDirectory,
+		DesiredPhase: v1.TaskPhase_TASK_PHASE_IDLE, // Default to idle phase
 	}, nil
 }
 

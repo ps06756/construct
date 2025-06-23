@@ -131,7 +131,7 @@ func TestAgentCreate(t *testing.T) {
 						},
 					},
 				).Return(&connect.Response[v1.ListModelsResponse]{
-					Msg: &v1.ListModelsResponse{	
+					Msg: &v1.ListModelsResponse{
 						Models: []*v1.Model{
 							{
 								Metadata: &v1.ModelMetadata{
@@ -210,23 +210,19 @@ func setupAgentCreationMock(mockClient *api_client.MockClient, agentName, instru
 		ModelId:      modelID,
 	}
 
-	metadata := &v1.AgentMetadata{
-		Name: agentName,
-	}
-
-	if description != "" {
-		req.Description = description
-		metadata.Description = description
-	}
-
 	mockClient.Agent.EXPECT().CreateAgent(
 		gomock.Any(),
 		connect.NewRequest(req),
 	).Return(&connect.Response[v1.CreateAgentResponse]{
 		Msg: &v1.CreateAgentResponse{
 			Agent: &v1.Agent{
-				Id:       agentID,
-				Metadata: metadata,
+				Metadata: &v1.AgentMetadata{
+					Id: agentID,
+				},
+				Spec: &v1.AgentSpec{
+					Name:        agentName,
+					Description: description,
+				},
 			},
 		},
 	}, nil)

@@ -41,16 +41,25 @@ type DisplayTaskUsage struct {
 }
 
 func ConvertTaskToDisplay(task *v1.Task) *DisplayTask {
+	var usage DisplayTaskUsage
+	if task.Status != nil && task.Status.Usage != nil {
+		usage = ConvertTaskUsageToDisplay(task.Status.Usage)
+	}
+
 	return &DisplayTask{
-		Id:        task.Id,
+		Id:        task.Metadata.Id,
 		AgentId:   PtrToString(task.Spec.AgentId),
-		Usage:     ConvertTaskUsageToDisplay(task.Status.Usage),
+		Workspace: task.Spec.Workspace,
+		Usage:     usage,
 		CreatedAt: task.Metadata.CreatedAt.AsTime(),
 		UpdatedAt: task.Metadata.UpdatedAt.AsTime(),
 	}
 }
 
 func ConvertTaskUsageToDisplay(usage *v1.TaskUsage) DisplayTaskUsage {
+	if usage == nil {
+		return DisplayTaskUsage{}
+	}
 	return DisplayTaskUsage{
 		InputTokens:      usage.InputTokens,
 		OutputTokens:     usage.OutputTokens,

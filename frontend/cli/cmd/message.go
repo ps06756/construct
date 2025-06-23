@@ -44,16 +44,34 @@ type DisplayMessageUsage struct {
 }
 
 func ConvertMessageToDisplay(message *v1.Message) *DisplayMessage {
+	var agentId, modelId *string
+	if message.Metadata.AgentId != nil {
+		agentId = message.Metadata.AgentId
+	}
+	if message.Metadata.ModelId != nil {
+		modelId = message.Metadata.ModelId
+	}
+
+	var usage DisplayMessageUsage
+	if message.Status != nil && message.Status.Usage != nil {
+		usage = ConvertMessageUsageToDisplay(message.Status.Usage)
+	}
+
+	content := ""
+	for _, part := range message.Spec.Content {
+		content += part.GetText().Content
+	}
+
 	return &DisplayMessage{
-		Id:        message.Id,
+		Id:        message.Metadata.Id,
 		TaskId:    message.Metadata.TaskId,
-		Agent:     PtrToString(message.Metadata.AgentId),
-		Model:     PtrToString(message.Metadata.ModelId),
+		Agent:     PtrToString(agentId),
+		Model:     PtrToString(modelId),
 		Role:      ConvertMessageRoleToString(message.Metadata.Role),
-		Content:   message.Content.GetText(),
+		Content:   content,
 		CreatedAt: message.Metadata.CreatedAt.AsTime(),
 		UpdatedAt: message.Metadata.UpdatedAt.AsTime(),
-		Usage:     ConvertMessageUsageToDisplay(message.Metadata.Usage),
+		Usage:     usage,
 	}
 }
 

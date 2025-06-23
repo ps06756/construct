@@ -23,7 +23,7 @@ func TestCreateMessage(t *testing.T) {
 			return client.Message().CreateMessage(ctx, req)
 		},
 		CmpOptions: []cmp.Option{
-			cmpopts.IgnoreUnexported(v1.CreateMessageResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessageContent{}),
+			cmpopts.IgnoreUnexported(v1.CreateMessageResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessagePart{}),
 			protocmp.Transform(),
 			protocmp.IgnoreFields(&v1.MessageMetadata{}, "id", "created_at", "updated_at"),
 		},
@@ -74,9 +74,13 @@ func TestCreateMessage(t *testing.T) {
 							Role:   v1.MessageRole_MESSAGE_ROLE_USER,
 						},
 						Spec: &v1.MessageSpec{
-							Content: &v1.MessageContent{
-								Content: &v1.MessageContent_Text{
-									Text: "Test message content",
+							Content: []*v1.MessagePart{
+								{
+									Data: &v1.MessagePart_Text_{
+										Text: &v1.MessagePart_Text{
+											Content: "Test message content",
+										},
+									},
 								},
 							},
 						},
@@ -94,7 +98,7 @@ func TestGetMessage(t *testing.T) {
 			return client.Message().GetMessage(ctx, req)
 		},
 		CmpOptions: []cmp.Option{
-			cmpopts.IgnoreUnexported(v1.GetMessageResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessageContent{}),
+			cmpopts.IgnoreUnexported(v1.GetMessageResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessagePart{}),
 			protocmp.Transform(),
 			protocmp.IgnoreFields(&v1.MessageMetadata{}, "created_at", "updated_at"),
 		},
@@ -159,9 +163,13 @@ func TestGetMessage(t *testing.T) {
 							Role:    v1.MessageRole_MESSAGE_ROLE_ASSISTANT,
 						},
 						Spec: &v1.MessageSpec{
-							Content: &v1.MessageContent{
-								Content: &v1.MessageContent_Text{
-									Text: "Test message content",
+							Content: []*v1.MessagePart{
+								{
+									Data: &v1.MessagePart_Text_{
+										Text: &v1.MessagePart_Text{
+											Content: "Test message content",
+										},
+									},
 								},
 							},
 						},
@@ -179,7 +187,7 @@ func TestListMessages(t *testing.T) {
 			return client.Message().ListMessages(ctx, req)
 		},
 		CmpOptions: []cmp.Option{
-			cmpopts.IgnoreUnexported(v1.ListMessagesResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessageContent{}, v1.ListMessagesRequest_Filter{}),
+			cmpopts.IgnoreUnexported(v1.ListMessagesResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessagePart{}, v1.ListMessagesRequest_Filter{}),
 			protocmp.Transform(),
 			protocmp.IgnoreFields(&v1.MessageMetadata{}, "created_at", "updated_at"),
 		},
@@ -265,9 +273,13 @@ func TestListMessages(t *testing.T) {
 								Role:    v1.MessageRole_MESSAGE_ROLE_ASSISTANT,
 							},
 							Spec: &v1.MessageSpec{
-								Content: &v1.MessageContent{
-									Content: &v1.MessageContent_Text{
-										Text: "Message 2 content",
+								Content: []*v1.MessagePart{
+									{
+										Data: &v1.MessagePart_Text_{
+											Text: &v1.MessagePart_Text{
+												Content: "Message 2 content",
+											},
+										},
 									},
 								},
 							},
@@ -329,9 +341,13 @@ func TestListMessages(t *testing.T) {
 								Role:    v1.MessageRole_MESSAGE_ROLE_ASSISTANT,
 							},
 							Spec: &v1.MessageSpec{
-								Content: &v1.MessageContent{
-									Content: &v1.MessageContent_Text{
-										Text: "Message 2 content",
+								Content: []*v1.MessagePart{
+									{
+										Data: &v1.MessagePart_Text_{
+											Text: &v1.MessagePart_Text{
+												Content: "Message 2 content",
+											},
+										},
 									},
 								},
 							},
@@ -391,9 +407,13 @@ func TestListMessages(t *testing.T) {
 								Role:    v1.MessageRole_MESSAGE_ROLE_ASSISTANT,
 							},
 							Spec: &v1.MessageSpec{
-								Content: &v1.MessageContent{
-									Content: &v1.MessageContent_Text{
-										Text: "Message 2 content",
+								Content: []*v1.MessagePart{
+									{
+										Data: &v1.MessagePart_Text_{
+											Text: &v1.MessagePart_Text{
+												Content: "Message 2 content",
+											},
+										},
 									},
 								},
 							},
@@ -448,9 +468,13 @@ func TestListMessages(t *testing.T) {
 								Role:   v1.MessageRole_MESSAGE_ROLE_USER,
 							},
 							Spec: &v1.MessageSpec{
-								Content: &v1.MessageContent{
-									Content: &v1.MessageContent_Text{
-										Text: "Message 1 content",
+								Content: []*v1.MessagePart{
+									{
+										Data: &v1.MessagePart_Text_{
+											Text: &v1.MessagePart_Text{
+												Content: "Message 1 content",
+											},
+										},
 									},
 								},
 							},
@@ -465,9 +489,13 @@ func TestListMessages(t *testing.T) {
 								Role:    v1.MessageRole_MESSAGE_ROLE_ASSISTANT,
 							},
 							Spec: &v1.MessageSpec{
-								Content: &v1.MessageContent{
-									Content: &v1.MessageContent_Text{
-										Text: "Message 2 content",
+								Content: []*v1.MessagePart{
+									{
+										Data: &v1.MessagePart_Text_{
+											Text: &v1.MessagePart_Text{
+												Content: "Message 2 content",
+											},
+										},
 									},
 								},
 							},
@@ -486,7 +514,7 @@ func TestUpdateMessage(t *testing.T) {
 			return client.Message().UpdateMessage(ctx, req)
 		},
 		CmpOptions: []cmp.Option{
-			cmpopts.IgnoreUnexported(v1.UpdateMessageResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessageContent{}),
+			cmpopts.IgnoreUnexported(v1.UpdateMessageResponse{}, v1.Message{}, v1.MessageMetadata{}, v1.MessageSpec{}, v1.MessageStatus{}, v1.MessageUsage{}, v1.MessagePart{}),
 			protocmp.Transform(),
 			protocmp.IgnoreFields(&v1.MessageMetadata{}, "created_at", "updated_at"),
 		},
@@ -550,9 +578,13 @@ func TestUpdateMessage(t *testing.T) {
 							Role:   v1.MessageRole_MESSAGE_ROLE_USER,
 						},
 						Spec: &v1.MessageSpec{
-							Content: &v1.MessageContent{
-								Content: &v1.MessageContent_Text{
-									Text: "Updated content",
+							Content: []*v1.MessagePart{
+								{
+									Data: &v1.MessagePart_Text_{
+										Text: &v1.MessagePart_Text{
+											Content: "Updated content",
+										},
+									},
 								},
 							},
 						},

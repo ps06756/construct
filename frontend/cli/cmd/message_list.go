@@ -40,7 +40,7 @@ func NewMessageListCmd() *cobra.Command {
 			filter := &v1.ListMessagesRequest_Filter{}
 
 			if options.Task != "" {
-				filter.TaskId = &options.Task
+				filter.TaskIds = &options.Task
 			}
 
 			if options.Agent != "" {
@@ -48,17 +48,17 @@ func NewMessageListCmd() *cobra.Command {
 				if err != nil {
 					return fmt.Errorf("failed to resolve agent %s: %w", options.Agent, err)
 				}
-				filter.AgentId = &agentID
+				filter.AgentIds = &agentID
 			}
 
 			if options.Role != "" {
 				switch options.Role {
 				case "user":
 					role := v1.MessageRole_MESSAGE_ROLE_USER
-					filter.Role = &role
+					filter.Roles = &role
 				case "assistant":
 					role := v1.MessageRole_MESSAGE_ROLE_ASSISTANT
-					filter.Role = &role
+					filter.Roles = &role
 				default:
 					return fmt.Errorf("invalid role %s: must be 'user' or 'assistant'", options.Role)
 				}

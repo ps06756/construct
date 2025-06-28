@@ -2,8 +2,12 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 
 	"github.com/furisto/construct/api/go/client/mocks"
 	"github.com/furisto/construct/api/go/v1/v1connect"
@@ -23,23 +27,25 @@ type ClientOptions struct {
 }
 
 func NewClient(endpointContext EndpointContext) *Client {
-	httpClient := &http.Client{}
+	httpClient := http.DefaultClient
 
-	if endpointContext.Type == "unix" {
+	baseURL := endpointContext.Address
+	if endpointContext.Kind == "unix" {
 		httpClient.Transport = &http.Transport{
 			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
 				return net.Dial("unix", endpointContext.Address)
 			},
 		}
-
+		baseURL = "http://unix"
 	}
+	baseURL, _ = url.JoinPath(baseURL, "api")
 
 	return &Client{
-		modelProvider: v1connect.NewModelProviderServiceClient(httpClient, endpointContext.Address),
-		model:         v1connect.NewModelServiceClient(httpClient, endpointContext.Address),
-		agent:         v1connect.NewAgentServiceClient(httpClient, endpointContext.Address),
-		task:          v1connect.NewTaskServiceClient(httpClient, endpointContext.Address),
-		message:       v1connect.NewMessageServiceClient(httpClient, endpointContext.Address),
+		modelProvider: v1connect.NewModelProviderServiceClient(httpClient, baseURL),
+		model:         v1connect.NewModelServiceClient(httpClient, baseURL),
+		agent:         v1connect.NewAgentServiceClient(httpClient, baseURL),
+		task:          v1connect.NewTaskServiceClient(httpClient, baseURL),
+		message:       v1connect.NewMessageServiceClient(httpClient, baseURL),
 	}
 }
 
@@ -92,13 +98,71 @@ func (c *MockClient) Client() *Client {
 }
 
 type EndpointContexts struct {
-	Current  string                     `yaml:"current"`
-	Contexts map[string]EndpointContext `yaml:"contexts"`
+	CurrentContext string                     `yaml:"current"`
+	Contexts       map[string]EndpointContext `yaml:"contexts"`
+}
+
+func (c *EndpointContexts) Validate() error {
+	for name, context := range c.Contexts {
+		if err := context.Validate(); err != nil {
+			return fmt.Errorf("invalid context '%s': %w", name, err)
+		}
+	}
+
+	if c.CurrentContext != "" {
+		if _, ok := c.Contexts[c.CurrentContext]; !ok {
+			return fmt.Errorf("current context %s not found", c.CurrentContext)
+		}
+	}
+
+	return nil
+}
+
+func (c *EndpointContexts) Current() (EndpointContext, bool) {
+	context, ok := c.Contexts[c.CurrentContext]
+	return context, ok
+}
+
+func (c *EndpointContexts) SetCurrent(contextName string) error {
+	if contextName == "" {
+		return fmt.Errorf("context name is required")
+	}
+
+	if _, ok := c.Contexts[contextName]; !ok {
+		return fmt.Errorf("context %s not found", contextName)
+	}
+
+	c.CurrentContext = contextName
+	return nil
 }
 
 type EndpointContext struct {
 	Address string `yaml:"address"`
-	Type    string `yaml:"type"`
+	Kind    string `yaml:"kind"`
+}
+
+func (c *EndpointContext) Validate() error {
+	if c.Kind != "unix" && c.Kind != "http" {
+		return fmt.Errorf("invalid kind: %s", c.Kind)
+	}
+
+	if c.Kind == "unix" {
+		if !filepath.IsAbs(c.Address) {
+			return fmt.Errorf("unix address must be an absolute path: %s", c.Address)
+		}
+
+		if _, err := os.Stat(c.Address); os.IsNotExist(err) {
+			return fmt.Errorf("unix address does not exist: %s", c.Address)
+		}
+	}
+
+	if c.Kind == "http" {
+		if _, err := url.Parse(c.Address); err != nil {
+			return fmt.Errorf("invalid http address: %s", c.Address)
+		}
+	}
+
+	return nil
 }
 
 func Ptr[T any](v T) *T {

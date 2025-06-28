@@ -5,11 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"os/signal"
-	"os/user"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -19,18 +15,17 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/getsentry/sentry-go"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	api "github.com/furisto/construct/api/go/client"
 )
 
-var globalOptions struct {
+type globalOptions struct {
 	Verbose bool
 }
 
 func NewRootCmd() *cobra.Command {
+	options := globalOptions{}
 	cmd := &cobra.Command{
 		Use:   "construct",
 		Short: "Construct: Build intelligent agents.",
@@ -41,7 +36,7 @@ func NewRootCmd() *cobra.Command {
 			})))
 
 			if requiresContext(cmd) {
-				err := setAPIClient(cmd.Context(), cmd)
+				err := setAPIClient(cmd.Context(), cmd, options)
 				if err != nil {
 					slog.Error("failed to set API client", "error", err)
 					return err
@@ -52,7 +47,7 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().BoolVarP(&globalOptions.Verbose, "verbose", "v", false, "verbose output")
+	cmd.PersistentFlags().BoolVarP(&options.Verbose, "verbose", "v", false, "verbose output")
 
 	cmd.AddGroup(
 		&cobra.Group{
@@ -122,21 +117,26 @@ func Execute() {
 	sentry.Flush(2 * time.Second)
 }
 
-func setAPIClient(ctx context.Context, cmd *cobra.Command) error {
+func setAPIClient(ctx context.Context, cmd *cobra.Command, options globalOptions) error {
 	if getAPIClient(ctx) != nil {
 		return nil
 	}
 
-	endpointContext, err := loadContext(cmd)
+	endpointContexts, err := NewContextManager(getFileSystem(cmd.Context()), getUserInfo(cmd.Context())).LoadContext()
 	if err != nil {
 		return err
 	}
 
-	if endpointContext.Current == "" {
-		return fmt.Errorf("no current context found. please run `construct context set` to set a current context")
+	if err := endpointContexts.Validate(); err != nil {
+		return err
 	}
 
-	apiClient := api.NewClient(endpointContext.Contexts[endpointContext.Current])
+	endpointContext, ok := endpointContexts.Current()
+	if !ok {
+		return fmt.Errorf("no current context found. please run `construct config context set` to set a current context")
+	}
+
+	apiClient := api.NewClient(endpointContext)
 	cmd.SetContext(context.WithValue(cmd.Context(), ContextKeyAPIClient, apiClient))
 
 	return nil
@@ -157,168 +157,6 @@ func requiresContext(cmd *cobra.Command) bool {
 	}
 
 	return true
-}
-
-func loadContext(cmd *cobra.Command) (*api.EndpointContexts, error) {
-	fs := getFileSystem(cmd.Context())
-
-	constructDir, err := getUserInfo(cmd.Context()).ConstructDir()
-	if err != nil {
-		return nil, err
-	}
-
-	endpointContextsFile := filepath.Join(constructDir, "context.yaml")
-	exists, err := fs.Exists(endpointContextsFile)
-	if err != nil {
-		return nil, err
-	}
-
-	if !exists {
-		return nil, fmt.Errorf("construct context not found. please run `construct daemon install` to create a new context")
-	}
-
-	content, err := fs.ReadFile(endpointContextsFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var endpointContexts api.EndpointContexts
-	err = yaml.Unmarshal(content, &endpointContexts)
-	if err != nil {
-		return nil, err
-	}
-
-	return &endpointContexts, nil
-}
-
-type ContextKey string
-
-const (
-	ContextKeyAPIClient       ContextKey = "api_client"
-	ContextKeyFileSystem      ContextKey = "filesystem"
-	ContextKeyOutputRenderer  ContextKey = "output_renderer"
-	ContextKeyCommandRunner   ContextKey = "command_runner"
-	ContextKeyEndpointContext ContextKey = "endpoint_context"
-	ContextKeyRuntimeInfo     ContextKey = "runtime_info"
-	ContextKeyUserInfo        ContextKey = "user_info"
-)
-
-func getAPIClient(ctx context.Context) *api.Client {
-	apiClient := ctx.Value(ContextKeyAPIClient)
-	if apiClient != nil {
-		return apiClient.(*api.Client)
-	}
-
-	return nil
-}
-
-func getFileSystem(ctx context.Context) *afero.Afero {
-	fs := ctx.Value(ContextKeyFileSystem)
-	if fs != nil {
-		return fs.(*afero.Afero)
-	}
-
-	return &afero.Afero{Fs: afero.NewOsFs()}
-}
-
-//go:generate mockgen -destination=mocks/command_runner_mock.go -package=mocks . CommandRunner
-type CommandRunner interface {
-	Run(ctx context.Context, command string, args ...string) (string, error)
-}
-
-type RuntimeInfo interface {
-	GOOS() string
-}
-
-//go:generate mockgen -destination=mocks/user_info_mock.go -package=mocks . UserInfo
-type UserInfo interface {
-	UserID() string
-	HomeDir() (string, error)
-	ConstructDir() (string, error)
-}
-
-type DefaultCommandRunner struct{}
-
-func (r *DefaultCommandRunner) Run(ctx context.Context, command string, args ...string) (string, error) {
-	cmd := exec.CommandContext(ctx, command, args...)
-	output, err := cmd.CombinedOutput()
-	return string(output), err
-}
-
-type DefaultRuntimeInfo struct{}
-
-func (r *DefaultRuntimeInfo) GOOS() string {
-	return runtime.GOOS
-}
-
-type DefaultUserInfo struct {
-	fs *afero.Afero
-}
-
-func NewDefaultUserInfo(fs *afero.Afero) *DefaultUserInfo {
-	return &DefaultUserInfo{fs: fs}
-}
-
-func (u *DefaultUserInfo) UserID() string {
-	user, err := user.Current()
-	if err != nil {
-		return ""
-	}
-	return user.Uid
-}
-
-func (u *DefaultUserInfo) HomeDir() (string, error) {
-	return os.UserHomeDir()
-}
-
-func (u *DefaultUserInfo) ConstructDir() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	constructDir := filepath.Join(homeDir, ".construct")
-	if err := u.fs.MkdirAll(constructDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create construct directory: %w", err)
-	}
-
-	return constructDir, nil
-}
-
-func getCommandRunner(ctx context.Context) CommandRunner {
-	runner := ctx.Value(ContextKeyCommandRunner)
-	if runner != nil {
-		return runner.(CommandRunner)
-	}
-
-	return &DefaultCommandRunner{}
-}
-
-func getRuntimeInfo(ctx context.Context) RuntimeInfo {
-	runtimeInfo := ctx.Value(ContextKeyRuntimeInfo)
-	if runtimeInfo != nil {
-		return runtimeInfo.(RuntimeInfo)
-	}
-
-	return &DefaultRuntimeInfo{}
-}
-
-func getUserInfo(ctx context.Context) UserInfo {
-	userInfo := ctx.Value(ContextKeyUserInfo)
-	if userInfo != nil {
-		return userInfo.(UserInfo)
-	}
-
-	return NewDefaultUserInfo(getFileSystem(ctx))
-}
-
-func getRenderer(ctx context.Context) OutputRenderer {
-	printer := ctx.Value(ContextKeyOutputRenderer)
-	if printer != nil {
-		return printer.(OutputRenderer)
-	}
-
-	return &DefaultRenderer{}
 }
 
 func confirmDeletion(stdin io.Reader, stdout io.Writer, kind string, idOrNames []string) bool {

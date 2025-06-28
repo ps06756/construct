@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
+	"net"
 
 	"entgo.io/ent/dialect"
 	"github.com/furisto/construct/backend/agent"
@@ -37,7 +38,9 @@ func NewDaemonRunCmd() *cobra.Command {
 		  - If launched by systemd: uses HTTP address if provided, otherwise uses socket activation  
 		  - If not launched by systemd: uses provided HTTP address or Unix socket`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			homeDir, err := os.UserHomeDir()
+			userInfo := getUserInfo(cmd.Context())
+
+			homeDir, err := userInfo.HomeDir()
 			if err != nil {
 				return err
 			}
@@ -65,6 +68,15 @@ func NewDaemonRunCmd() *cobra.Command {
 			listener, err := provider.Create()
 			if err != nil {
 				return fmt.Errorf("failed to create listener: %w", err)
+			}
+
+			if explicitLaunch(provider.ActivationType()) {
+				contextManager := NewContextManager(getFileSystem(cmd.Context()), getUserInfo(cmd.Context()))
+				contextName := generateContextName(provider.ActivationType(), listener)
+				_, err = contextManager.UpsertContext(contextName, provider.ActivationType(), listener.Addr().String(), true)
+				if err != nil {
+					return fmt.Errorf("failed to upsert context: %w", err)
+				}
 			}
 
 			runtime, err := agent.NewRuntime(
@@ -95,6 +107,15 @@ func NewDaemonRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&options.UnixSocket, "listen-unix", "", "The path to listen on for Unix socket requests")
 
 	return cmd
+}
+
+func explicitLaunch(kind string) bool {
+	return kind == "unix" || kind == "tcp"
+}
+
+func generateContextName(kind string, listener net.Listener) string {
+	hash := sha256.Sum256([]byte(listener.Addr().String()))
+	return fmt.Sprintf("%s-%x", kind, hash[:3])
 }
 
 func getEncryptionClient() (*secret.Client, error) {

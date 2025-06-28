@@ -43,5 +43,5 @@ func (p *UnixSocketProvider) Close() error {
 }
 
 func (p *UnixSocketProvider) ActivationType() string {
-	return "unixsocket"
+	return "unix"
 }

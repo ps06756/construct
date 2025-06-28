@@ -19,7 +19,6 @@ import (
 	"github.com/furisto/construct/frontend/cli/pkg/fail"
 	"github.com/furisto/construct/frontend/cli/pkg/terminal"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 const DefaultInstallDirectory = "/usr/local/bin"
@@ -309,18 +308,6 @@ func createOrUpdateContext(ctx context.Context, out io.Writer, socketType string
 	fs := getFileSystem(ctx)
 	userInfo := getUserInfo(ctx)
 
-	homeDir, err := userInfo.HomeDir()
-	if err != nil {
-		return nil, fail.HandleError(err)
-	}
-	constructDir := filepath.Join(homeDir, ".construct")
-
-	err = fs.MkdirAll(constructDir, 0755)
-	if err != nil {
-		return nil, fail.HandleError(err)
-	}
-	contextFile := filepath.Join(constructDir, "context.yaml")
-
 	var address string
 	switch socketType {
 	case "http":
@@ -331,52 +318,25 @@ func createOrUpdateContext(ctx context.Context, out io.Writer, socketType string
 		return nil, fmt.Errorf("invalid socket type: %s", socketType)
 	}
 
-	var endpointContexts api.EndpointContexts
-	exists, err := fs.Exists(contextFile)
+	contextManager := NewContextManager(fs, userInfo)
+	exists, err := contextManager.UpsertContext(options.Name, socketType, address, true)
 	if err != nil {
 		return nil, fail.HandleError(err)
 	}
 
 	if exists {
-		content, err := fs.ReadFile(contextFile)
-		if err != nil {
-			return nil, fail.HandleError(err)
-		}
-		err = yaml.Unmarshal(content, &endpointContexts)
-		if err != nil {
-			return nil, fail.HandleError(err)
-		}
-	}
-
-	contextName := options.Name
-	if endpointContexts.Contexts == nil {
-		endpointContexts.Contexts = make(map[string]api.EndpointContext)
-	}
-
-	endpointContexts.Contexts[contextName] = api.EndpointContext{
-		Address: address,
-		Type:    socketType,
-	}
-
-	endpointContexts.Current = contextName
-
-	content, err := yaml.Marshal(&endpointContexts)
-	if err != nil {
-		return nil, fail.HandleError(err)
-	}
-
-	err = fs.WriteFile(contextFile, content, 0644)
-	if err != nil {
-		return nil, fail.HandleError(err)
-	}
-
-	if exists {
-		fmt.Fprintf(out, " %s Context '%s' updated\n", terminal.SuccessSymbol, contextName)
+		fmt.Fprintf(out, " %s Context '%s' updated\n", terminal.SuccessSymbol, options.Name)
 	} else {
-		fmt.Fprintf(out, " %s Context '%s' created\n", terminal.SuccessSymbol, contextName)
+		fmt.Fprintf(out, " %s Context '%s' created\n", terminal.SuccessSymbol, options.Name)
 	}
 
-	return api.Ptr(endpointContexts.Contexts[contextName]), nil
+	endpointContexts, err := contextManager.LoadContext()
+	if err != nil {
+		return nil, fail.HandleError(err)
+	}
+
+	endpointContext, _ := endpointContexts.Current()
+	return &endpointContext, nil
 }
 
 func checkConnectionAndSetupStatus(ctx context.Context, out io.Writer, endpoint api.EndpointContext) (bool, error) {
@@ -428,8 +388,8 @@ func buildTroubleshootingMessage(ctx context.Context, endpointContext *api.Endpo
 	var endpointSolution strings.Builder
 	endpointSolution.WriteString("Verify the daemon endpoint:\n")
 	endpointSolution.WriteString(fmt.Sprintf("   Address: %s\n", endpointContext.Address))
-	endpointSolution.WriteString(fmt.Sprintf("   Type: %s\n", endpointContext.Type))
-	if endpointContext.Type == "unix" {
+	endpointSolution.WriteString(fmt.Sprintf("   Type: %s\n", endpointContext.Kind))
+	if endpointContext.Kind == "unix" {
 		endpointSolution.WriteString("   Check if socket file exists and has correct permissions:\n")
 		if strings.HasPrefix(endpointContext.Address, "unix://") {
 			socketPath := strings.TrimPrefix(endpointContext.Address, "unix://")
@@ -464,7 +424,7 @@ func buildTroubleshootingMessage(ctx context.Context, endpointContext *api.Endpo
 	reinstallSolution.WriteString("Try reinstalling the daemon:\n")
 	reinstallSolution.WriteString("   construct daemon uninstall\n")
 	reinstallSolution.WriteString("   construct daemon install")
-	if endpointContext.Type == "http" {
+	if endpointContext.Kind == "http" {
 		reinstallSolution.WriteString(" --listen-http " + endpointContext.Address)
 	}
 	solutions = append(solutions, reinstallSolution.String())

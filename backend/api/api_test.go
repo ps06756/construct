@@ -59,7 +59,7 @@ func (s *ServiceTestSetup[Request, Response]) RunServiceTests(t *testing.T, scen
 
 	apiClient := api_client.NewClient(api_client.EndpointContext{
 		Address: server.API.URL + "/api",
-		Type:    "http",
+		Kind:    "http",
 	})
 
 	if s.Debug {

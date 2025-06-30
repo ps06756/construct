@@ -183,7 +183,15 @@ func (m *model) onTextInput(msg tea.KeyMsg) tea.Cmd {
 		_, err := m.apiClient.Message().CreateMessage(context.Background(), &connect.Request[v1.CreateMessageRequest]{
 			Msg: &v1.CreateMessageRequest{
 				TaskId:  m.task.Metadata.Id,
-				Content: userInput,
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: userInput,
+							},
+						},
+					},
+				},
 			},
 		})
 		if err != nil {

@@ -36,7 +36,15 @@ func TestCreateMessage(t *testing.T) {
 			Name: "invalid task ID",
 			Request: &v1.CreateMessageRequest{
 				TaskId:  "not-a-valid-uuid",
-				Content: "Test message content",
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: "Test message content",
+							},
+						},
+					},
+				},
 			},
 			Expected: ServiceTestExpectation[v1.CreateMessageResponse]{
 				Error: "invalid_argument: invalid task ID format: invalid UUID length: 16",
@@ -46,7 +54,15 @@ func TestCreateMessage(t *testing.T) {
 			Name: "task not found",
 			Request: &v1.CreateMessageRequest{
 				TaskId:  taskID.String(),
-				Content: "Test message content",
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: "Test message content",
+							},
+						},
+					},
+				},
 			},
 			Expected: ServiceTestExpectation[v1.CreateMessageResponse]{
 				Error: "not_found: task not found",
@@ -64,7 +80,15 @@ func TestCreateMessage(t *testing.T) {
 			},
 			Request: &v1.CreateMessageRequest{
 				TaskId:  taskID.String(),
-				Content: "Test message content",
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: "Test message content",
+							},
+						},
+					},
+				},
 			},
 			Expected: ServiceTestExpectation[v1.CreateMessageResponse]{
 				Response: v1.CreateMessageResponse{
@@ -528,7 +552,15 @@ func TestUpdateMessage(t *testing.T) {
 			Name: "invalid id format",
 			Request: &v1.UpdateMessageRequest{
 				Id:      "not-a-valid-uuid",
-				Content: "Updated content",
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: "Updated content",
+							},
+						},
+					},
+				},
 			},
 			Expected: ServiceTestExpectation[v1.UpdateMessageResponse]{
 				Error: "invalid_argument: invalid ID format: invalid UUID length: 16",
@@ -538,7 +570,15 @@ func TestUpdateMessage(t *testing.T) {
 			Name: "message not found",
 			Request: &v1.UpdateMessageRequest{
 				Id:      messageID.String(),
-				Content: "Updated content",
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: "Updated content",
+							},
+						},
+					},
+				},
 			},
 			Expected: ServiceTestExpectation[v1.UpdateMessageResponse]{
 				Error: "not_found: message not found",
@@ -567,7 +607,15 @@ func TestUpdateMessage(t *testing.T) {
 			},
 			Request: &v1.UpdateMessageRequest{
 				Id:      messageID.String(),
-				Content: "Updated content",
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: "Updated content",
+							},
+						},
+					},
+				},
 			},
 			Expected: ServiceTestExpectation[v1.UpdateMessageResponse]{
 				Response: v1.UpdateMessageResponse{

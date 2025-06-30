@@ -40,8 +40,16 @@ func TestMessageCreate(t *testing.T) {
 					gomock.Any(),
 					&connect.Request[v1.CreateMessageRequest]{
 						Msg: &v1.CreateMessageRequest{
-							TaskId:  taskID1,
-							Content: "Test message",
+							TaskId: taskID1,
+							Content: []*v1.MessagePart{
+								{
+									Data: &v1.MessagePart_Text_{
+										Text: &v1.MessagePart_Text{
+											Content: "Test message",
+										},
+									},
+								},
+							},
 						},
 					},
 				).Return(nil, connect.NewError(connect.CodeInternal, nil))
@@ -58,8 +66,16 @@ func setupMessageCreateMock(mockClient *api_client.MockClient, taskID, content, 
 		gomock.Any(),
 		&connect.Request[v1.CreateMessageRequest]{
 			Msg: &v1.CreateMessageRequest{
-				TaskId:  taskID,
-				Content: content,
+				TaskId: taskID,
+				Content: []*v1.MessagePart{
+					{
+						Data: &v1.MessagePart_Text_{
+							Text: &v1.MessagePart_Text{
+								Content: content,
+							},
+						},
+					},
+				},
 			},
 		},
 	).Return(&connect.Response[v1.CreateMessageResponse]{

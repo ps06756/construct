@@ -493,8 +493,8 @@ type CreateMessageRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// task_id references the task this message will belong to (UUID format).
 	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	// content is the text content of the message (minimum 1 character).
-	Content       string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	// content is the content of the message.
+	Content       []*MessagePart `protobuf:"bytes,2,rep,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -536,11 +536,11 @@ func (x *CreateMessageRequest) GetTaskId() string {
 	return ""
 }
 
-func (x *CreateMessageRequest) GetContent() string {
+func (x *CreateMessageRequest) GetContent() []*MessagePart {
 	if x != nil {
 		return x.Content
 	}
-	return ""
+	return nil
 }
 
 // CreateMessageResponse contains the newly created message.
@@ -823,8 +823,8 @@ type UpdateMessageRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// id is the unique identifier of the message to update (UUID format).
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// content is the new text content for the message (minimum 1 character).
-	Content       string `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	// content is the new content for the message.
+	Content       []*MessagePart `protobuf:"bytes,2,rep,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -866,11 +866,11 @@ func (x *UpdateMessageRequest) GetId() string {
 	return ""
 }
 
-func (x *UpdateMessageRequest) GetContent() string {
+func (x *UpdateMessageRequest) GetContent() []*MessagePart {
 	if x != nil {
 		return x.Content
 	}
-	return ""
+	return nil
 }
 
 // UpdateMessageResponse contains the updated message.
@@ -1134,21 +1134,22 @@ const file_construct_v1_message_proto_rawDesc = "" +
 	"\vMessageSpec\x123\n" +
 	"\acontent\x18\x01 \x03(\v2\x19.construct.v1.MessagePartR\acontent\"A\n" +
 	"\rMessageStatus\x120\n" +
-	"\x05usage\x18\x01 \x01(\v2\x1a.construct.v1.MessageUsageR\x05usage\"m\n" +
+	"\x05usage\x18\x01 \x01(\v2\x1a.construct.v1.MessageUsageR\x05usage\"z\n" +
 	"\vMessagePart\x124\n" +
-	"\x04text\x18\x01 \x01(\v2\x1e.construct.v1.MessagePart.TextH\x00R\x04text\x1a \n" +
-	"\x04Text\x12\x18\n" +
-	"\acontent\x18\x01 \x01(\tR\acontentB\x06\n" +
+	"\x04text\x18\x01 \x01(\v2\x1e.construct.v1.MessagePart.TextH\x00R\x04text\x1a-\n" +
+	"\x04Text\x12%\n" +
+	"\acontent\x18\x01 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\acontentB\x06\n" +
 	"\x04data\"\xc4\x01\n" +
 	"\fMessageUsage\x12!\n" +
 	"\finput_tokens\x18\x01 \x01(\x03R\vinputTokens\x12#\n" +
 	"\routput_tokens\x18\x02 \x01(\x03R\foutputTokens\x12,\n" +
 	"\x12cache_write_tokens\x18\x03 \x01(\x03R\x10cacheWriteTokens\x12*\n" +
 	"\x11cache_read_tokens\x18\x04 \x01(\x03R\x0fcacheReadTokens\x12\x12\n" +
-	"\x04cost\x18\x05 \x01(\x01R\x04cost\"\\\n" +
+	"\x04cost\x18\x05 \x01(\x01R\x04cost\"z\n" +
 	"\x14CreateMessageRequest\x12!\n" +
-	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\x12!\n" +
-	"\acontent\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\acontent\"P\n" +
+	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\x12?\n" +
+	"\acontent\x18\x02 \x03(\v2\x19.construct.v1.MessagePartB\n" +
+	"\xbaH\a\x92\x01\x04\b\x01\x10\x19R\acontent\"P\n" +
 	"\x15CreateMessageResponse\x127\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.construct.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"-\n" +
 	"\x11GetMessageRequest\x12\x18\n" +
@@ -1181,10 +1182,11 @@ const file_construct_v1_message_proto_rawDesc = "" +
 	"\v_sort_order\"q\n" +
 	"\x14ListMessagesResponse\x121\n" +
 	"\bmessages\x18\x01 \x03(\v2\x15.construct.v1.MessageR\bmessages\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"S\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"q\n" +
 	"\x14UpdateMessageRequest\x12\x18\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12!\n" +
-	"\acontent\x18\x02 \x01(\tB\a\xbaH\x04r\x02\x10\x01R\acontent\"P\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12?\n" +
+	"\acontent\x18\x02 \x03(\v2\x19.construct.v1.MessagePartB\n" +
+	"\xbaH\a\x92\x01\x04\b\x01\x10\x19R\acontent\"P\n" +
 	"\x15UpdateMessageResponse\x127\n" +
 	"\amessage\x18\x01 \x01(\v2\x15.construct.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"0\n" +
 	"\x14DeleteMessageRequest\x12\x18\n" +
@@ -1250,29 +1252,31 @@ var file_construct_v1_message_proto_depIdxs = []int32{
 	5,  // 6: construct.v1.MessageSpec.content:type_name -> construct.v1.MessagePart
 	6,  // 7: construct.v1.MessageStatus.usage:type_name -> construct.v1.MessageUsage
 	17, // 8: construct.v1.MessagePart.text:type_name -> construct.v1.MessagePart.Text
-	1,  // 9: construct.v1.CreateMessageResponse.message:type_name -> construct.v1.Message
-	1,  // 10: construct.v1.GetMessageResponse.message:type_name -> construct.v1.Message
-	18, // 11: construct.v1.ListMessagesRequest.filter:type_name -> construct.v1.ListMessagesRequest.Filter
-	20, // 12: construct.v1.ListMessagesRequest.sort_field:type_name -> construct.v1.SortField
-	21, // 13: construct.v1.ListMessagesRequest.sort_order:type_name -> construct.v1.SortOrder
-	1,  // 14: construct.v1.ListMessagesResponse.messages:type_name -> construct.v1.Message
-	1,  // 15: construct.v1.UpdateMessageResponse.message:type_name -> construct.v1.Message
-	0,  // 16: construct.v1.ListMessagesRequest.Filter.roles:type_name -> construct.v1.MessageRole
-	7,  // 17: construct.v1.MessageService.CreateMessage:input_type -> construct.v1.CreateMessageRequest
-	9,  // 18: construct.v1.MessageService.GetMessage:input_type -> construct.v1.GetMessageRequest
-	11, // 19: construct.v1.MessageService.ListMessages:input_type -> construct.v1.ListMessagesRequest
-	13, // 20: construct.v1.MessageService.UpdateMessage:input_type -> construct.v1.UpdateMessageRequest
-	15, // 21: construct.v1.MessageService.DeleteMessage:input_type -> construct.v1.DeleteMessageRequest
-	8,  // 22: construct.v1.MessageService.CreateMessage:output_type -> construct.v1.CreateMessageResponse
-	10, // 23: construct.v1.MessageService.GetMessage:output_type -> construct.v1.GetMessageResponse
-	12, // 24: construct.v1.MessageService.ListMessages:output_type -> construct.v1.ListMessagesResponse
-	14, // 25: construct.v1.MessageService.UpdateMessage:output_type -> construct.v1.UpdateMessageResponse
-	16, // 26: construct.v1.MessageService.DeleteMessage:output_type -> construct.v1.DeleteMessageResponse
-	22, // [22:27] is the sub-list for method output_type
-	17, // [17:22] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	5,  // 9: construct.v1.CreateMessageRequest.content:type_name -> construct.v1.MessagePart
+	1,  // 10: construct.v1.CreateMessageResponse.message:type_name -> construct.v1.Message
+	1,  // 11: construct.v1.GetMessageResponse.message:type_name -> construct.v1.Message
+	18, // 12: construct.v1.ListMessagesRequest.filter:type_name -> construct.v1.ListMessagesRequest.Filter
+	20, // 13: construct.v1.ListMessagesRequest.sort_field:type_name -> construct.v1.SortField
+	21, // 14: construct.v1.ListMessagesRequest.sort_order:type_name -> construct.v1.SortOrder
+	1,  // 15: construct.v1.ListMessagesResponse.messages:type_name -> construct.v1.Message
+	5,  // 16: construct.v1.UpdateMessageRequest.content:type_name -> construct.v1.MessagePart
+	1,  // 17: construct.v1.UpdateMessageResponse.message:type_name -> construct.v1.Message
+	0,  // 18: construct.v1.ListMessagesRequest.Filter.roles:type_name -> construct.v1.MessageRole
+	7,  // 19: construct.v1.MessageService.CreateMessage:input_type -> construct.v1.CreateMessageRequest
+	9,  // 20: construct.v1.MessageService.GetMessage:input_type -> construct.v1.GetMessageRequest
+	11, // 21: construct.v1.MessageService.ListMessages:input_type -> construct.v1.ListMessagesRequest
+	13, // 22: construct.v1.MessageService.UpdateMessage:input_type -> construct.v1.UpdateMessageRequest
+	15, // 23: construct.v1.MessageService.DeleteMessage:input_type -> construct.v1.DeleteMessageRequest
+	8,  // 24: construct.v1.MessageService.CreateMessage:output_type -> construct.v1.CreateMessageResponse
+	10, // 25: construct.v1.MessageService.GetMessage:output_type -> construct.v1.GetMessageResponse
+	12, // 26: construct.v1.MessageService.ListMessages:output_type -> construct.v1.ListMessagesResponse
+	14, // 27: construct.v1.MessageService.UpdateMessage:output_type -> construct.v1.UpdateMessageResponse
+	16, // 28: construct.v1.MessageService.DeleteMessage:output_type -> construct.v1.DeleteMessageResponse
+	24, // [24:29] is the sub-list for method output_type
+	19, // [19:24] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_construct_v1_message_proto_init() }

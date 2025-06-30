@@ -27,8 +27,16 @@ func NewMessageCreateCmd() *cobra.Command {
 
 			resp, err := client.Message().CreateMessage(cmd.Context(), &connect.Request[v1.CreateMessageRequest]{
 				Msg: &v1.CreateMessageRequest{
-					TaskId:  args[0],
-					Content: args[1],
+					TaskId: args[0],
+					Content: []*v1.MessagePart{
+						{
+							Data: &v1.MessagePart_Text_{
+								Text: &v1.MessagePart_Text{
+									Content: args[1],
+								},
+							},
+						},
+					},
 				},
 			})
 

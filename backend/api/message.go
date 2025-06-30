@@ -24,7 +24,7 @@ func NewMessageHandler(db *memory.Client, runtime AgentRuntime, messageHub *stre
 		runtime:    runtime,
 		messageHub: messageHub,
 	}
-} 
+}
 
 type MessageHandler struct {
 	db         *memory.Client
@@ -45,18 +45,9 @@ func (h *MessageHandler) CreateMessage(ctx context.Context, req *connect.Request
 			return nil, err
 		}
 
-		content := &types.MessageContent{
-			Blocks: []types.MessageBlock{
-				{
-					Kind:    types.MessageBlockKindText,
-					Payload: req.Msg.Content,
-				},
-			},
-		}
-
 		return tx.Message.Create().
 			SetTask(task).
-			SetContent(content).
+			SetContent(conv.ConvertProtoContentToMemory(req.Msg.Content)).
 			SetSource(types.MessageSourceUser).
 			Save(ctx)
 	})
@@ -82,7 +73,7 @@ func (h *MessageHandler) GetMessage(ctx context.Context, req *connect.Request[v1
 	if err != nil {
 		return nil, apiError(connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid ID format: %w", err)))
 	}
-	
+
 	msg, err := h.db.Message.Query().
 		Where(message.ID(id)).
 		First(ctx)
@@ -158,17 +149,8 @@ func (h *MessageHandler) UpdateMessage(ctx context.Context, req *connect.Request
 		return nil, apiError(connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid ID format: %w", err)))
 	}
 
-	content := &types.MessageContent{
-		Blocks: []types.MessageBlock{
-			{
-				Kind:    types.MessageBlockKindText,
-				Payload: req.Msg.Content,
-			},
-		},
-	}
-
 	msg, err := h.db.Message.UpdateOneID(id).
-		SetContent(content).
+		SetContent(conv.ConvertProtoContentToMemory(req.Msg.Content)).
 		Save(ctx)
 	if err != nil {
 		return nil, apiError(err)
@@ -197,4 +179,3 @@ func (h *MessageHandler) DeleteMessage(ctx context.Context, req *connect.Request
 
 	return connect.NewResponse(&v1.DeleteMessageResponse{}), nil
 }
-

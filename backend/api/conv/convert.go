@@ -39,7 +39,17 @@ func ConvertUUIDPtrToString(id *uuid.UUID) string {
 }
 
 func ConvertStringToUUID(id string) (uuid.UUID, error) {
+	if id == "" {
+		return uuid.Nil, nil
+	}
 	return uuid.Parse(id)
+}
+
+func ConvertStringPtrToUUID(id *string) (uuid.UUID, error) {
+	if id == nil {
+		return uuid.Nil, nil
+	}
+	return uuid.Parse(*id)
 }
 
 func ConvertTimeToTimestamp(t time.Time) *timestamppb.Timestamp {

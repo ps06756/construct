@@ -58,7 +58,7 @@ func (s *ServiceTestSetup[Request, Response]) RunServiceTests(t *testing.T, scen
 	defer server.Close()
 
 	apiClient := api_client.NewClient(api_client.EndpointContext{
-		Address: server.API.URL + "/api",
+		Address: server.API.URL,
 		Kind:    "http",
 	})
 

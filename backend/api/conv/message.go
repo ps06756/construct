@@ -78,3 +78,96 @@ func convertContent(content *types.MessageContent) string {
 	}
 	return ""
 }
+
+func ConvertProtoMessageToMemory(m *v1.Message) (*memory.Message, error) {
+	if m == nil {
+		return nil, fmt.Errorf("message is nil")
+	}
+
+	messageID, err := ConvertStringToUUID(m.Metadata.Id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid message ID: %w", err)
+	}
+
+	taskID, err := ConvertStringToUUID(m.Metadata.TaskId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid task ID: %w", err)
+	}
+
+	agentID, err := ConvertStringPtrToUUID(m.Metadata.AgentId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid agent ID: %w", err)
+	}
+
+	modelID, err := ConvertStringPtrToUUID(m.Metadata.ModelId)
+	if err != nil {
+		return nil, fmt.Errorf("invalid model ID: %w", err)
+	}
+
+	source, err := ConvertProtoRoleToMemoryRole(m.Metadata.Role)
+	if err != nil {
+		return nil, fmt.Errorf("invalid message role: %w", err)
+	}
+
+	return &memory.Message{
+		ID:         messageID,
+		CreateTime: m.Metadata.CreatedAt.AsTime(),
+		UpdateTime: m.Metadata.UpdatedAt.AsTime(),
+		TaskID:     taskID,
+		AgentID:    agentID,
+		ModelID:    modelID,
+		Source:     source,
+		Content:    ConvertProtoContentToMemory(m.Spec.Content),
+		Usage:      ConvertProtoUsageToMemoryUsage(m.Status.Usage),
+	}, nil
+}
+
+func ConvertProtoRoleToMemoryRole(role v1.MessageRole) (types.MessageSource, error) {
+	switch role {
+	case v1.MessageRole_MESSAGE_ROLE_USER:
+		return types.MessageSourceUser, nil
+	case v1.MessageRole_MESSAGE_ROLE_ASSISTANT:
+		return types.MessageSourceAssistant, nil
+	default:
+		return "", fmt.Errorf("invalid message role: %v", role)
+	}
+}
+
+func ConvertProtoContentToMemory(content []*v1.MessagePart) *types.MessageContent {
+	if len(content) == 0 {
+		return nil
+	}
+
+	blocks := make([]types.MessageBlock, 0, len(content))
+	for _, part := range content {
+		if part.Data == nil {
+			continue
+		}
+
+		switch messagePart := part.Data.(type) {
+		case *v1.MessagePart_Text_:
+			blocks = append(blocks, types.MessageBlock{
+				Kind:    types.MessageBlockKindText,
+				Payload: messagePart.Text.Content,
+			})
+		}
+	}
+
+	return &types.MessageContent{
+		Blocks: blocks,
+	}
+}
+
+func ConvertProtoUsageToMemoryUsage(usage *v1.MessageUsage) *types.MessageUsage {
+	if usage == nil {
+		return nil
+	}
+
+	return &types.MessageUsage{
+		InputTokens:      usage.InputTokens,
+		OutputTokens:     usage.OutputTokens,
+		CacheWriteTokens: usage.CacheWriteTokens,
+		CacheReadTokens:  usage.CacheReadTokens,
+		Cost:             usage.Cost,
+	}
+}

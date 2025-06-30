@@ -576,7 +576,7 @@ type UpdateAgentRequest struct {
 	Name *string `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
 	// description is the new description for the agent (max 1000 characters, optional).
 	Description *string `protobuf:"bytes,3,opt,name=description,proto3,oneof" json:"description,omitempty"`
-	// instructions are the new instructions for the agent (1-10000 characters, optional).
+	// instructions are the new instructions for the agent (1-65536 characters, optional).
 	Instructions *string `protobuf:"bytes,4,opt,name=instructions,proto3,oneof" json:"instructions,omitempty"`
 	// model_id is the new model reference for the agent (UUID format, optional).
 	ModelId       *string `protobuf:"bytes,5,opt,name=model_id,json=modelId,proto3,oneof" json:"model_id,omitempty"`
@@ -873,14 +873,13 @@ const file_construct_v1_agent_proto_rawDesc = "" +
 	"\v_sort_order\"i\n" +
 	"\x12ListAgentsResponse\x12+\n" +
 	"\x06agents\x18\x01 \x03(\v2\x13.construct.v1.AgentR\x06agents\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x9a\x02\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x9b\x02\n" +
 	"\x12UpdateAgentRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12#\n" +
 	"\x04name\x18\x02 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\xff\x01H\x00R\x04name\x88\x01\x01\x12/\n" +
-	"\vdescription\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aH\x01R\vdescription\x88\x01\x01\x123\n" +
-	"\finstructions\x18\x04 \x01(\tB\n" +
-	"\xbaH\ar\x05\x10\x01\x18\x90NH\x02R\finstructions\x88\x01\x01\x12(\n" +
+	"\vdescription\x18\x03 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aH\x01R\vdescription\x88\x01\x01\x124\n" +
+	"\finstructions\x18\x04 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04H\x02R\finstructions\x88\x01\x01\x12(\n" +
 	"\bmodel_id\x18\x05 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x03R\amodelId\x88\x01\x01B\a\n" +
 	"\x05_nameB\x0e\n" +
 	"\f_descriptionB\x0f\n" +

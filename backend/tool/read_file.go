@@ -1,9 +1,12 @@
 package tool
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/sobek"
 	"github.com/spf13/afero"
@@ -23,11 +26,12 @@ Returns an object containing the file content as a string:
 %[1]s
 {
   "path": "The absolute path of the file",
-  "content": "The complete content of the file as a string"
+  "content": "1: The complete content of the file as a string"
 }
 %[1]s
 
-If the file doesn't exist or cannot be read, it will throw an exception describing the issue.
+If the file doesn't exist or cannot be read, it will throw an exception describing the issue. The content will be returned with line numbers prefixed to each line. 
+The line numbers are not part of the actual file content, they are just for you to understand the file structure.
 
 ## IMPORTANT USAGE NOTES
 - **Check file extensions**: Ensure you're reading appropriate file types; this tool is best suited for text files
@@ -131,9 +135,32 @@ func readFile(fsys afero.Fs, input *ReadFileInput) (*ReadFileResult, error) {
 			"Please provide a valid path to a file",
 		}, "path", path)
 	}
-
-	content, err := afero.ReadFile(fsys, path)
+	
+	file, err := fsys.Open(path)
 	if err != nil {
+		return nil, codeact.NewCustomError("error reading file", []string{
+			"Verify that you have the permission to read the file",
+		}, "path", path, "error", err)
+	}
+	defer file.Close()
+
+
+	var builder strings.Builder
+	scanner := bufio.NewScanner(file)
+	lineNumber := 1
+	
+	for scanner.Scan() {
+		line := scanner.Text()
+		if lineNumber > 1 {
+			builder.WriteByte('\n')
+		}
+		builder.WriteString(strconv.Itoa(lineNumber))
+		builder.WriteString(": ")
+		builder.WriteString(line)
+		lineNumber++
+	}
+	
+	if err := scanner.Err(); err != nil {
 		return nil, codeact.NewCustomError("error reading file", []string{
 			"Verify that you have the permission to read the file",
 		}, "path", path, "error", err)
@@ -141,6 +168,6 @@ func readFile(fsys afero.Fs, input *ReadFileInput) (*ReadFileResult, error) {
 
 	return &ReadFileResult{
 		Path:    path,
-		Content: string(content),
+		Content: builder.String(),
 	}, nil
 }

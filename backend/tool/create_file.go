@@ -97,7 +97,7 @@ type CreateFileResult struct {
 
 func NewCreateFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"create_file",
+		ToolNameCreateFile,
 		fmt.Sprintf(createFileDescription, "```", "`"),
 		createFileHandler,
 	)

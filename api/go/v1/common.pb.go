@@ -126,6 +126,73 @@ func (SortOrder) EnumDescriptor() ([]byte, []int) {
 	return file_construct_v1_common_proto_rawDescGZIP(), []int{1}
 }
 
+type ToolName int32
+
+const (
+	ToolName_UNSPECIFIED      ToolName = 0
+	ToolName_EDIT_FILE        ToolName = 1
+	ToolName_CREATE_FILE      ToolName = 2
+	ToolName_READ_FILE        ToolName = 3
+	ToolName_EXECUTE_COMMAND  ToolName = 4
+	ToolName_FIND_FILE        ToolName = 5
+	ToolName_HANDOFF          ToolName = 6
+	ToolName_LIST_FILES       ToolName = 7
+	ToolName_CODE_INTERPRETER ToolName = 8
+)
+
+// Enum value maps for ToolName.
+var (
+	ToolName_name = map[int32]string{
+		0: "UNSPECIFIED",
+		1: "EDIT_FILE",
+		2: "CREATE_FILE",
+		3: "READ_FILE",
+		4: "EXECUTE_COMMAND",
+		5: "FIND_FILE",
+		6: "HANDOFF",
+		7: "LIST_FILES",
+		8: "CODE_INTERPRETER",
+	}
+	ToolName_value = map[string]int32{
+		"UNSPECIFIED":      0,
+		"EDIT_FILE":        1,
+		"CREATE_FILE":      2,
+		"READ_FILE":        3,
+		"EXECUTE_COMMAND":  4,
+		"FIND_FILE":        5,
+		"HANDOFF":          6,
+		"LIST_FILES":       7,
+		"CODE_INTERPRETER": 8,
+	}
+)
+
+func (x ToolName) Enum() *ToolName {
+	p := new(ToolName)
+	*p = x
+	return p
+}
+
+func (x ToolName) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ToolName) Descriptor() protoreflect.EnumDescriptor {
+	return file_construct_v1_common_proto_enumTypes[2].Descriptor()
+}
+
+func (ToolName) Type() protoreflect.EnumType {
+	return &file_construct_v1_common_proto_enumTypes[2]
+}
+
+func (x ToolName) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ToolName.Descriptor instead.
+func (ToolName) EnumDescriptor() ([]byte, []int) {
+	return file_construct_v1_common_proto_rawDescGZIP(), []int{2}
+}
+
 var File_construct_v1_common_proto protoreflect.FileDescriptor
 
 const file_construct_v1_common_proto_rawDesc = "" +
@@ -138,7 +205,18 @@ const file_construct_v1_common_proto_rawDesc = "" +
 	"\tSortOrder\x12\x1a\n" +
 	"\x16SORT_ORDER_UNSPECIFIED\x10\x00\x12\x12\n" +
 	"\x0eSORT_ORDER_ASC\x10\x01\x12\x13\n" +
-	"\x0fSORT_ORDER_DESC\x10\x02B(Z&github.com/furisto/construct/api/go/v1b\x06proto3"
+	"\x0fSORT_ORDER_DESC\x10\x02*\xa1\x01\n" +
+	"\bToolName\x12\x0f\n" +
+	"\vUNSPECIFIED\x10\x00\x12\r\n" +
+	"\tEDIT_FILE\x10\x01\x12\x0f\n" +
+	"\vCREATE_FILE\x10\x02\x12\r\n" +
+	"\tREAD_FILE\x10\x03\x12\x13\n" +
+	"\x0fEXECUTE_COMMAND\x10\x04\x12\r\n" +
+	"\tFIND_FILE\x10\x05\x12\v\n" +
+	"\aHANDOFF\x10\x06\x12\x0e\n" +
+	"\n" +
+	"LIST_FILES\x10\a\x12\x14\n" +
+	"\x10CODE_INTERPRETER\x10\bB(Z&github.com/furisto/construct/api/go/v1b\x06proto3"
 
 var (
 	file_construct_v1_common_proto_rawDescOnce sync.Once
@@ -152,10 +230,11 @@ func file_construct_v1_common_proto_rawDescGZIP() []byte {
 	return file_construct_v1_common_proto_rawDescData
 }
 
-var file_construct_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_construct_v1_common_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
 var file_construct_v1_common_proto_goTypes = []any{
 	(SortField)(0), // 0: construct.v1.SortField
 	(SortOrder)(0), // 1: construct.v1.SortOrder
+	(ToolName)(0),  // 2: construct.v1.ToolName
 }
 var file_construct_v1_common_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -175,7 +254,7 @@ func file_construct_v1_common_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_construct_v1_common_proto_rawDesc), len(file_construct_v1_common_proto_rawDesc)),
-			NumEnums:      2,
+			NumEnums:      3,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

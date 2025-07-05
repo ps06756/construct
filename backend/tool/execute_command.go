@@ -97,7 +97,7 @@ func (e *ExecuteCommandInput) Validate() error {
 
 func NewExecuteCommandTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"execute_command",
+		ToolNameExecuteCommand,
 		fmt.Sprintf(executeCommandDescription, "```"),
 		executeCommandHandler,
 	)

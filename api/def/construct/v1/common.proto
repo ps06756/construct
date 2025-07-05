@@ -26,3 +26,15 @@ enum SortOrder {
   // SORT_ORDER_DESC sorts results in descending order (Z-A, newest first).
   SORT_ORDER_DESC = 2;
 }
+
+enum ToolName {
+  UNSPECIFIED = 0;
+  EDIT_FILE = 1;
+  CREATE_FILE = 2;
+  READ_FILE = 3;
+  EXECUTE_COMMAND = 4;
+  FIND_FILE = 5;
+  HANDOFF = 6;
+  LIST_FILES = 7;
+  CODE_INTERPRETER = 8;
+}

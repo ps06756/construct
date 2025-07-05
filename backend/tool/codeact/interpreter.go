@@ -118,8 +118,3 @@ func (c *Interpreter) intercept(session *Session, toolName Tool, inner func(sobe
 	}
 }
 
-type InterpreterToolResult struct {
-	ID     string             `json:"id"`
-	Output *InterpreterResult `json:"result"`
-	Error  error              `json:"error"`
-}

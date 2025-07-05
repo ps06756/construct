@@ -26,7 +26,7 @@ var _ Interceptor = InterceptorFunc(nil)
 type FunctionCall struct {
 	ToolName string
 	Input    []string
-	Output   string
+	Output   any
 }
 
 func FunctionCallLogInterceptor(session *Session, tool Tool, inner func(sobek.FunctionCall) sobek.Value) func(sobek.FunctionCall) sobek.Value {
@@ -43,11 +43,7 @@ func FunctionCallLogInterceptor(session *Session, tool Tool, inner func(sobek.Fu
 		}
 
 		result := inner(call)
-		exported, err := export(result)
-		if err != nil {
-			slog.Error("failed to export result", "error", err)
-		}
-		functionResult.Output = exported
+		functionResult.Output = result.Export()
 
 		executions, ok := GetValue[[]FunctionCall](session, "executions")
 		if !ok {
@@ -117,7 +113,7 @@ func (p *FunctionResultPublisher) Intercept(session *Session, tool Tool, inner f
 						{
 							Data: &v1.MessagePart_ToolResult_{
 								ToolResult: &v1.MessagePart_ToolResult{
-									ToolName: tool.Name(),
+									ToolName:  v1.ToolName_UNSPECIFIED,
 									Arguments: arguments,
 									Result:    exported,
 									Error:     "",

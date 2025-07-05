@@ -6,8 +6,6 @@ const (
 	MessageBlockKindText                  MessageBlockKind = "text"
 	MessageBlockKindNativeToolCall        MessageBlockKind = "native_tool_call"
 	MessageBlockKindNativeToolResult      MessageBlockKind = "native_tool_result"
-	MessageBlockKindCodeActToolCall       MessageBlockKind = "code_act_tool_call"
-	MessageBlockKindCodeActToolResult     MessageBlockKind = "code_act_tool_result"
 	MessageBlockKindCodeInterpreterCall   MessageBlockKind = "code_interpreter_call"
 	MessageBlockKindCodeInterpreterResult MessageBlockKind = "code_interpreter_result"
 )

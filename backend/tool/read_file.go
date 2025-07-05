@@ -84,7 +84,7 @@ type ReadFileResult struct {
 
 func NewReadFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"read_file",
+		ToolNameReadFile,
 		fmt.Sprintf(readFileDescription, "```", "`"),
 		readFileHandler,
 	)

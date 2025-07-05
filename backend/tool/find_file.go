@@ -118,7 +118,7 @@ type FindFileResult struct {
 
 func NewFindFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"find_file",
+		ToolNameFindFile,
 		fmt.Sprintf(findFileDescription, "```"),
 		findFileHandler,
 	)

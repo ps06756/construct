@@ -85,7 +85,7 @@ print("File content:", content);
 
 func NewPrintTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"print",
+		ToolNamePrint,
 		fmt.Sprintf(printDescription, "```"),
 		printHandler,
 	)

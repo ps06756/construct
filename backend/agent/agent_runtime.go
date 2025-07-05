@@ -26,9 +26,11 @@ import (
 	"github.com/furisto/construct/backend/prompt"
 	"github.com/furisto/construct/backend/secret"
 	"github.com/furisto/construct/backend/stream"
+	"github.com/furisto/construct/backend/tool"
 	"github.com/furisto/construct/backend/tool/codeact"
 	"github.com/google/uuid"
 	"github.com/spf13/afero"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"k8s.io/client-go/util/workqueue"
 )
 
@@ -231,25 +233,77 @@ func (rt *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 		Message: protoMessage,
 	})
 
-	toolMessages, err := rt.callTools(ctx, task, message.Content)
+	toolResults, err := rt.callTools(ctx, message.Content)
 	if err != nil {
 		return err
 	}
 
-	for _, toolMessage := range toolMessages {
-		protoMessage, err := ConvertMemoryMessageToProto(toolMessage)
-		if err != nil {
-			return err
-		}
-
-		rt.eventHub.Publish(taskID, &v1.SubscribeResponse{
-			Message: protoMessage,
-		})
+	toolMessage, err := rt.saveToolResults(ctx, taskID, toolResults)
+	if err != nil {
+		return err
 	}
+
+	protoToolResults, err := ConvertToolResultsToProto(toolResults)
+	if err != nil {
+		return err
+	}
+
+	rt.eventHub.Publish(taskID, &v1.SubscribeResponse{
+		Message: &v1.Message{
+			Metadata: &v1.MessageMetadata{
+				Id:        toolMessage.ID.String(),
+				TaskId:    taskID.String(),
+				CreatedAt: timestamppb.New(toolMessage.CreateTime),
+				UpdatedAt: timestamppb.New(toolMessage.UpdateTime),
+			},
+			Spec: &v1.MessageSpec{
+				Content: protoToolResults,
+			},
+		},
+	})
 
 	rt.TriggerReconciliation(taskID)
 
 	return nil
+}
+
+func (rt *Runtime) saveToolResults(ctx context.Context, taskID uuid.UUID, toolResults []ToolResult) (*memory.Message, error) {
+	if len(toolResults) > 0 {
+		jsonResults, err := json.Marshal(toolResults)
+		if err == nil {
+			os.WriteFile("/tmp/tool_results.json", jsonResults, 0644)
+		}
+	}
+
+	toolBlocks := make([]types.MessageBlock, 0, len(toolResults))
+	for _, result := range toolResults {
+		jsonResult, err := json.Marshal(result)
+		if err != nil {
+			return nil, err
+		}
+		switch result := result.(type) {
+		case *InterpreterToolResult:
+			toolBlocks = append(toolBlocks, types.MessageBlock{
+				Kind:    types.MessageBlockKindCodeInterpreterResult,
+				Payload: string(jsonResult),
+			})
+		case *NativeToolResult:
+			toolBlocks = append(toolBlocks, types.MessageBlock{
+				Kind:    types.MessageBlockKindNativeToolResult,
+				Payload: string(jsonResult),
+			})
+		default:
+			return nil, fmt.Errorf("unknown tool result type: %T", result)
+		}
+	}
+
+	return rt.memory.Message.Create().
+		SetTaskID(taskID).
+		SetSource(types.MessageSourceSystem).
+		SetContent(&types.MessageContent{
+			Blocks: toolBlocks,
+		}).
+		Save(ctx)
 }
 
 func (rt *Runtime) fetchTaskWithAgent(ctx context.Context, taskID uuid.UUID) (*memory.Task, *memory.Agent, error) {
@@ -447,8 +501,8 @@ func (rt *Runtime) saveResponse(ctx context.Context, taskID uuid.UUID, processed
 	return newMessage, nil
 }
 
-func (rt *Runtime) callTools(ctx context.Context, task *memory.Task, content []model.ContentBlock) ([]*memory.Message, error) {
-	var toolResults []codeact.InterpreterToolResult
+func (rt *Runtime) callTools(ctx context.Context, content []model.ContentBlock) ([]ToolResult, error) {
+	var toolResults []ToolResult
 
 	for _, block := range content {
 		toolCall, ok := block.(*model.ToolCallBlock)
@@ -456,51 +510,27 @@ func (rt *Runtime) callTools(ctx context.Context, task *memory.Task, content []m
 			continue
 		}
 
-		if toolCall.Tool != "code_interpreter" {
-			slog.WarnContext(ctx, "model requested unknown tool", "tool", toolCall.Tool)
-			continue
-		}
-
-		os.WriteFile("/tmp/tool_call.json", []byte(toolCall.Args), 0644)
-		result, err := rt.interpreter.Interpret(ctx, afero.NewOsFs(), toolCall.Args)
-
-		toolResults = append(toolResults, codeact.InterpreterToolResult{
-			ID:     toolCall.ID,
-			Output: result,
-			Error:  err,
-		})
-	}
-
-	var toolMessages []*memory.Message
-	if len(toolResults) > 0 {
-		toolBlocks := make([]types.MessageBlock, 0, len(toolResults))
-		for _, result := range toolResults {
-			jsonResult, err := json.Marshal(result)
+		switch toolCall.Tool {
+		case tool.ToolNameCodeInterpreter:
+			os.WriteFile("/tmp/tool_call.json", []byte(toolCall.Args), 0644)
+			result, err := rt.interpreter.Interpret(ctx, afero.NewOsFs(), toolCall.Args)
 			if err != nil {
 				return nil, err
 			}
 
-			toolBlocks = append(toolBlocks, types.MessageBlock{
-				Kind:    types.MessageBlockKindCodeInterpreterResult,
-				Payload: string(jsonResult),
+			toolResults = append(toolResults, &InterpreterToolResult{
+				ID:            toolCall.ID,
+				Output:        result.ConsoleOutput,
+				FunctionCalls: result.FunctionExecutions,
+				Error:         err,
 			})
+		default:
+			slog.WarnContext(ctx, "model requested unknown tool", "tool", toolCall.Tool)
+			continue
 		}
-
-		toolMessage, err := rt.memory.Message.Create().
-			SetTaskID(task.ID).
-			SetSource(types.MessageSourceSystem).
-			SetContent(&types.MessageContent{
-				Blocks: toolBlocks,
-			}).
-			Save(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-		toolMessages = append(toolMessages, toolMessage)
 	}
 
-	return toolMessages, nil
+	return toolResults, nil
 }
 
 func (rt *Runtime) modelProviderAPI(m *memory.Model) (model.ModelProvider, error) {

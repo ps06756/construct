@@ -8,6 +8,7 @@ import (
 	"github.com/furisto/construct/backend/memory"
 	"github.com/furisto/construct/backend/memory/schema/types"
 	"github.com/furisto/construct/backend/model"
+	"github.com/furisto/construct/backend/tool"
 	"github.com/furisto/construct/backend/tool/codeact"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -72,7 +73,7 @@ func ConvertMemoryMessageBlocksToModel(blocks []types.MessageBlock) ([]model.Con
 			contentBlocks = append(contentBlocks, &toolCall)
 
 		case types.MessageBlockKindCodeInterpreterResult:
-			var interpreterResult codeact.InterpreterToolResult
+			var interpreterResult InterpreterToolResult
 			err := json.Unmarshal([]byte(block.Payload), &interpreterResult)
 			if err != nil {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter result block: %w", err)
@@ -80,14 +81,9 @@ func ConvertMemoryMessageBlocksToModel(blocks []types.MessageBlock) ([]model.Con
 			contentBlocks = append(contentBlocks, &model.ToolResultBlock{
 				ID:        interpreterResult.ID,
 				Name:      "code_interpreter",
-				Result:    interpreterResult.Output.ConsoleOutput,
+				Result:    interpreterResult.Output,
 				Succeeded: interpreterResult.Error == nil,
 			})
-
-		case types.MessageBlockKindCodeActToolCall,
-			types.MessageBlockKindCodeActToolResult:
-
-			continue
 		default:
 			return nil, fmt.Errorf("unknown message block kind: %s", block.Kind)
 		}
@@ -119,18 +115,23 @@ func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
 				},
 			})
 		case types.MessageBlockKindCodeInterpreterResult:
-			var interpreterResult codeact.InterpreterToolResult
+			var interpreterResult InterpreterToolResult
 			err := json.Unmarshal([]byte(block.Payload), &interpreterResult)
 			if err != nil {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter result: %w", err)
 			}
-			
+
 			contentParts = append(contentParts, &v1.MessagePart{
 				Data: &v1.MessagePart_ToolResult_{
 					ToolResult: &v1.MessagePart_ToolResult{
-						ToolName: "code_interpreter",
-						Result:   interpreterResult.Output.ConsoleOutput,
-						Error:    func() string { if interpreterResult.Error != nil { return interpreterResult.Error.Error() }; return "" }(),
+						ToolName: v1.ToolName_CODE_INTERPRETER,
+						Result:   interpreterResult.Output,
+						Error: func() string {
+							if interpreterResult.Error != nil {
+								return interpreterResult.Error.Error()
+							}
+							return ""
+						}(),
 					},
 				},
 			})
@@ -152,9 +153,21 @@ func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
 			CreatedAt: timestamppb.New(m.CreateTime),
 			UpdatedAt: timestamppb.New(m.UpdateTime),
 			TaskId:    m.TaskID.String(),
-			AgentId:   func() *string { if m.AgentID != uuid.Nil { s := m.AgentID.String(); return &s }; return nil }(),
-			ModelId:   func() *string { if m.ModelID != uuid.Nil { s := m.ModelID.String(); return &s }; return nil }(),
-			Role:      role,
+			AgentId: func() *string {
+				if m.AgentID != uuid.Nil {
+					s := m.AgentID.String()
+					return &s
+				}
+				return nil
+			}(),
+			ModelId: func() *string {
+				if m.ModelID != uuid.Nil {
+					s := m.ModelID.String()
+					return &s
+				}
+				return nil
+			}(),
+			Role: role,
 		},
 		Spec: &v1.MessageSpec{
 			Content: contentParts,
@@ -233,4 +246,63 @@ func ConvertModelUsageToMemory(usage *model.Usage) *types.MessageUsage {
 		OutputTokens:     usage.OutputTokens,
 		CacheWriteTokens: usage.CacheWriteTokens,
 	}
+}
+
+func ConvertToolResultsToProto(results []ToolResult) ([]*v1.MessagePart, error) {
+	var protoToolResults []*v1.MessagePart
+	for _, result := range results {
+		switch result := result.(type) {
+		case *InterpreterToolResult:
+			interpreterFuncResults, err := convertFunctionCallsToProto(result.FunctionCalls)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert tool result to proto: %w", err)
+			}
+			protoToolResults = append(protoToolResults, interpreterFuncResults...)
+
+		case *NativeToolResult:
+			protoToolResults = append(protoToolResults, &v1.MessagePart{
+				Data: &v1.MessagePart_ToolResult_{
+					ToolResult: &v1.MessagePart_ToolResult{
+						ToolName: v1.ToolName_UNSPECIFIED,
+						Result:   result.Output,
+					},
+				},
+			})
+		}
+	}
+	return protoToolResults, nil
+}
+
+func convertFunctionCallsToProto(functionCalls []codeact.FunctionCall) ([]*v1.MessagePart, error) {
+	protoFunctionCalls := make([]*v1.MessagePart, 0, len(functionCalls))
+	for _, call := range functionCalls {
+		switch call.ToolName {
+		case tool.ToolNameSubmitReport:
+			submitReport, ok := call.Output.(tool.SubmitReportResult)
+			if !ok {
+				return nil, fmt.Errorf("%s has invalid tool result type: %T", call.ToolName, call.Output)
+			}
+			protoFunctionCalls = append(protoFunctionCalls, &v1.MessagePart{
+				Data: &v1.MessagePart_SubmitReport_{
+					SubmitReport: &v1.MessagePart_SubmitReport{
+						Summary:      submitReport.Summary,
+						Completed:    submitReport.Completed,
+						Deliverables: submitReport.Deliverables,
+						NextSteps:    submitReport.NextSteps,
+					},
+				},
+			})
+		default:
+			protoFunctionCalls = append(protoFunctionCalls, &v1.MessagePart{
+				Data: &v1.MessagePart_ToolResult_{
+					ToolResult: &v1.MessagePart_ToolResult{
+						ToolName: v1.ToolName_UNSPECIFIED,
+						Result:   fmt.Sprintf("%v", call.Output),
+					},
+				},
+			})
+		}
+	}
+
+	return protoFunctionCalls, nil
 }

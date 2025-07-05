@@ -16,19 +16,10 @@ type WriteFileInput struct {
 	Content  string `json:"content"`
 }
 
-type EditFileInput struct {
-	FilePath string `json:"file_path"`
-	Content  string `json:"content"`
-}
-
 type FindFilesInput struct {
 	Query string `json:"query"`
 }
 
-type GrepInput struct {
-	Pattern string `json:"pattern"`
-	Path    string `json:"path"`
-}
 
 func FilesystemTools() []NativeTool {
 	return []NativeTool{
@@ -62,19 +53,19 @@ func FilesystemTools() []NativeTool {
 			}
 			return "File written successfully", nil
 		}, WithReadonly(false)),
-		NewTool("edit_file", "Edit a file", FilesystemToolCategory, func(ctx context.Context, input EditFileInput) (string, error) {
-			// For editing a file, we'll read the file first, then write new content
-			_, err := os.Stat(input.FilePath)
-			if err != nil {
-				return "", err
-			}
+		// NewTool("edit_file", "Edit a file", FilesystemToolCategory, func(ctx context.Context, input EditFileInput) (string, error) {
+		// 	// For editing a file, we'll read the file first, then write new content
+		// 	_, err := os.Stat(input.FilePath)
+		// 	if err != nil {
+		// 		return "", err
+		// 	}
 
-			err = os.WriteFile(input.FilePath, []byte(input.Content), 0644)
-			if err != nil {
-				return "", err
-			}
-			return "File edited successfully", nil
-		}, WithReadonly(false)),
+		// 	err = os.WriteFile(input.FilePath, []byte(input.Content), 0644)
+		// 	if err != nil {
+		// 		return "", err
+		// 	}
+		// 	return "File edited successfully", nil
+		// }, WithReadonly(false)),
 		NewTool("find_files", "Search for files in the project", FilesystemToolCategory, func(ctx context.Context, input FindFilesInput) (string, error) {
 			var results []string
 
@@ -94,49 +85,7 @@ func FilesystemTools() []NativeTool {
 
 			return strings.Join(results, "\n"), nil
 		}),
-		NewTool("grep", "Grep for a pattern in the project", FilesystemToolCategory, func(ctx context.Context, input GrepInput) (string, error) {
-			if input.Pattern == "" {
-				return "", fmt.Errorf("pattern is required")
-			}
-
-			if input.Path == "" {
-				return "", fmt.Errorf("path is required")
-			}
-
-			if !filepath.IsAbs(input.Path) {
-				return "", fmt.Errorf("path must be absolute")
-			}
-
-			var results []string
-			searchPath := "."
-			if input.Path != "" {
-				searchPath = input.Path
-			}
-
-			err := filepath.Walk(searchPath, func(path string, info os.FileInfo, err error) error {
-				if err != nil {
-					return err
-				}
-
-				if !info.IsDir() {
-					content, err := os.ReadFile(path)
-					if err != nil {
-						return nil // Skip files we can't read
-					}
-
-					if strings.Contains(string(content), input.Pattern) {
-						results = append(results, path)
-					}
-				}
-				return nil
-			})
-
-			if err != nil {
-				return "", err
-			}
-
-			return strings.Join(results, "\n"), nil
-		}),
+		
 		// NewTool("list_files", "List all files in the directory", FilesystemToolCategory, func(ctx context.Context, input ListFilesInput) (string, error) {
 		// 	directory := input.Directory
 		// 	if directory == "" {

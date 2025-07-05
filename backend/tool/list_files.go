@@ -118,7 +118,7 @@ try {
 
 func NewListFilesTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"list_files",
+		ToolNameListFiles,
 		fmt.Sprintf(listFilesDescription, "```", "`"),
 		listFilesHandler,
 	)

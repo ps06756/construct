@@ -65,7 +65,7 @@ func (h *HandoffInput) Validate() error {
 
 func NewHandoffTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
-		"handoff",
+		ToolNameHandoff,
 		fmt.Sprintf(handoffDescription, "```", "`"),
 		handoffHandler,
 	)

@@ -23,6 +23,7 @@ import (
 	"github.com/furisto/construct/backend/memory/schema/types"
 	memory_task "github.com/furisto/construct/backend/memory/task"
 	"github.com/furisto/construct/backend/model"
+	"github.com/furisto/construct/backend/prompt"
 	"github.com/furisto/construct/backend/secret"
 	"github.com/furisto/construct/backend/stream"
 	"github.com/furisto/construct/backend/tool/codeact"
@@ -349,13 +350,7 @@ func (rt *Runtime) prepareModelData(
 func (rt *Runtime) assembleSystemPrompt(agentInstruction string, cwd string) (string, error) {
 	var toolInstruction string
 	if len(rt.interpreter.Tools) != 0 {
-		toolInstruction = `
-You can use the following tools to help you answer the user's question. The tools are specified as Javascript functions.
-In order to use them you have to write a javascript program and then call the code interpreter tool with the script as argument.
-The only functions that are allowed for this javascript program are the ones specified in the tool descriptions.
-The script will be executed in a new process, so you don't need to worry about the environment it is executed in.
-If you try to call any other function that is not specified here the execution will fail.
-`
+		toolInstruction = prompt.ToolInstructions()
 	}
 
 	var builder strings.Builder

@@ -16,6 +16,42 @@ type AnthropicProvider struct {
 func SupportedAnthropicModels() []Model {
 	return []Model{
 		{
+			ID:       uuid.MustParse("0197e0d5-7567-70c6-8f64-e217dee9eb05"),
+			Name:     "claude-sonnet-4-20250514",
+			Provider: Anthropic,
+			Capabilities: []Capability{
+				CapabilityImage,
+				CapabilityComputerUse,
+				CapabilityPromptCache,
+				CapabilityExtendedThinking,
+			},
+			ContextWindow: 200000,
+			Pricing: ModelPricing{
+				Input:      3.0,
+				Output:     15.0,
+				CacheWrite: 3.75,
+				CacheRead:  0.3,
+			},
+		},
+		{
+			ID:       uuid.MustParse("0197e0d5-8f08-7609-9fe0-d407b2563375"),
+			Name:     "claude-opus-4-20250514",
+			Provider: Anthropic,
+			Capabilities: []Capability{
+				CapabilityImage,
+				CapabilityComputerUse,
+				CapabilityPromptCache,
+				CapabilityExtendedThinking,
+			},
+			ContextWindow: 200000,
+			Pricing: ModelPricing{
+				Input:      15.0,
+				Output:     75.0,
+				CacheWrite: 18.75,
+				CacheRead:  1.5,
+			},
+		},
+		{
 			ID:       uuid.MustParse("0195b4e2-45b6-76df-b208-f48b7b0d5f51"),
 			Name:     "claude-3-7-sonnet-20250219",
 			Provider: Anthropic,
@@ -147,6 +183,18 @@ func (p *AnthropicProvider) InvokeModel(ctx context.Context, model, systemPrompt
 		opt(options)
 	}
 
+	var lastUserMessageIndex, secondToLastUserMessageIndex int = -1, -1
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].Source == MessageSourceUser {
+			if lastUserMessageIndex == -1 {
+				lastUserMessageIndex = i
+			} else if secondToLastUserMessageIndex == -1 {
+				secondToLastUserMessageIndex = i
+				break
+			}
+		}
+	}
+
 	// convert to anthropic messages
 	anthropicMessages := make([]anthropic.MessageParam, len(messages))
 	for i, message := range messages {
@@ -154,11 +202,23 @@ func (p *AnthropicProvider) InvokeModel(ctx context.Context, model, systemPrompt
 		for j, b := range message.Content {
 			switch block := b.(type) {
 			case *TextBlock:
-				anthropicBlocks[j] = anthropic.NewTextBlock(block.Text)
+				textBlock := anthropic.NewTextBlock(block.Text)
+				if (i == lastUserMessageIndex || i == secondToLastUserMessageIndex) && j == len(message.Content)-1 {
+					textBlock.CacheControl = anthropic.F(anthropic.CacheControlEphemeralParam{
+						Type: anthropic.F(anthropic.CacheControlEphemeralTypeEphemeral),
+					})
+				}
+				anthropicBlocks[j] = textBlock
 			case *ToolCallBlock:
 				anthropicBlocks[j] = anthropic.NewToolUseBlockParam(block.ID, block.Tool, block.Args)
 			case *ToolResultBlock:
-				anthropicBlocks[j] = anthropic.NewToolResultBlock(block.ID, block.Result, !block.Succeeded)
+				toolResultBlock := anthropic.NewToolResultBlock(block.ID, block.Result, !block.Succeeded)
+				if (i == lastUserMessageIndex || i == secondToLastUserMessageIndex) && j == len(message.Content)-1 {
+					toolResultBlock.CacheControl = anthropic.F(anthropic.CacheControlEphemeralParam{
+						Type: anthropic.F(anthropic.CacheControlEphemeralTypeEphemeral),
+					})
+				}
+				anthropicBlocks[j] = toolResultBlock
 			}
 		}
 

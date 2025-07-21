@@ -11,6 +11,7 @@ import (
 	"github.com/furisto/construct/backend/api/conv"
 	"github.com/furisto/construct/backend/memory"
 	"github.com/furisto/construct/backend/memory/agent"
+	"github.com/furisto/construct/backend/memory/extension"
 	"github.com/furisto/construct/backend/memory/task"
 	"github.com/furisto/construct/backend/stream"
 	"github.com/google/uuid"
@@ -93,6 +94,10 @@ func (h *TaskHandler) ListTasks(ctx context.Context, req *connect.Request[v1.Lis
 			return nil, apiError(connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid agent ID format: %w", err)))
 		}
 		query = query.Where(task.HasAgentWith(agent.ID(agentID)))
+	}
+
+	if req.Msg.Filter != nil && req.Msg.Filter.TaskIdPrefix != nil {
+		query = query.Where(extension.UUIDHasPrefix(task.FieldID, *req.Msg.Filter.TaskIdPrefix))
 	}
 
 	sortField := v1.SortField_SORT_FIELD_CREATED_AT

@@ -159,6 +159,9 @@ message ListTasksRequest {
   message Filter {
     // agent_id filters tasks by the agent assigned to execute them (UUID format, optional).
     optional string agent_id = 1 [(buf.validate.field).string.uuid = true];
+
+    // prefix filters tasks by the prefix of the task id.
+    optional string task_id_prefix = 2;
   }
 
   // filter specifies criteria for narrowing the results.

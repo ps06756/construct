@@ -244,7 +244,7 @@ func TestListTasks(t *testing.T) {
 					Tasks: []*v1.Task{
 						{
 							Metadata: &v1.TaskMetadata{
-								Id: taskID1.String(),
+								Id: taskID2.String(),
 							},
 							Spec: &v1.TaskSpec{
 								AgentId:      strPtr(agentID.String()),
@@ -257,7 +257,43 @@ func TestListTasks(t *testing.T) {
 						},
 						{
 							Metadata: &v1.TaskMetadata{
-								Id: taskID2.String(),
+								Id: taskID1.String(),
+							},
+							Spec: &v1.TaskSpec{
+								AgentId:      strPtr(agentID.String()),
+								DesiredPhase: v1.TaskPhase_TASK_PHASE_AWAITING,
+							},
+							Status: &v1.TaskStatus{
+								Usage: &v1.TaskUsage{},
+								Phase: v1.TaskPhase_TASK_PHASE_AWAITING,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Name: "filter by task ID prefix",
+			SeedDatabase: func(ctx context.Context, db *memory.Client) {
+				modelProvider := test.NewModelProviderBuilder(t, uuid.New(), db).Build(ctx)
+				model := test.NewModelBuilder(t, modelID, db, modelProvider).Build(ctx)
+
+				agent1 := test.NewAgentBuilder(t, agentID, db, model).Build(ctx)
+
+				test.NewTaskBuilder(t, taskID1, db, agent1).Build(ctx)
+				test.NewTaskBuilder(t, taskID2, db, agent1).Build(ctx)
+			},
+			Request: &v1.ListTasksRequest{
+				Filter: &v1.ListTasksRequest_Filter{
+					TaskIdPrefix: strPtr(taskID1.String()[:8]),
+				},
+			},
+			Expected: ServiceTestExpectation[v1.ListTasksResponse]{
+				Response: v1.ListTasksResponse{
+					Tasks: []*v1.Task{
+						{
+							Metadata: &v1.TaskMetadata{
+								Id: taskID1.String(),
 							},
 							Spec: &v1.TaskSpec{
 								AgentId:      strPtr(agentID.String()),

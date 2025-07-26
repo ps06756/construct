@@ -99,20 +99,35 @@ func NewExecuteCommandTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameExecuteCommand,
 		fmt.Sprintf(executeCommandDescription, "```"),
+		executeCommandInput,
 		executeCommandHandler,
 	)
 }
 
+func executeCommandInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) < 1 {
+		return nil, nil
+	}
+
+	return &ExecuteCommandInput{
+		Command: args[0].String(),
+	}, nil
+}
+
 func executeCommandHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		command := call.Argument(0).String()
+		rawInput, err := executeCommandInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
+		}
+		input := rawInput.(*ExecuteCommandInput)
 
-		input := &ExecuteCommandInput{Command: command}
 		result, err := executeCommand(input)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		codeact.SetValue(session, "result", result)
 		return session.VM.ToValue(result)
 	}
 }

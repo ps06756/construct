@@ -87,18 +87,29 @@ func NewPrintTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNamePrint,
 		fmt.Sprintf(printDescription, "```"),
+		printInput,
 		printHandler,
 	)
 }
 
+func printInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	result := make([]any, len(args))
+	for i, arg := range args {
+		result[i] = arg.Export()
+	}
+	return result, nil
+}
+
 func printHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		args := make([]interface{}, len(call.Arguments))
-		for i, arg := range call.Arguments {
-			args[i] = arg.Export()
+		rawInput, err := printInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
 		}
+		args := rawInput.([]any)
 
 		fmt.Fprintln(session.System, args...)
+		// Print doesn't need to store a result since it returns undefined
 		return sobek.Undefined()
 	}
 }

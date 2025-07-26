@@ -86,21 +86,35 @@ func NewReadFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameReadFile,
 		fmt.Sprintf(readFileDescription, "```", "`"),
+		readFileInput,
 		readFileHandler,
 	)
 }
 
+func readFileInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) < 1 {
+		return nil, nil
+	}
+
+	return &ReadFileInput{
+		Path: args[0].String(),
+	}, nil
+}
+
 func readFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		input := &ReadFileInput{
-			Path: call.Argument(0).String(),
+		rawInput, err := readFileInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
 		}
+		input := rawInput.(*ReadFileInput)
 
 		result, err := readFile(session.FS, input)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		codeact.SetValue(session, "result", result)
 		return session.VM.ToValue(result)
 	}
 }

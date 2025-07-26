@@ -120,37 +120,56 @@ func NewFindFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameFindFile,
 		fmt.Sprintf(findFileDescription, "```"),
+		findFileInput,
 		findFileHandler,
 	)
 }
 
+func findFileInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) < 1 {
+		return nil, nil
+	}
+
+	inputObj := args[0].ToObject(session.VM)
+	if inputObj == nil {
+		return nil, nil
+	}
+
+	input := &FindFileInput{}
+	if pattern := inputObj.Get("pattern"); pattern != nil {
+		input.Pattern = pattern.String()
+	}
+	if path := inputObj.Get("path"); path != nil {
+		input.Path = path.String()
+	}
+	if excludePattern := inputObj.Get("exclude_pattern"); excludePattern != nil {
+		input.ExcludePattern = excludePattern.String()
+	}
+	if maxResults := inputObj.Get("max_results"); maxResults != nil {
+		input.MaxResults = int(maxResults.ToInteger())
+	}
+
+	if input.MaxResults == 0 {
+		input.MaxResults = 50
+	}
+
+	return input, nil
+}
+
 func findFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		inputObj := call.Argument(0).ToObject(session.VM)
-
-		input := &FindFileInput{}
-		if pattern := inputObj.Get("pattern"); pattern != nil {
-			input.Pattern = pattern.String()
+		rawInput, err := findFileInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
 		}
-		if path := inputObj.Get("path"); path != nil {
-			input.Path = path.String()
-		}
-		if excludePattern := inputObj.Get("exclude_pattern"); excludePattern != nil {
-			input.ExcludePattern = excludePattern.String()
-		}
-		if maxResults := inputObj.Get("max_results"); maxResults != nil {
-			input.MaxResults = int(maxResults.ToInteger())
-		}
-
-		if input.MaxResults == 0 {
-			input.MaxResults = 50
-		}
+		input := rawInput.(*FindFileInput)
 
 		result, err := findFile(session.FS, input)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		codeact.SetValue(session, "result", result)
 		return session.VM.ToValue(result)
 	}
 }

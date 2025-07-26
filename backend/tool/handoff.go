@@ -67,26 +67,39 @@ func NewHandoffTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameHandoff,
 		fmt.Sprintf(handoffDescription, "```", "`"),
+		handoffInput,
 		handoffHandler,
 	)
 }
 
+func handoffInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) < 1 {
+		return nil, nil
+	}
+
+	agent := args[0].String()
+	var handoverMessage string
+	if len(args) > 1 && args[1] != sobek.Undefined() {
+		handoverMessage = args[1].String()
+	}
+
+	return &HandoffInput{
+		TaskID:          session.TaskID,
+		CurrentAgentID:  session.AgentID,
+		RequestedAgent:  agent,
+		HandoverMessage: handoverMessage,
+	}, nil
+}
+
 func handoffHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		agent := call.Argument(0).String()
-		var handoverMessage string
-		if len(call.Arguments) > 1 && call.Arguments[1] != sobek.Undefined() {
-			handoverMessage = call.Argument(1).String()
-		} else {
-			handoverMessage = ""
+		rawInput, err := handoffInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
 		}
+		input := rawInput.(*HandoffInput)
 
-		err := handoff(session.Context, session.Memory, &HandoffInput{
-			TaskID:          session.TaskID,
-			CurrentAgentID:  session.AgentID,
-			RequestedAgent:  agent,
-			HandoverMessage: handoverMessage,
-		})
+		err = handoff(session.Context, session.Memory, input)
 		if err != nil {
 			session.Throw(err)
 		}

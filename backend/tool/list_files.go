@@ -120,6 +120,7 @@ func NewListFilesTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameListFiles,
 		fmt.Sprintf(listFilesDescription, "```", "`"),
+		listFilesInput,
 		listFilesHandler,
 	)
 }
@@ -140,26 +141,31 @@ type DirectoryEntry struct {
 	Size int64  `json:"s"`
 }
 
+func listFilesInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) < 2 {
+		return nil, nil
+	}
+
+	return &ListFilesInput{
+		Path:      args[0].String(),
+		Recursive: args[1].ToBoolean(),
+	}, nil
+}
+
 func listFilesHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		if len(call.Arguments) != 2 {
-			session.Throw(codeact.NewCustomError("list_files requires exactly 2 arguments: path and recursive", []string{
-				"- **path** (string, required): Absolute path to the directory you want to list (e.g., \"/workspace/project/src\"). Forward slashes (/) work on all platforms.\n" +
-					"- **recursive** (boolean, required): When set to true, lists all files and directories recursively through all subdirectories. When false only lists the top-level contents of the specified directory.",
-			}))
+		rawInput, err := listFilesInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
 		}
+		input := rawInput.(*ListFilesInput)
 
-		path := call.Argument(0).String()
-		recursive := call.Argument(1).ToBoolean()
-
-		result, err := listFiles(session.FS, &ListFilesInput{
-			Path:      path,
-			Recursive: recursive,
-		})
+		result, err := listFiles(session.FS, input)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		codeact.SetValue(session, "result", result)
 		return session.VM.ToValue(result)
 	}
 }

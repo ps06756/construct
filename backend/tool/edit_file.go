@@ -99,6 +99,7 @@ func NewEditFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameEditFile,
 		fmt.Sprintf(editFileDescription, "```"),
+		editFileInput,
 		editFileHandler,
 	)
 }
@@ -144,55 +145,65 @@ type EditFileResult struct {
 	PatchInfo            PatchInfo             `json:"patch_info,omitempty"`
 }
 
-func editFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
-	return func(call sobek.FunctionCall) sobek.Value {
-		if len(call.Arguments) != 2 {
-			session.Throw(codeact.NewCustomError("edit_file requires exactly 2 arguments: path and diffs", []string{
-				"- **path** (string, required): Absolute path to the file to modify (e.g., \"/workspace/project/src/components/Button.jsx\").",
-				"- **diffs** (array, required): Array of diff objects, each containing: - **old** (string, required): The exact text to find and replace - **new** (string, required): The new text to replace it with",
-			}))
-		}
+func editFileInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) < 2 {
+		return nil, codeact.NewCustomError("invalid arguments", []string{
+			"The edit_file tool requires exactly two arguments: path and diffs",
+		}, "arguments", args)
+	}
 
-		path := call.Argument(0).String()
-		diffsArg := call.Argument(1)
+	path := args[0].String()
+	diffsArg := args[1]
 
-		// Parse diffs array
-		var diffs []DiffPair
-		if diffsObj := diffsArg.ToObject(session.VM); diffsObj != nil && diffsObj != sobek.Undefined() {
-			if lengthVal := diffsObj.Get("length"); lengthVal != nil {
-				length := int(lengthVal.ToInteger())
-				for i := 0; i < length; i++ {
-					if diffVal := diffsObj.Get(fmt.Sprintf("%d", i)); diffVal != nil {
-						if diffObj := diffVal.ToObject(session.VM); diffObj != nil {
-							oldText := ""
-							newText := ""
-							if oldVal := diffObj.Get("old"); oldVal != nil {
-								oldText = oldVal.String()
-							}
-							if newVal := diffObj.Get("new"); newVal != nil {
-								newText = newVal.String()
-							}
-							diffs = append(diffs, DiffPair{Old: oldText, New: newText})
+	// Parse diffs array
+	var diffs []DiffPair
+	if diffsObj := diffsArg.ToObject(session.VM); diffsObj != nil && diffsObj != sobek.Undefined() {
+		if lengthVal := diffsObj.Get("length"); lengthVal != nil {
+			length := int(lengthVal.ToInteger())
+			for i := 0; i < length; i++ {
+				if diffVal := diffsObj.Get(fmt.Sprintf("%d", i)); diffVal != nil {
+					if diffObj := diffVal.ToObject(session.VM); diffObj != nil {
+						oldText := ""
+						newText := ""
+						if oldVal := diffObj.Get("old"); oldVal != nil {
+							oldText = oldVal.String()
 						}
+						if newVal := diffObj.Get("new"); newVal != nil {
+							newText = newVal.String()
+						}
+						diffs = append(diffs, DiffPair{Old: oldText, New: newText})
 					}
 				}
 			}
 		}
+	}
 
-		if len(diffs) == 0 {
+	return &EditFileInput{
+		Path:  path,
+		Diffs: diffs,
+	}, nil
+}
+
+func editFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
+	return func(call sobek.FunctionCall) sobek.Value {
+		rawInput, err := editFileInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
+		}
+		input := rawInput.(*EditFileInput)
+
+		if len(input.Diffs) == 0 {
 			session.Throw(codeact.NewCustomError("diffs array cannot be empty", []string{
 				"Provide at least one diff object with 'old' and 'new' properties",
 			}))
 		}
 
-		result, err := editFile(session.FS, &EditFileInput{
-			Path:  path,
-			Diffs: diffs,
-		})
+		result, err := editFile(session.FS, input)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		codeact.SetValue(session, "result", result)
 		return session.VM.ToValue(result)
 	}
 }

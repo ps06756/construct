@@ -13,13 +13,13 @@ import (
 
 type Session struct {
 	Context context.Context
-	TaskID uuid.UUID
+	TaskID  uuid.UUID
 	AgentID uuid.UUID
-	VM     *sobek.Runtime
-	System io.Writer
-	User   io.Writer
-	FS     afero.Fs
-	Memory *memory.Client
+	VM      *sobek.Runtime
+	System  io.Writer
+	User    io.Writer
+	FS      afero.Fs
+	Memory  *memory.Client
 
 	CurrentTool string
 	values      map[string]any
@@ -60,17 +60,23 @@ func GetValue[T any](s *Session, key string) (T, bool) {
 	return value.(T), true
 }
 
+func UnsetValue(s *Session, key string) {
+	delete(s.values, key)
+}
+
 type CodeActToolHandler func(session *Session) func(call sobek.FunctionCall) sobek.Value
 
 type Tool interface {
 	Name() string
 	Description() string
+	Input(session *Session, args []sobek.Value) (any, error)
 	ToolHandler(session *Session) func(call sobek.FunctionCall) sobek.Value
 }
 
 type onDemandTool struct {
 	name        string
 	description string
+	input       func(session *Session, args []sobek.Value) (any, error)
 	handler     CodeActToolHandler
 }
 
@@ -86,10 +92,15 @@ func (t *onDemandTool) ToolHandler(session *Session) func(call sobek.FunctionCal
 	return t.handler(session)
 }
 
-func NewOnDemandTool(name, description string, handler CodeActToolHandler) Tool {
+func (t *onDemandTool) Input(session *Session, args []sobek.Value) (any, error) {
+	return t.input(session, args)
+}
+
+func NewOnDemandTool(name, description string, input func(session *Session, args []sobek.Value) (any, error), handler CodeActToolHandler) Tool {
 	return &onDemandTool{
 		name:        name,
 		description: description,
+		input:       input,
 		handler:     handler,
 	}
 }

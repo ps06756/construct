@@ -104,64 +104,70 @@ func NewSubmitReportTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameSubmitReport,
 		fmt.Sprintf(submitReportDescription, "```"),
+		submitReportInput,
 		submitReportHandler,
 	)
 }
 
-func submitReportHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
-	return func(call sobek.FunctionCall) sobek.Value {
-		if len(call.Arguments) == 0 {
-			session.Throw(codeact.NewCustomError("submit_report requires at least 1 argument", []string{
-				"- **summary** (string, required): A clear, concise summary of what was accomplished",
-				"- **completed** (boolean, required): Whether the task has been completed",
-				"- **deliverables** (array, optional): List of specific files, features, or outputs created",
-				"- **next_steps** (string, optional): Suggestions for follow-up actions",
-			}))
-		}
+func submitReportInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) == 0 {
+		return nil, codeact.NewCustomError("submit_report requires at least 1 argument", []string{
+			"- **summary** (string, required): A clear, concise summary of what was accomplished",
+			"- **completed** (boolean, required): Whether the task has been completed",
+			"- **deliverables** (array, optional): List of specific files, features, or outputs created",
+			"- **next_steps** (string, optional): Suggestions for follow-up actions",
+		})
+	}
 
-		obj := call.Argument(0).ToObject(session.VM)
+	obj := args[0].ToObject(session.VM)
+	if obj == nil {
+		return nil, nil
+	}
 
-		summary := ""
-		if summaryVal := obj.Get("summary"); summaryVal != nil && summaryVal != sobek.Undefined() {
-			summary = summaryVal.String()
-		}
+	input := &SubmitReportInput{}
 
-		var deliverables []string
-		if deliverablesVal := obj.Get("deliverables"); deliverablesVal != nil && deliverablesVal != sobek.Undefined() {
-			deliverablesObj := deliverablesVal.ToObject(session.VM)
-			if deliverablesObj.ClassName() == "Array" {
-				length := int(deliverablesObj.Get("length").ToInteger())
-				for i := 0; i < length; i++ {
-					item := deliverablesObj.Get(fmt.Sprintf("%d", i))
-					if item != nil && item != sobek.Undefined() {
-						deliverables = append(deliverables, item.String())
-					}
+	if summaryVal := obj.Get("summary"); summaryVal != nil && summaryVal != sobek.Undefined() {
+		input.Summary = summaryVal.String()
+	}
+
+	if deliverablesVal := obj.Get("deliverables"); deliverablesVal != nil && deliverablesVal != sobek.Undefined() {
+		deliverablesObj := deliverablesVal.ToObject(session.VM)
+		if deliverablesObj != nil && deliverablesObj.ClassName() == "Array" {
+			length := int(deliverablesObj.Get("length").ToInteger())
+			for i := range length {
+				item := deliverablesObj.Get(fmt.Sprintf("%d", i))
+				if item != nil && item != sobek.Undefined() {
+					input.Deliverables = append(input.Deliverables, item.String())
 				}
 			}
 		}
+	}
 
-		nextSteps := ""
-		if nextStepsVal := obj.Get("next_steps"); nextStepsVal != nil && nextStepsVal != sobek.Undefined() {
-			nextSteps = nextStepsVal.String()
-		}
+	if nextStepsVal := obj.Get("next_steps"); nextStepsVal != nil && nextStepsVal != sobek.Undefined() {
+		input.NextSteps = nextStepsVal.String()
+	}
 
-		var completed bool
-		if completedVal := obj.Get("completed"); completedVal != nil && completedVal != sobek.Undefined() {
-			completed = completedVal.ToBoolean()
-		}
+	if completedVal := obj.Get("completed"); completedVal != nil && completedVal != sobek.Undefined() {
+		input.Completed = completedVal.ToBoolean()
+	}
 
-		input := &SubmitReportInput{
-			Summary:      summary,
-			Completed:    completed,
-			Deliverables: deliverables,
-			NextSteps:    nextSteps,
+	return input, nil
+}
+
+func submitReportHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
+	return func(call sobek.FunctionCall) sobek.Value {
+		rawInput, err := submitReportInput(session, call.Arguments)
+		if err != nil {
+			session.Throw(err)
 		}
+		input := rawInput.(*SubmitReportInput)
 
 		result, err := submitReport(input)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		codeact.SetValue(session, "result", result)
 		fmt.Fprintln(session.System, "REPORT SUBMITTED")
 		return session.VM.ToValue(result)
 	}

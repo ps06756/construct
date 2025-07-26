@@ -99,27 +99,36 @@ func NewCreateFileTool() codeact.Tool {
 	return codeact.NewOnDemandTool(
 		ToolNameCreateFile,
 		fmt.Sprintf(createFileDescription, "```", "`"),
+		fileInput,
 		createFileHandler,
 	)
 }
 
+func fileInput(session *codeact.Session, args []sobek.Value) (any, error) {
+	if len(args) >= 2 {
+		return &CreateFileInput{
+			Path:    args[0].String(),
+			Content: args[1].String(),
+		}, nil
+	}
+	return nil, codeact.NewCustomError("invalid arguments", []string{
+		"The create_file tool requires exactly two arguments: path and content",
+	}, "arguments", args)
+}
+
 func createFileHandler(session *codeact.Session) func(call sobek.FunctionCall) sobek.Value {
 	return func(call sobek.FunctionCall) sobek.Value {
-		if len(call.Arguments) != 2 {
-			session.Throw(codeact.NewError(codeact.InvalidArgument))
-		}
-
-		path := call.Arguments[0].String()
-		content := call.Arguments[1].String()
-
-		result, err := createFile(session.FS, &CreateFileInput{
-			Path:    path,
-			Content: content,
-		})
+		input, err := fileInput(session, call.Arguments)
 		if err != nil {
 			session.Throw(err)
 		}
 
+		result, err := createFile(session.FS, input.(*CreateFileInput))
+		if err != nil {
+			session.Throw(err)
+		}
+
+		codeact.SetValue(session, "result", result)
 		return session.VM.ToValue(result)
 	}
 }

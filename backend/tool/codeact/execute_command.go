@@ -56,6 +56,45 @@ Returns an object containing the command's output:
 - **Network utilities**: For ping, curl, wget, and other network tools
 - **Process management**: To start, stop, or monitor system processes
 
+## Commiting with Git
+When the user asks you to create a new git commit, follow these steps carefully:
+
+### Safety Requirements
+- Never force push without explicit user instruction and warning
+- Never %[2]sgit reset --hard%[2]s or %[2]sgit clean%[2]s without confirmation
+- Warn if staging files >50MB, suggest Git LFS or .gitignore
+- Check for sensitive patterns: %[2]s.env%[2]s, secrets, keys, passwords in filenames/content etc.
+- Mention when committing binary files
+
+### Analysis Workflow
+1. **Assess repository state**: Run %[2]sgit status%[2]s, %[2]sgit diff --stat%[2]s, %[2]sgit diff --cached --stat%[2]s
+2. **Analyze changes**: List modified files, categorize change type (feature/fix/refactor/docs/test)
+3. **Determine motivation**: Why were these changes made?
+4. **Security scan**: Check staged files for sensitive information
+5. **Check repository style**: Review recent commits (%[2]sgit log --format='%h - %s%n%b%n---' -6%[2]s) for message patterns
+
+### Commit Message Rules
+- Focus on "why" not "what" - explain purpose, not just actions
+- Use specific verbs: %[2]sgit add%[2]s (new), %[2]sgit fix%[2]s (bugs), %[2]sgit update%[2]s (enhance existing), %[2]sgit refactor%[2]s, %[2]sgit remove%[2]s
+- Avoid generic terms like "Update" without context
+- Match repository's existing style (capitalization, tense, format)
+
+### Error Handling
+- **No changes**: Show status, suggest staging files
+- **Merge conflicts**: Guide through resolution before committing
+- **Hook failures**: Show output, ask how to proceed
+- **Large/sensitive files**: Require explicit confirmation
+
+### Execution Process
+1. Perform safety checks and analysis
+2. If pre-commit hooks modify fail, retry commit ONCE
+3. If commit succeeds but hooks modified files, amend: %[2]sgit add . && git commit --amend --no-edit%[2]s
+4. Verify commit was created successfully
+
+### Key Success Factors
+- Craft meaningful messages that reflect actual changes and their purpose
+- Adapt to each repository's established commit conventions
+
 ## Usage Examples
 %[1]s
 // Simple command with error checking
@@ -65,11 +104,49 @@ print(Error: ${result.stderr});
 return;
 }
 // Git operations
+# TURN 1
+// BATCH REPOSITORY STATE ANALYSIS: Get complete picture first
 const gitStatus = execute_command("git status --porcelain");
-if (gitStatus.stdout.trim() === "") {
-// Repository is clean, create and checkout new branch
-execute_command("git checkout -b feature/new-feature", true);
+print("=== STATUS SUMMARY ===");
+print(gitStatus.stdout);
+
+const gitDiffStat = execute_command("git diff --stat");
+print("=== DIFF SUMMARY ===");
+print(gitDiffStat.stdout);
+
+const gitDiffCachedStat = execute_command("git diff --cached --stat");
+print("=== CACHED DIFF SUMMARY ===");
+print(gitDiffCachedStat.stdout);
+
+const gitDiffCached = execute_command("git diff --cached");
+print("=== CACHED DIFF ===");
+print(gitDiffCached.stdout);
+
+const gitLog = execute_command("git log --format='%h - %s%n%b%n---' -6");
+print("=== LAST 6 COMMITS ===");
+print(gitLog.stdout);
+
+# TURN 2
+const commitMessage = %[2]sEnhance read_file tool with line number prefixing
+... Rest of message depends on style found in the last commits.
+
+Co-authored-by: construct-agent <agent@construct.sh>%[2]s
+
+const commitResult = execute_command(%[2]sgit commit -m "$commitMessage"%[2]s);
+// Verify the commit was created successfully
+if (commitResult.exitCode === 0) {
+  print("✅ Commit successful");
+  
+  const lastCommit = execute_command("git log --oneline -1");
+  print("=== CREATED COMMIT ===");
+  print(lastCommit.stdout);
+  
+} else {
+  print("❌ Commit failed");
+  print("Exit code:", commitResult.exitCode);
+  print("Errors:", commitResult.stderr);
 }
+
 // Development commands
 const npmInstall = execute_command("npm install", true);
 if (npmInstall.exitCode === 0) {
@@ -81,7 +158,7 @@ execute_command("npm run dev", false);
 func NewExecuteCommandTool() Tool {
 	return NewOnDemandTool(
 		"execute_command",
-		fmt.Sprintf(executeCommandDescription, "```"),
+		fmt.Sprintf(executeCommandDescription, "```", "`"),
 		executeCommandInput,
 		executeCommandHandler,
 	)

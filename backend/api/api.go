@@ -48,9 +48,12 @@ func NewServer(runtime AgentRuntime, listener net.Listener) *Server {
 	}
 }
 
-func (s *Server) ListenAndServe() error {
+func (s *Server) ListenAndServe(ctx context.Context) error {
 	s.server = &http.Server{
 		Handler: s.mux,
+		BaseContext: func(l net.Listener) context.Context {
+			return ctx
+		},
 	}
 
 	return s.server.Serve(s.listener)

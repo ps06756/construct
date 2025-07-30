@@ -124,7 +124,7 @@ func (rt *Runtime) Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := rt.api.ListenAndServe()
+		err := rt.api.ListenAndServe(ctx)
 		if err != nil && err != http.ErrServerClosed {
 			slog.Error("API server failed", "error", err)
 		}
@@ -296,7 +296,7 @@ func (rt *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 			task.ToolUses[tool] += count
 		}
 
-		_, err = task.Update().Save(ctx)
+		_, err = task.Update().SetToolUses(task.ToolUses).Save(ctx)
 		if err != nil {
 			return err
 		}

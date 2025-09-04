@@ -17,23 +17,24 @@ import (
 	"github.com/furisto/construct/backend/memory/task"
 	"github.com/furisto/construct/backend/stream"
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var _ v1connect.TaskServiceHandler = (*TaskHandler)(nil)
 
 func NewTaskHandler(db *memory.Client, eventHub *stream.EventHub, runtime AgentRuntime, analytics analytics.Client) *TaskHandler {
 	return &TaskHandler{
-		db:       db,
-		eventHub: eventHub,
-		runtime:  runtime,
+		db:        db,
+		eventHub:  eventHub,
+		runtime:   runtime,
 		analytics: analytics,
 	}
 }
 
 type TaskHandler struct {
-	db       *memory.Client
-	eventHub *stream.EventHub
-	runtime  AgentRuntime
+	db        *memory.Client
+	eventHub  *stream.EventHub
+	runtime   AgentRuntime
 	analytics analytics.Client
 	v1connect.UnimplementedTaskServiceHandler
 }
@@ -222,6 +223,21 @@ func (h *TaskHandler) UpdateTask(ctx context.Context, req *connect.Request[v1.Up
 	}
 
 	analytics.EmitTaskUpdated(h.analytics, updatedTask.ID.String(), updatedFields)
+
+	for _, field := range updatedFields {
+		if field == "agent_id" {
+			taskEvent := &v1.TaskEvent{
+				TaskId:    updatedTask.ID.String(),
+				Timestamp: timestamppb.Now(),
+			}
+			h.eventHub.Publish(updatedTask.ID, &v1.SubscribeResponse{
+				Event: &v1.SubscribeResponse_TaskEvent{
+					TaskEvent: taskEvent,
+				},
+			})
+			break
+		}
+	}
 
 	return connect.NewResponse(&v1.UpdateTaskResponse{
 		Task: protoTask,

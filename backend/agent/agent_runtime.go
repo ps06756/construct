@@ -199,7 +199,9 @@ func (rt *Runtime) publishError(err error, taskID uuid.UUID) {
 	}))
 
 	rt.eventHub.Publish(taskID, &v1.SubscribeResponse{
-		Message: msg,
+		Event: &v1.SubscribeResponse_Message{
+			Message: msg,
+		},
 	})
 }
 
@@ -225,6 +227,9 @@ func (rt *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 		slog.DebugContext(ctx, "no unprocessed messages, skipping", "task_id", taskID)
 		return nil
 	}
+
+	// Publish task event: processing started
+	rt.publishTaskEvent(taskID)
 
 	if nextMessage.Source == types.MessageSourceUser {
 		msg, err := ConvertMemoryMessageToProto(nextMessage)
@@ -286,8 +291,13 @@ func (rt *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 	protoMessage.Status.ContentState = v1.ContentStatus_CONTENT_STATUS_COMPLETE
 
 	rt.eventHub.Publish(taskID, &v1.SubscribeResponse{
-		Message: protoMessage,
+		Event: &v1.SubscribeResponse_Message{
+			Message: protoMessage,
+		},
 	})
+
+	// Publish task event: model response received
+	rt.publishTaskEvent(taskID)
 
 	toolResults, toolStats, err := rt.callTools(ctx, task, message.Content)
 	if err != nil {
@@ -316,6 +326,9 @@ func (rt *Runtime) processTask(ctx context.Context, taskID uuid.UUID) error {
 	}
 
 	rt.TriggerReconciliation(taskID)
+
+	// Publish task event: processing finished
+	rt.publishTaskEvent(taskID)
 
 	return nil
 }
@@ -589,6 +602,7 @@ func (rt *Runtime) callTools(ctx context.Context, task *memory.Task, content []m
 	return toolResults, toolStats, nil
 }
 
+
 func logInterpreterArgs(taskID uuid.UUID, args json.RawMessage) {
 	var a codeact.InterpreterArgs
 	err := json.Unmarshal(args, &a)
@@ -654,13 +668,13 @@ func (rt *Runtime) modelProviderClient(m *memory.Model) (model.ModelProvider, er
 
 	switch provider.ProviderType {
 	case types.ModelProviderTypeAnthropic:
-		provider, err := model.NewAnthropicProvider(auth.APIKey)
+		provider, err := model.NewAnthropicProvider(auth.APIKey, "")
 		if err != nil {
 			return nil, err
 		}
 		return provider, nil
 	case types.ModelProviderTypeOpenAI:
-		provider, err := model.NewOpenAICompletionProvider(auth.APIKey)
+		provider, err := model.NewOpenAICompletionProvider(auth.APIKey, "")
 		if err != nil {
 			return nil, err
 		}
@@ -672,7 +686,7 @@ func (rt *Runtime) modelProviderClient(m *memory.Model) (model.ModelProvider, er
 		}
 		return provider, nil
 	case types.ModelProviderTypeXAI:
-		provider, err := model.NewAnthropicProvider(auth.APIKey)
+		provider, err := model.NewOpenAICompletionProvider("csk-kr54542e9e9ccmtd8ddywd8w6vhfc2rn5n4nwwhff8wrhrkw", "https://api.cerebras.ai/v1")
 		if err != nil {
 			return nil, err
 		}
@@ -683,10 +697,10 @@ func (rt *Runtime) modelProviderClient(m *memory.Model) (model.ModelProvider, er
 }
 
 func calculateCost(usage model.Usage, model *memory.Model) float64 {
-	return float64(usage.InputTokens)*model.InputCost +
-		float64(usage.OutputTokens)*model.OutputCost +
-		float64(usage.CacheWriteTokens)*model.CacheWriteCost +
-		float64(usage.CacheReadTokens)*model.CacheReadCost
+	return (float64(usage.InputTokens) * model.InputCost / 1000000) +
+		(float64(usage.OutputTokens) * model.OutputCost / 1000000) +
+		(float64(usage.CacheWriteTokens) * model.CacheWriteCost / 1000000) +
+		(float64(usage.CacheReadTokens) * model.CacheReadCost / 1000000)
 }
 
 func hasToolCalls(content []model.ContentBlock) bool {
@@ -701,7 +715,22 @@ func hasToolCalls(content []model.ContentBlock) bool {
 
 func (rt *Runtime) publishMessage(taskID uuid.UUID, message *v1.Message) {
 	rt.eventHub.Publish(taskID, &v1.SubscribeResponse{
-		Message: message,
+		Event: &v1.SubscribeResponse_Message{
+			Message: message,
+		},
+	})
+}
+
+func (rt *Runtime) publishTaskEvent(taskID uuid.UUID) {
+	taskEvent := &v1.TaskEvent{
+		TaskId:    taskID.String(),
+		Timestamp: timestamppb.Now(),
+	}
+
+	rt.eventHub.Publish(taskID, &v1.SubscribeResponse{
+		Event: &v1.SubscribeResponse_TaskEvent{
+			TaskEvent: taskEvent,
+		},
 	})
 }
 

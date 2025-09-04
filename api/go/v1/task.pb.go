@@ -1016,9 +1016,13 @@ func (x *SubscribeRequest) GetTaskId() string {
 	return ""
 }
 
+// TaskEvent represents a task state change notification
 type TaskEvent struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TaskId        string                 `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// task_id is the ID of the task that changed
+	TaskId string `protobuf:"bytes,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	// timestamp when the event occurred
+	Timestamp     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1060,10 +1064,20 @@ func (x *TaskEvent) GetTaskId() string {
 	return ""
 }
 
+func (x *TaskEvent) GetTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Timestamp
+	}
+	return nil
+}
+
 type SubscribeResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       *Message               `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	TaskEvent     *TaskEvent             `protobuf:"bytes,2,opt,name=task_event,json=taskEvent,proto3" json:"task_event,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Event:
+	//
+	//	*SubscribeResponse_Message
+	//	*SubscribeResponse_TaskEvent
+	Event         isSubscribeResponse_Event `protobuf_oneof:"event"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1098,19 +1112,46 @@ func (*SubscribeResponse) Descriptor() ([]byte, []int) {
 	return file_construct_v1_task_proto_rawDescGZIP(), []int{17}
 }
 
+func (x *SubscribeResponse) GetEvent() isSubscribeResponse_Event {
+	if x != nil {
+		return x.Event
+	}
+	return nil
+}
+
 func (x *SubscribeResponse) GetMessage() *Message {
 	if x != nil {
-		return x.Message
+		if x, ok := x.Event.(*SubscribeResponse_Message); ok {
+			return x.Message
+		}
 	}
 	return nil
 }
 
 func (x *SubscribeResponse) GetTaskEvent() *TaskEvent {
 	if x != nil {
-		return x.TaskEvent
+		if x, ok := x.Event.(*SubscribeResponse_TaskEvent); ok {
+			return x.TaskEvent
+		}
 	}
 	return nil
 }
+
+type isSubscribeResponse_Event interface {
+	isSubscribeResponse_Event()
+}
+
+type SubscribeResponse_Message struct {
+	Message *Message `protobuf:"bytes,1,opt,name=message,proto3,oneof"`
+}
+
+type SubscribeResponse_TaskEvent struct {
+	TaskEvent *TaskEvent `protobuf:"bytes,2,opt,name=task_event,json=taskEvent,proto3,oneof"`
+}
+
+func (*SubscribeResponse_Message) isSubscribeResponse_Event() {}
+
+func (*SubscribeResponse_TaskEvent) isSubscribeResponse_Event() {}
 
 type SuspendTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1339,13 +1380,15 @@ const file_construct_v1_task_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x14\n" +
 	"\x12DeleteTaskResponse\"5\n" +
 	"\x10SubscribeRequest\x12!\n" +
-	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\".\n" +
+	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\"p\n" +
 	"\tTaskEvent\x12!\n" +
-	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\"|\n" +
-	"\x11SubscribeResponse\x12/\n" +
-	"\amessage\x18\x01 \x01(\v2\x15.construct.v1.MessageR\amessage\x126\n" +
+	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\x12@\n" +
+	"\ttimestamp\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\ttimestamp\"\x89\x01\n" +
+	"\x11SubscribeResponse\x121\n" +
+	"\amessage\x18\x01 \x01(\v2\x15.construct.v1.MessageH\x00R\amessage\x128\n" +
 	"\n" +
-	"task_event\x18\x02 \x01(\v2\x17.construct.v1.TaskEventR\ttaskEvent\"7\n" +
+	"task_event\x18\x02 \x01(\v2\x17.construct.v1.TaskEventH\x00R\ttaskEventB\a\n" +
+	"\x05event\"7\n" +
 	"\x12SuspendTaskRequest\x12!\n" +
 	"\atask_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x06taskId\"\x15\n" +
 	"\x13SuspendTaskResponse*r\n" +
@@ -1426,27 +1469,28 @@ var file_construct_v1_task_proto_depIdxs = []int32{
 	25, // 13: construct.v1.ListTasksRequest.sort_order:type_name -> construct.v1.SortOrder
 	1,  // 14: construct.v1.ListTasksResponse.tasks:type_name -> construct.v1.Task
 	1,  // 15: construct.v1.UpdateTaskResponse.task:type_name -> construct.v1.Task
-	26, // 16: construct.v1.SubscribeResponse.message:type_name -> construct.v1.Message
-	17, // 17: construct.v1.SubscribeResponse.task_event:type_name -> construct.v1.TaskEvent
-	6,  // 18: construct.v1.TaskService.CreateTask:input_type -> construct.v1.CreateTaskRequest
-	8,  // 19: construct.v1.TaskService.GetTask:input_type -> construct.v1.GetTaskRequest
-	10, // 20: construct.v1.TaskService.ListTasks:input_type -> construct.v1.ListTasksRequest
-	12, // 21: construct.v1.TaskService.UpdateTask:input_type -> construct.v1.UpdateTaskRequest
-	14, // 22: construct.v1.TaskService.DeleteTask:input_type -> construct.v1.DeleteTaskRequest
-	16, // 23: construct.v1.TaskService.Subscribe:input_type -> construct.v1.SubscribeRequest
-	19, // 24: construct.v1.TaskService.SuspendTask:input_type -> construct.v1.SuspendTaskRequest
-	7,  // 25: construct.v1.TaskService.CreateTask:output_type -> construct.v1.CreateTaskResponse
-	9,  // 26: construct.v1.TaskService.GetTask:output_type -> construct.v1.GetTaskResponse
-	11, // 27: construct.v1.TaskService.ListTasks:output_type -> construct.v1.ListTasksResponse
-	13, // 28: construct.v1.TaskService.UpdateTask:output_type -> construct.v1.UpdateTaskResponse
-	15, // 29: construct.v1.TaskService.DeleteTask:output_type -> construct.v1.DeleteTaskResponse
-	18, // 30: construct.v1.TaskService.Subscribe:output_type -> construct.v1.SubscribeResponse
-	20, // 31: construct.v1.TaskService.SuspendTask:output_type -> construct.v1.SuspendTaskResponse
-	25, // [25:32] is the sub-list for method output_type
-	18, // [18:25] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	23, // 16: construct.v1.TaskEvent.timestamp:type_name -> google.protobuf.Timestamp
+	26, // 17: construct.v1.SubscribeResponse.message:type_name -> construct.v1.Message
+	17, // 18: construct.v1.SubscribeResponse.task_event:type_name -> construct.v1.TaskEvent
+	6,  // 19: construct.v1.TaskService.CreateTask:input_type -> construct.v1.CreateTaskRequest
+	8,  // 20: construct.v1.TaskService.GetTask:input_type -> construct.v1.GetTaskRequest
+	10, // 21: construct.v1.TaskService.ListTasks:input_type -> construct.v1.ListTasksRequest
+	12, // 22: construct.v1.TaskService.UpdateTask:input_type -> construct.v1.UpdateTaskRequest
+	14, // 23: construct.v1.TaskService.DeleteTask:input_type -> construct.v1.DeleteTaskRequest
+	16, // 24: construct.v1.TaskService.Subscribe:input_type -> construct.v1.SubscribeRequest
+	19, // 25: construct.v1.TaskService.SuspendTask:input_type -> construct.v1.SuspendTaskRequest
+	7,  // 26: construct.v1.TaskService.CreateTask:output_type -> construct.v1.CreateTaskResponse
+	9,  // 27: construct.v1.TaskService.GetTask:output_type -> construct.v1.GetTaskResponse
+	11, // 28: construct.v1.TaskService.ListTasks:output_type -> construct.v1.ListTasksResponse
+	13, // 29: construct.v1.TaskService.UpdateTask:output_type -> construct.v1.UpdateTaskResponse
+	15, // 30: construct.v1.TaskService.DeleteTask:output_type -> construct.v1.DeleteTaskResponse
+	18, // 31: construct.v1.TaskService.Subscribe:output_type -> construct.v1.SubscribeResponse
+	20, // 32: construct.v1.TaskService.SuspendTask:output_type -> construct.v1.SuspendTaskResponse
+	26, // [26:33] is the sub-list for method output_type
+	19, // [19:26] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_construct_v1_task_proto_init() }
@@ -1459,6 +1503,10 @@ func file_construct_v1_task_proto_init() {
 	file_construct_v1_task_proto_msgTypes[2].OneofWrappers = []any{}
 	file_construct_v1_task_proto_msgTypes[9].OneofWrappers = []any{}
 	file_construct_v1_task_proto_msgTypes[11].OneofWrappers = []any{}
+	file_construct_v1_task_proto_msgTypes[17].OneofWrappers = []any{
+		(*SubscribeResponse_Message)(nil),
+		(*SubscribeResponse_TaskEvent)(nil),
+	}
 	file_construct_v1_task_proto_msgTypes[21].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

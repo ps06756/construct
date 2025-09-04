@@ -11,6 +11,8 @@ import (
 	"github.com/furisto/construct/backend/memory"
 	"github.com/google/go-cmp/cmp"
 	"github.com/spf13/afero"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type ToolTestSetup[ToolInput any, ToolResult any] struct {

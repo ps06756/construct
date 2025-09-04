@@ -273,7 +273,8 @@ func (p *ToolEventPublisher) publishToolEvent(taskID uuid.UUID, part *v1.Message
 	}
 
 	p.EventHub.Publish(taskID, &v1.SubscribeResponse{
-		Message: &v1.Message{
+		Event: &v1.SubscribeResponse_Message{
+			Message: &v1.Message{
 			Metadata: &v1.MessageMetadata{
 				CreatedAt: timestamppb.New(time.Now()),
 				UpdatedAt: timestamppb.New(time.Now()),
@@ -286,7 +287,8 @@ func (p *ToolEventPublisher) publishToolEvent(taskID uuid.UUID, part *v1.Message
 				},
 			},
 			Status: &v1.MessageStatus{
-				ContentState: v1.ContentStatus_CONTENT_STATUS_COMPLETE,
+					ContentState: v1.ContentStatus_CONTENT_STATUS_COMPLETE,
+				},
 			},
 		},
 	})

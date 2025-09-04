@@ -108,7 +108,9 @@ func (h *EventHub) Subscribe(ctx context.Context, taskID uuid.UUID) iter.Seq2[*v
 				}
 			}
 			if !yield(&v1.SubscribeResponse{
-				Message: protoMessage,
+				Event: &v1.SubscribeResponse_Message{
+					Message: protoMessage,
+				},
 			}, nil) {
 				return
 			}

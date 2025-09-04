@@ -121,7 +121,12 @@ func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOp
 
 		for watch.Receive() {
 			msg := watch.Msg()
-			program.Send(msg.Message)
+			switch msg.Event.(type) {
+			case *v1.SubscribeResponse_Message:
+				program.Send(msg.GetMessage())
+			case *v1.SubscribeResponse_TaskEvent:
+				program.Send(msg.GetTaskEvent())
+			}
 		}
 
 		if err := watch.Err(); err != nil {

@@ -15,9 +15,9 @@ type modelProviderDeleteOptions struct {
 func NewModelProviderDeleteCmd() *cobra.Command {
 	options := new(modelProviderDeleteOptions)
 	cmd := &cobra.Command{
-		Use:   "delete <id-or-name>...",
-		Short: "Delete one or more model providers by their IDs or names",
-		Args:  cobra.MinimumNArgs(1),
+		Use:     "delete <id-or-name>...",
+		Short:   "Delete one or more model providers by their IDs or names",
+		Args:    cobra.MinimumNArgs(1),
 		Aliases: []string{"rm"},
 		Example: `  # Delete multiple model providers
   construct modelprovider delete anthropic-dev openai-prod

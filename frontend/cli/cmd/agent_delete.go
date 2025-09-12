@@ -15,8 +15,8 @@ type agentDeleteOptions struct {
 func NewAgentDeleteCmd() *cobra.Command {
 	options := new(agentDeleteOptions)
 	cmd := &cobra.Command{
-		Use:   "delete <id-or-name>...",
-		Short: "Delete one or more agents by their IDs or names",
+		Use:     "delete <id-or-name>...",
+		Short:   "Delete one or more agents by their IDs or names",
 		Aliases: []string{"rm"},
 		Example: `  # Delete multiple agents
   construct agent delete coder architect debugger

@@ -602,7 +602,6 @@ func (rt *Runtime) callTools(ctx context.Context, task *memory.Task, content []m
 	return toolResults, toolStats, nil
 }
 
-
 func logInterpreterArgs(taskID uuid.UUID, args json.RawMessage) {
 	var a codeact.InterpreterArgs
 	err := json.Unmarshal(args, &a)

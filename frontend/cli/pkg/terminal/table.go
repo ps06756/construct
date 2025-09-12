@@ -31,13 +31,13 @@ type SelectableTable struct {
 }
 
 type TableRow struct {
-	ID          string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	Workspace   string
+	ID           string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Workspace    string
 	MessageCount int64
-	Description string
-	Task        *v1.Task
+	Description  string
+	Task         *v1.Task
 }
 
 func (t *TableRow) Init() tea.Cmd {

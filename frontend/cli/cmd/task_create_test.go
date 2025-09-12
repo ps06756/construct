@@ -164,7 +164,7 @@ func setupTaskCreateMock(mockClient *api_client.MockClient, agentID, workspace, 
 		Msg: &v1.CreateTaskResponse{
 			Task: &v1.Task{
 				Metadata: &v1.TaskMetadata{
-					Id: taskID,
+					Id:        taskID,
 					CreatedAt: timestamppb.Now(),
 					UpdatedAt: timestamppb.Now(),
 				},

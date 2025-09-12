@@ -35,7 +35,7 @@ func TestCreateMessage(t *testing.T) {
 		{
 			Name: "invalid task ID",
 			Request: &v1.CreateMessageRequest{
-				TaskId:  "not-a-valid-uuid",
+				TaskId: "not-a-valid-uuid",
 				Content: []*v1.MessagePart{
 					{
 						Data: &v1.MessagePart_Text_{
@@ -53,7 +53,7 @@ func TestCreateMessage(t *testing.T) {
 		{
 			Name: "task not found",
 			Request: &v1.CreateMessageRequest{
-				TaskId:  taskID.String(),
+				TaskId: taskID.String(),
 				Content: []*v1.MessagePart{
 					{
 						Data: &v1.MessagePart_Text_{
@@ -79,7 +79,7 @@ func TestCreateMessage(t *testing.T) {
 				test.NewTaskBuilder(t, taskID, db, agent).Build(ctx)
 			},
 			Request: &v1.CreateMessageRequest{
-				TaskId:  taskID.String(),
+				TaskId: taskID.String(),
 				Content: []*v1.MessagePart{
 					{
 						Data: &v1.MessagePart_Text_{
@@ -551,7 +551,7 @@ func TestUpdateMessage(t *testing.T) {
 		{
 			Name: "invalid id format",
 			Request: &v1.UpdateMessageRequest{
-				Id:      "not-a-valid-uuid",
+				Id: "not-a-valid-uuid",
 				Content: []*v1.MessagePart{
 					{
 						Data: &v1.MessagePart_Text_{
@@ -569,7 +569,7 @@ func TestUpdateMessage(t *testing.T) {
 		{
 			Name: "message not found",
 			Request: &v1.UpdateMessageRequest{
-				Id:      messageID.String(),
+				Id: messageID.String(),
 				Content: []*v1.MessagePart{
 					{
 						Data: &v1.MessagePart_Text_{
@@ -606,7 +606,7 @@ func TestUpdateMessage(t *testing.T) {
 					Build(ctx)
 			},
 			Request: &v1.UpdateMessageRequest{
-				Id:      messageID.String(),
+				Id: messageID.String(),
 				Content: []*v1.MessagePart{
 					{
 						Data: &v1.MessagePart_Text_{

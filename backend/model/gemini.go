@@ -276,17 +276,17 @@ func (p *GeminiProvider) convertJSONSchemaToGemini(jsonSchema map[string]any) (*
 
 	if properties := jsonSchema["properties"]; properties != nil {
 		schema.Properties = make(map[string]*genai.Schema)
-		
+
 		propBytes, err := json.Marshal(properties)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal properties: %w", err)
 		}
-		
+
 		var propMap map[string]any
 		if err := json.Unmarshal(propBytes, &propMap); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal properties: %w", err)
 		}
-		
+
 		for propName, propDef := range propMap {
 			if propDefMap, ok := propDef.(map[string]any); ok {
 				propSchema, err := p.convertPropertyToGemini(propDefMap)
@@ -313,7 +313,7 @@ func (p *GeminiProvider) convertJSONSchemaToGemini(jsonSchema map[string]any) (*
 
 func (p *GeminiProvider) convertPropertyToGemini(propDef map[string]any) (*genai.Schema, error) {
 	propSchema := &genai.Schema{}
-	
+
 	if propType, ok := propDef["type"].(string); ok {
 		switch propType {
 		case "object":
@@ -349,11 +349,11 @@ func (p *GeminiProvider) convertPropertyToGemini(propDef map[string]any) (*genai
 			propSchema.Type = genai.TypeString
 		}
 	}
-	
+
 	if description, ok := propDef["description"].(string); ok {
 		propSchema.Description = description
 	}
-	
+
 	// Handle enum values
 	if enum := propDef["enum"]; enum != nil {
 		enumBytes, err := json.Marshal(enum)
@@ -364,7 +364,7 @@ func (p *GeminiProvider) convertPropertyToGemini(propDef map[string]any) (*genai
 			}
 		}
 	}
-	
+
 	return propSchema, nil
 }
 

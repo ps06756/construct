@@ -62,9 +62,9 @@ type ModelProvider interface {
 type MessageSource string
 
 const (
-	MessageSourceUser  MessageSource = "user"
-	MessageSourceModel MessageSource = "model"
-	MessageSourceSystem  MessageSource = "system"
+	MessageSourceUser   MessageSource = "user"
+	MessageSourceModel  MessageSource = "model"
+	MessageSourceSystem MessageSource = "system"
 )
 
 type Message struct {

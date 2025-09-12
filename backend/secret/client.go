@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/tink-crypto/tink-go/aead"
+	"github.com/tink-crypto/tink-go/insecurecleartextkeyset"
 	"github.com/tink-crypto/tink-go/keyset"
 	"github.com/tink-crypto/tink-go/tink"
-	"github.com/tink-crypto/tink-go/insecurecleartextkeyset"
 )
 
 func GenerateKeyset() (*keyset.Handle, error) {

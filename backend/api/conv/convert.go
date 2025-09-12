@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	dpb "google.golang.org/genproto/googleapis/type/decimal"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MissingRelatedEntityError struct {

@@ -23,8 +23,8 @@ type GrepInput struct {
 }
 
 type GrepMatch struct {
-	FilePath   string `json:"file_path"`
-	Value      string `json:"value"`
+	FilePath string `json:"file_path"`
+	Value    string `json:"value"`
 }
 
 type GrepResult struct {
@@ -88,10 +88,10 @@ func performRipgrep(ctx context.Context, input *GrepInput, cmdRunner shared.Comm
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 			// No matches found, return empty result
 			return &GrepResult{
-				Matches:       []GrepMatch{},
-				TotalMatches:  0,
+				Matches:          []GrepMatch{},
+				TotalMatches:     0,
 				TruncatedMatches: 0,
-				SearchedFiles: 0,
+				SearchedFiles:    0,
 			}, nil
 		}
 		return nil, base.NewCustomError("ripgrep error", []string{
@@ -130,10 +130,10 @@ func performRegularGrep(ctx context.Context, input *GrepInput, cmdRunner shared.
 		if exitErr, ok := err.(*exec.ExitError); ok && exitErr.ExitCode() == 1 {
 			// No matches found, return empty result
 			return &GrepResult{
-				Matches:       []GrepMatch{},
-				TotalMatches:  0,
+				Matches:          []GrepMatch{},
+				TotalMatches:     0,
 				TruncatedMatches: 0,
-				SearchedFiles: 0,
+				SearchedFiles:    0,
 			}, nil
 		}
 		return nil, base.NewCustomError("grep error", []string{
@@ -243,7 +243,7 @@ func processFileGroup(group *fileGroup, context int) []GrepMatch {
 	for i := 1; i < len(group.entries); i++ {
 		prevLine := group.entries[i-1].Data.LineNumber
 		currentLine := group.entries[i].Data.LineNumber
-		
+
 		// If gap between lines is <= context*2, add to current group
 		if currentLine-prevLine <= context*2 {
 			currentGroup = append(currentGroup, group.entries[i])
@@ -266,7 +266,7 @@ func processFileGroup(group *fileGroup, context int) []GrepMatch {
 				break
 			}
 		}
-		
+
 		if !hasMatch {
 			continue
 		}
@@ -276,7 +276,7 @@ func processFileGroup(group *fileGroup, context int) []GrepMatch {
 		for _, entry := range entryGroup {
 			lineNum := entry.Data.LineNumber
 			text := entry.Data.Lines.Text
-			
+
 			if entry.Type == "match" {
 				formattedLines = append(formattedLines, fmt.Sprintf(":%d:%s", lineNum, text))
 			} else {

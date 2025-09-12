@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/sobek"
 )
 
-
 const findFileDescription = `
 ## Description
 Finds files matching a glob pattern using ripgrep for optimal performance when available, falling back to filesystem walking with doublestar. This tool is designed for discovering files by name patterns rather than content, making it ideal for locating specific files, exploring project structure, or finding files of certain types.

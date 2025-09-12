@@ -374,8 +374,8 @@ func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
 					var matches []*v1.ToolResult_GrepResult_GrepMatch
 					for _, match := range grepResult.Matches {
 						matches = append(matches, &v1.ToolResult_GrepResult_GrepMatch{
-							FilePath:    match.FilePath,
-							Value: match.Value,
+							FilePath: match.FilePath,
+							Value:    match.Value,
 						})
 					}
 

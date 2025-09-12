@@ -275,18 +275,18 @@ func (p *ToolEventPublisher) publishToolEvent(taskID uuid.UUID, part *v1.Message
 	p.EventHub.Publish(taskID, &v1.SubscribeResponse{
 		Event: &v1.SubscribeResponse_Message{
 			Message: &v1.Message{
-			Metadata: &v1.MessageMetadata{
-				CreatedAt: timestamppb.New(time.Now()),
-				UpdatedAt: timestamppb.New(time.Now()),
-				TaskId:    taskID.String(),
-				Role:      role,
-			},
-			Spec: &v1.MessageSpec{
-				Content: []*v1.MessagePart{
-					part,
+				Metadata: &v1.MessageMetadata{
+					CreatedAt: timestamppb.New(time.Now()),
+					UpdatedAt: timestamppb.New(time.Now()),
+					TaskId:    taskID.String(),
+					Role:      role,
 				},
-			},
-			Status: &v1.MessageStatus{
+				Spec: &v1.MessageSpec{
+					Content: []*v1.MessagePart{
+						part,
+					},
+				},
+				Status: &v1.MessageStatus{
 					ContentState: v1.ContentStatus_CONTENT_STATUS_COMPLETE,
 				},
 			},
@@ -447,8 +447,8 @@ func convertResultToProtoToolResult(toolName string, result any) (*v1.MessagePar
 		var matches []*v1.ToolResult_GrepResult_GrepMatch
 		for _, match := range result.Matches {
 			matches = append(matches, &v1.ToolResult_GrepResult_GrepMatch{
-				FilePath:    match.FilePath,
-				Value: match.Value,
+				FilePath: match.FilePath,
+				Value:    match.Value,
 			})
 		}
 		toolResult.Result = &v1.ToolResult_Grep{

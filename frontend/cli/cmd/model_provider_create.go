@@ -69,7 +69,7 @@ func NewModelProviderCreateCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&options.ApiKey, "api-key", "k", "", "The API key for the model provider (can also be set via environment variable)")
 	cmd.Flags().VarP(&options.Type, "type", "t", "The type of the model provider (anthropic, openai)")
-	
+
 	cmd.MarkFlagRequired("type")
 
 	return cmd

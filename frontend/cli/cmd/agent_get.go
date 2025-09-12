@@ -55,7 +55,7 @@ func NewAgentGetCmd() *cobra.Command {
 						Id: agentResp.Msg.Agent.Spec.ModelId,
 					},
 				})
-	
+
 				if err != nil {
 					return fmt.Errorf("failed to get model %s: %w", agentResp.Msg.Agent.Spec.ModelId, err)
 				}

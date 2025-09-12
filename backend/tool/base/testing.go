@@ -24,8 +24,8 @@ type ToolTestSetup[ToolInput any, ToolResult any] struct {
 }
 
 type ToolTestServices struct {
-	DB *memory.Client
-	FS afero.Fs
+	DB            *memory.Client
+	FS            afero.Fs
 	CommandRunner shared.CommandRunner
 }
 

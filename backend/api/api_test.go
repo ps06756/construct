@@ -30,9 +30,9 @@ type ServiceTestSetup[Request any, Response any] struct {
 }
 
 type ServiceTestExpectation[Response any] struct {
-	Response Response
-	Error    string
-	Database []any
+	Response  Response
+	Error     string
+	Database  []any
 	Analytics []analytics.Event
 }
 

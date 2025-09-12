@@ -86,7 +86,7 @@ func TestModelProviderList(t *testing.T) {
 					v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
 				}, []*v1.ModelProvider{
 					{
-							Metadata: &v1.ModelProviderMetadata{
+						Metadata: &v1.ModelProviderMetadata{
 							Id:           modelProviderID1,
 							ProviderType: v1.ModelProviderType_MODEL_PROVIDER_TYPE_ANTHROPIC,
 						},

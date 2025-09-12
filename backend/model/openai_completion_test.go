@@ -5,5 +5,5 @@ import (
 )
 
 func TestOpenAICompletion_InvokeModel(t *testing.T) {
-	
+
 }

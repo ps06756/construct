@@ -30,7 +30,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				// Simulate executable path

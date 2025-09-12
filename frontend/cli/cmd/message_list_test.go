@@ -38,8 +38,8 @@ func TestMessageList(t *testing.T) {
 			Expected: TestExpectation{
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID1,
-						TaskId:    taskID1,
+						ID:        messageID1,
+						TaskID:    taskID1,
 						Agent:     agentID1,
 						Model:     modelID1,
 						Role:      "user",
@@ -55,8 +55,8 @@ func TestMessageList(t *testing.T) {
 						},
 					},
 					{
-						Id:        messageID2,
-						TaskId:    taskID2,
+						ID:        messageID2,
+						TaskID:    taskID2,
 						Agent:     agentID2,
 						Model:     modelID1,
 						Role:      "assistant",
@@ -86,8 +86,8 @@ func TestMessageList(t *testing.T) {
 			Expected: TestExpectation{
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID1,
-						TaskId:    taskID1,
+						ID:        messageID1,
+						TaskID:    taskID1,
 						Agent:     agentID1,
 						Model:     modelID1,
 						Role:      "user",
@@ -116,8 +116,8 @@ func TestMessageList(t *testing.T) {
 			Expected: TestExpectation{
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID1,
-						TaskId:    taskID1,
+						ID:        messageID1,
+						TaskID:    taskID1,
 						Agent:     agentID1,
 						Model:     modelID1,
 						Role:      "user",
@@ -146,8 +146,8 @@ func TestMessageList(t *testing.T) {
 			Expected: TestExpectation{
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID1,
-						TaskId:    taskID1,
+						ID:        messageID1,
+						TaskID:    taskID1,
 						Agent:     agentID1,
 						Model:     modelID1,
 						Role:      "user",
@@ -177,8 +177,8 @@ func TestMessageList(t *testing.T) {
 			Expected: TestExpectation{
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID1,
-						TaskId:    taskID1,
+						ID:        messageID1,
+						TaskID:    taskID1,
 						Agent:     agentID1,
 						Model:     modelID1,
 						Role:      "user",
@@ -210,8 +210,8 @@ func TestMessageList(t *testing.T) {
 				},
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID1,
-						TaskId:    taskID1,
+						ID:        messageID1,
+						TaskID:    taskID1,
 						Agent:     agentID1,
 						Model:     modelID1,
 						Role:      "user",
@@ -245,8 +245,8 @@ func TestMessageList(t *testing.T) {
 				},
 				DisplayedObjects: []*DisplayMessage{
 					{
-						Id:        messageID2,
-						TaskId:    taskID2,
+						ID:        messageID2,
+						TaskID:    taskID2,
 						Agent:     agentID2,
 						Model:     modelID1,
 						Role:      "assistant",
@@ -358,7 +358,7 @@ func setupAgentLookupForMessageListMock(mockClient *api_client.MockClient, agent
 			Agents: []*v1.Agent{
 				{
 					Metadata: &v1.AgentMetadata{
-						Id:   agentID,
+						Id: agentID,
 					},
 					Spec: &v1.AgentSpec{
 						Name: agentName,

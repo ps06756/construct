@@ -31,8 +31,8 @@ func TestMessageGet(t *testing.T) {
 			},
 			Expected: TestExpectation{
 				DisplayedObjects: &DisplayMessage{
-					Id:        messageID1,
-					TaskId:    taskID1,
+					ID:        messageID1,
+					TaskID:    taskID1,
 					Agent:     agentID1,
 					Model:     modelID1,
 					Role:      "user",
@@ -60,8 +60,8 @@ func TestMessageGet(t *testing.T) {
 					Format: OutputFormatJSON,
 				},
 				DisplayedObjects: &DisplayMessage{
-					Id:        messageID1,
-					TaskId:    taskID1,
+					ID:        messageID1,
+					TaskID:    taskID1,
 					Agent:     agentID1,
 					Model:     modelID1,
 					Role:      "assistant",
@@ -89,8 +89,8 @@ func TestMessageGet(t *testing.T) {
 					Format: OutputFormatYAML,
 				},
 				DisplayedObjects: &DisplayMessage{
-					Id:        messageID1,
-					TaskId:    taskID1,
+					ID:        messageID1,
+					TaskID:    taskID1,
 					Agent:     agentID1,
 					Model:     modelID1,
 					Role:      "user",

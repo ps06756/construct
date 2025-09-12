@@ -24,8 +24,8 @@ func NewMessageCmd() *cobra.Command {
 }
 
 type DisplayMessage struct {
-	Id        string              `json:"id" yaml:"id" detail:"default"`
-	TaskId    string              `json:"task_id" yaml:"task_id" detail:"default"`
+	ID        string              `json:"id" yaml:"id" detail:"default"`
+	TaskID    string              `json:"task_id" yaml:"task_id" detail:"default"`
 	Agent     string              `json:"agent" yaml:"agent" detail:"default"`
 	Model     string              `json:"model" yaml:"model" detail:"default"`
 	Role      string              `json:"role" yaml:"role" detail:"default"`
@@ -63,8 +63,8 @@ func ConvertMessageToDisplay(message *v1.Message) *DisplayMessage {
 	}
 
 	return &DisplayMessage{
-		Id:        message.Metadata.Id,
-		TaskId:    message.Metadata.TaskId,
+		ID:        message.Metadata.Id,
+		TaskID:    message.Metadata.TaskId,
 		Agent:     PtrToString(agentId),
 		Model:     PtrToString(modelId),
 		Role:      ConvertMessageRoleToString(message.Metadata.Role),

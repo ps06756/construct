@@ -29,8 +29,6 @@ archives:
     name_template: "construct_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
-      - LICENSE*
-      - CHANGELOG.md
 
 checksum:
   name_template: "construct_{{ .Version }}_checksums.txt"
@@ -56,10 +54,10 @@ release:
 brews:
   - name: construct
     repository:
-      owner: "{{ .Env.GITHUB_OWNER | default \"furisto\" }}"
+      owner: furisto
       name: homebrew-tap
       branch: main
-      token: "{{ .Env.HOMEBREW_TAP_GH_TOKEN }}"
+      token: "{{ .Env.GITHUB_TOKEN }}"
     commit_author:
       name: Thomas Schubart
       email: 24721048+Furisto@users.noreply.github.com
@@ -70,14 +68,6 @@ brews:
       bin.install "construct"
     test: |
       system "#{bin}/construct", "version"
-
-env:
-  - GITHUB_TOKEN
-  - GITHUB_OWNER
-
-git:
-  ignore_tags:
-    - "{{ .Env.SKIP_VALIDATE | default \"false\" }}"
 
 # Uncomment if you want to skip builds for missing git tags during development
 # snapshot:

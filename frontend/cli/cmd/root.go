@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -19,6 +20,17 @@ import (
 
 	api "github.com/furisto/construct/api/go/client"
 	"github.com/furisto/construct/shared"
+)
+
+const (
+	// Version is the version of the CLI
+	Version = "unknown"
+
+	// Git Commit is the commit that the CLI was built from
+	GitCommit = "unknown"
+
+	// BuildDate is the date the CLI was built
+	BuildDate = "unknown"
 )
 
 type globalOptions struct {
@@ -37,6 +49,18 @@ func NewRootCmd() *cobra.Command {
 			})))
 
 			cmd.SetContext(setGlobalOptions(cmd.Context(), &options))
+
+			userInfo := getUserInfo(cmd.Context())
+			constructDir, err := userInfo.ConstructDir()
+			if err != nil {
+				return err
+			}
+
+			configStore, err := NewConfigStoreFromFile(filepath.Join(constructDir, "config.yaml"))
+			if err != nil {
+				return err
+			}
+			cmd.SetContext(setConfigStore(cmd.Context(), configStore))
 
 			if requiresContext(cmd) {
 				err := setAPIClient(cmd.Context(), cmd)

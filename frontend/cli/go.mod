@@ -5,6 +5,7 @@ go 1.24.1
 require (
 	connectrpc.com/connect v1.18.1
 	entgo.io/ent v0.14.4
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.1.0
 	github.com/charmbracelet/glamour v0.10.0
@@ -15,6 +16,7 @@ require (
 	github.com/getsentry/sentry-go v0.33.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/uuid v1.6.0
+	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
 	github.com/mattn/go-sqlite3 v1.14.27
 	github.com/sahilm/fuzzy v0.1.1
 	github.com/spf13/afero v1.14.0

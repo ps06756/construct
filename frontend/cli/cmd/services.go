@@ -2,10 +2,13 @@ package cmd
 
 import (
 	"context"
+	"net/http"
+	"os"
 
 	api "github.com/furisto/construct/api/go/client"
 	"github.com/furisto/construct/shared"
 	"github.com/spf13/afero"
+	"gopkg.in/yaml.v3"
 )
 
 type ContextKey string
@@ -19,6 +22,8 @@ const (
 	ContextKeyRuntimeInfo     ContextKey = "runtime_info"
 	ContextKeyUserInfo        ContextKey = "user_info"
 	ContextKeyGlobalOptions   ContextKey = "global_options"
+	ContextKeyHttpClient      ContextKey = "http_client"
+	ContextKeyConfigStore     ContextKey = "config_store"
 )
 
 func getAPIClient(ctx context.Context) *api.Client {
@@ -84,4 +89,46 @@ func getGlobalOptions(ctx context.Context) *globalOptions {
 		return opts
 	}
 	return &globalOptions{}
+}
+
+func getHttpClient(ctx context.Context) *http.Client {
+	if httpClient := ctx.Value(ContextKeyHttpClient); httpClient != nil {
+		return httpClient.(*http.Client)
+	}
+
+	return http.DefaultClient
+}
+
+func getConfigStore(ctx context.Context) *ConfigStore {
+	if configStore := ctx.Value(ContextKeyConfigStore); configStore != nil {
+		return configStore.(*ConfigStore)
+	}
+
+	return &ConfigStore{settings: make(map[string]any)}
+}
+
+func setConfigStore(ctx context.Context, configStore *ConfigStore) context.Context {
+	return context.WithValue(ctx, ContextKeyConfigStore, configStore)
+}
+
+type ConfigStore struct {
+	settings map[string]any
+}
+
+func NewConfigStoreFromFile(filePath string) (*ConfigStore, error) {
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var settings map[string]any
+	if err := yaml.Unmarshal(content, &settings); err != nil {
+		return nil, err
+	}
+
+	return &ConfigStore{settings: settings}, nil
+}
+
+func (c *ConfigStore) Get(key string) (string, bool) {
+	return "", false
 }

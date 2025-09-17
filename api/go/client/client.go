@@ -26,7 +26,7 @@ type ClientOptions struct {
 }
 
 func NewClient(endpointContext EndpointContext) *Client {
-	httpClient := http.DefaultClient
+	httpClient := &http.Client{}
 
 	baseURL := endpointContext.Address
 	if endpointContext.Kind == "unix" {

@@ -18,20 +18,23 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/furisto/construct/frontend/cli/cmd.version={{.Version}}
-      - -X github.com/furisto/construct/frontend/cli/cmd.commit={{.Commit}}
-      - -X github.com/furisto/construct/frontend/cli/cmd.date={{.Date}}
+      - -X github.com/furisto/construct/frontend/cli/cmd.Version={{.Version}}
+      - -X github.com/furisto/construct/frontend/cli/cmd.GitCommit={{.Commit}}
+      - -X github.com/furisto/construct/frontend/cli/cmd.BuildDate={{.Date}}
+    hooks:
+      post:
+        - sh -c 'sha256sum {{ .Path }} | cut -d" " -f1 > {{ .Os }}_{{ .Arch }}_checksum.txt'
 
 archives:
   - id: construct
     builds:
       - construct
-    name_template: "construct_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
 
 checksum:
-  name_template: "construct_{{ .Version }}_checksums.txt"
+  name_template: "checksums.txt"
 
 changelog:
   sort: asc
@@ -46,6 +49,8 @@ release:
   draft: true
   replace_existing_draft: true
   target_commitish: "{{ .Commit }}"
+  extra_files:
+    - glob: "*_checksum.txt"
   header: |
     ## What's Changed
 
@@ -68,6 +73,20 @@ brews:
       bin.install "construct"
     test: |
       system "#{bin}/construct", "version"
+
+blobs:
+  - provider: s3
+    region: us-east-1
+    bucket: us-construct-releases
+    directory: versions/{{ .Version }}
+    extra_files:
+    - glob: "*_checksum.txt"
+  - provider: s3
+    region: eu-central-1
+    bucket: eu-construct-releases
+    directory: versions/{{ .Version }}
+    extra_files:
+    - glob: "*_checksum.txt"
 
 # Uncomment if you want to skip builds for missing git tags during development
 # snapshot:

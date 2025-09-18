@@ -1,20 +1,37 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
-func NewVersionCmd() *cobra.Command {
+type infoOptions struct {
+	RenderOptions RenderOptions
+}
+
+type VersionInfo struct {
+	Version   string `detail:"default"`
+	Commit    string `detail:"default"`
+	BuildDate string `detail:"default"`
+}
+
+func NewInfoCmd() *cobra.Command {
+	options := infoOptions{}
 	cmd := &cobra.Command{
-		Use:     "version",
-		Short:   "Print the version number of Construct",
+		Use:     "info",
+		Short:   "Show version information",
 		GroupID: "system",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Construct version 0.1.0")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			renderer := getRenderer(cmd.Context())
+			versionInfo := &VersionInfo{
+				Version:   Version,
+				Commit:    GitCommit,
+				BuildDate: BuildDate,
+			}
+
+			return renderer.Render(versionInfo, &options.RenderOptions)
 		},
 	}
 
+	addRenderOptions(cmd, WithCardFormat(&options.RenderOptions))
 	return cmd
 }

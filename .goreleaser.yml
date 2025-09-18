@@ -18,9 +18,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/furisto/construct/frontend/cli/cmd.Version={{.Version}}
-      - -X github.com/furisto/construct/frontend/cli/cmd.GitCommit={{.Commit}}
-      - -X github.com/furisto/construct/frontend/cli/cmd.BuildDate={{.Date}}
+      - -X github.com/furisto/construct/frontend/cli/cmd.Version={{ .Version }}
+      - -X github.com/furisto/construct/frontend/cli/cmd.GitCommit={{ .Commit }}
+      - -X github.com/furisto/construct/frontend/cli/cmd.BuildDate={{ .Date }}
     hooks:
       post:
         - sh -c 'sha256sum {{ .Path }} | cut -d" " -f1 > {{ .Os }}_{{ .Arch }}_checksum.txt'

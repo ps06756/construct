@@ -22,7 +22,7 @@ import (
 	"github.com/furisto/construct/shared"
 )
 
-const (
+var (
 	// Version is the version of the CLI
 	Version = "unknown"
 
@@ -109,7 +109,7 @@ func NewRootCmd() *cobra.Command {
 
 	cmd.AddCommand(NewConfigCmd())
 	cmd.AddCommand(NewDaemonCmd())
-	cmd.AddCommand(NewVersionCmd())
+	cmd.AddCommand(NewInfoCmd())
 	cmd.AddCommand(NewUpdateCmd())
 	return cmd
 }

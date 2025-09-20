@@ -27,18 +27,12 @@ type daemonRunOptions struct {
 func NewDaemonRunCmd() *cobra.Command {
 	options := daemonRunOptions{}
 	cmd := &cobra.Command{
-		Use:   "run",
-		Short: "Run the API server as a persistent service",
-		Long: `The "daemon" command allows you to run the construct server as a single, long-running
-		  process. It supports different launch modes:
-		
-		  On macOS:
-		  - If launched by launchd: uses HTTP address if provided, otherwise uses socket activation
-		  - If not launched by launchd: uses provided HTTP address or Unix socket
-		
-		  On Linux:
-		  - If launched by systemd: uses HTTP address if provided, otherwise uses socket activation  
-		  - If not launched by systemd: uses provided HTTP address or Unix socket`,
+		Use:   "run [flags]",
+		Short: "Run the daemon process in the foreground",
+		Long:  `Run the daemon process in the foreground.
+
+Starts the daemon process directly in the current terminal. This is useful for 
+debugging and development. For normal use, 'construct daemon install' is recommended.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			userInfo := getUserInfo(cmd.Context())
 
@@ -113,7 +107,7 @@ func NewDaemonRunCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&options.HTTPAddress, "listen-http", "", "The address to listen on for HTTP requests")
+	cmd.Flags().StringVar(&options.HTTPAddress, "listen-http", "", "The address and port to listen on (e.g., 127.0.0.1:8080)")
 	cmd.Flags().StringVar(&options.UnixSocket, "listen-unix", "", "The path to listen on for Unix socket requests")
 
 	return cmd

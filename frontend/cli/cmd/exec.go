@@ -63,30 +63,35 @@ func NewExecCmd() *cobra.Command {
 	}
 
 	cmd := &cobra.Command{
-		Use:     "exec [question]",
-		Short:   "Exec a question to the AI",
+		Use:     "exec [flags]",
+		Short:   "Execute a non-interactive task with an agent",
 		Args:    cobra.MaximumNArgs(1),
 		GroupID: "core",
-		Example: `  # Simple question
-  construct exec "What is 2+2?"
+		Long: `Execute a non-interactive task with an agent.
 
-  # Use a specific agent
-  construct exec "Review this code for security issues" --agent security-reviewer
+Sends a single prompt to an agent for immediate, non-interactive execution. This is 
+ideal for scripting, running automated tasks, or integrating Construct into other 
+workflows and pipelines. The entire execution is saved as a task that can be 
+inspected or resumed later with construct resume.`,
+		Example: `  # Execute a simple command
+  construct exec "What are the top 5 features of Go 1.22?"
 
-  # Include files as context
-  construct exec "What does this code do?" --file main.go --file utils.go
+  # Pipe a file into the agent as context for summarization
+  cat README.md | construct exec "Summarize this document."
 
-  # Pipe input with question and file context
-  cat main.go | construct exec "What does this code do?" --file config.yaml
+  # Instruct an agent to review specific files for bugs
+  construct exec "Review this code for potential race conditions" \
+    --file ./cmd/server/main.go \
+    --file ./pkg/worker/worker.go \
+    --agent go-reviewer
 
-  # Give agent more turns for complex tasks
-  construct exec "Debug why the build is failing" --max-turns 10
+  # Get structured JSON output for scripting
+  construct exec "List all .go files in the workspace" --output json
 
-  # Get JSON output for scripting
-  construct ask "List all Go files" --output json
-  
-  # Continue the previous task
-  construct exec "Continue refactoring the code" --continue`,
+  # Give the agent more turns to complete a complex task
+  construct exec "Draft a project proposal based on the attached spec" \
+    --file ./specs/project-spec.md \
+    --max-turns 10`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var question string
 			if len(args) > 0 {
@@ -101,11 +106,11 @@ func NewExecCmd() *cobra.Command {
 }
 
 func setupFlags(cmd *cobra.Command, options *execOptions) {
-	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "The agent to use (name or ID)")
-	cmd.Flags().StringVarP(&options.Workspace, "workspace", "w", "", "The workspace directory")
-	cmd.Flags().IntVar(&options.MaxTurns, "max-turns", 5, "Maximum number of turns for the conversation")
-	cmd.Flags().StringSliceVarP(&options.Files, "file", "f", []string{}, "Files to include as context (can be used multiple times)")
-	cmd.Flags().StringVarP(&options.Continue, "continue", "c", "", "Continue the previous task")
+	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "Specify the agent to use by its name or ID")
+	cmd.Flags().StringVarP(&options.Workspace, "workspace", "w", "", "Set the agent's working directory")
+	cmd.Flags().IntVar(&options.MaxTurns, "max-turns", 5, "Set a maximum number of conversational turns for the agent to complete the task")
+	cmd.Flags().StringSliceVarP(&options.Files, "file", "f", []string{}, "Add a file to the agent's context. Can be used multiple times")
+	cmd.Flags().StringVarP(&options.Continue, "continue", "c", "", "Continue the most recent task with this new question")
 	cmd.Flags().VarP(&options.Format, "output", "o", "The format to output the result in")
 	cmd.Flags().Lookup("continue").NoOptDefVal = "last"
 }

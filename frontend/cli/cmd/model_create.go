@@ -18,14 +18,17 @@ func NewModelCreateCmd() *cobra.Command {
 	var options modelCreateOptions
 
 	cmd := &cobra.Command{
-		Use:   "create <model-name> --provider <provider-name> --context-window <context-window>",
-		Short: "Create a new model",
-		Long:  `Create a new model with the specified name, model provider, and context window.`,
-		Example: `  # Create a model with a specific provider name
-  construct model create "gpt-4" --provider "openai-dev" --context-window 8192
+		Use:   "create <name> [flags]",
+		Short: "Register a new large language model for use by agents",
+		Long:  `Register a new large language model for use by agents.
 
-  # Create a model using provider ID
-  construct model create "claude-3-5-sonnet" --provider "123e4567-e89b-12d3-a456-426614174000" --context-window 200000`,
+Makes a specific model from a provider (like gpt-4o from OpenAI) available to 
+construct. You must configure a provider before you can create a model.`,
+		Example: `  # Register GPT-4o from the 'openai-prod' provider
+  construct model create "gpt-4o" --provider "openai-prod" --context-window 128000
+
+  # Register Claude Sonnet 3.5 from the 'anthropic' provider
+  construct model create "claude-3-5-sonnet-20240620" --provider "anthropic" --context-window 200000`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 			client := getAPIClient(cmd.Context())
@@ -53,9 +56,9 @@ func NewModelCreateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&options.ModelProvider, "provider", "p", "", "The name or ID of the model provider (required)")
-	cmd.Flags().Int64VarP(&options.ContextWindow, "context-window", "w", 0, "The context window size (required)")
+	cmd.Flags().Int64VarP(&options.ContextWindow, "context-window", "w", 0, "The maximum context window size for the model (required)")
 
-	cmd.MarkFlagRequired("model-provider")
+	cmd.MarkFlagRequired("provider")
 	cmd.MarkFlagRequired("context-window")
 
 	return cmd

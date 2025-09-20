@@ -12,7 +12,8 @@ func NewConfigGetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get <key>",
 		Short: "Get a configuration value",
-		Long:  `The "get" command allows you to get a configuration value`,
+		Example: `  # Get the default agent for the 'new' command
+  construct config get cmd.new.agent`,
 		Args:  cobra.ExactArgs(1),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) == 0 {

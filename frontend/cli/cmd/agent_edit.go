@@ -25,23 +25,18 @@ type AgentEditSpec struct {
 
 func NewAgentEditCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit <id-or-name>",
-		Short: "Edit an agent in your default editor",
-		Long: `Edit an agent's configuration using your default editor ($EDITOR).
+		Use:   "edit <name|id>",
+		Short: "Edit an agent's configuration in your default editor",
+		Long: `Edit an agent's configuration in your default editor.
 
-This command fetches the current agent configuration and opens it as a YAML
-file in your editor. After you save and close the file, any changes will
-be applied. If $EDITOR is not set, a common editor (like code, vim, or nano)
-will be used.`,
+Opens the agent's configuration in your default text editor ($EDITOR). This provides 
+a fast and powerful way to modify an agent's prompt, model, or description. The changes are applied when you save and close the file.`,
 		Args: cobra.ExactArgs(1),
-		Example: `  # Edit agent by name
-  construct agent edit "coder"
+		Example: `  # Edit the 'coder' agent in your default editor
+  construct agent edit coder
 
-  # Edit agent by ID  
-  construct agent edit 01974c1d-0be8-70e1-88b4-ad9462fff25e
-
-  # Set custom editor
-  EDITOR=nano construct agent edit "coder"`,
+  # Use a specific editor for the session
+  EDITOR=vim construct agent edit sql-expert`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 			idOrName := args[0]

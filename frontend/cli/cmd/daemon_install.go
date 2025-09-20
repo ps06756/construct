@@ -50,20 +50,15 @@ type daemonInstallOptions struct {
 func NewDaemonInstallCmd() *cobra.Command {
 	options := daemonInstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Install the daemon",
+		Use:   "install [flags]",
+		Short: "Install and enable the Construct daemon as a system service",
 		Args:  cobra.NoArgs,
-		Example: `  # Install daemon with Unix socket activation
-  construct daemon install
+		Long:  `Install and enable the Construct daemon as a system service.
 
-  # Install daemon with HTTP socket activation
-  construct daemon install --listen-http 127.0.0.1:8080
-
-  # Force install (overwrite existing installation)
-  construct daemon install --force
-
-  # Install daemon with custom name and run continuously
-  construct daemon install --name production --listen-http :8080 --always-running`,
+Installs the daemon using the appropriate service manager for your OS (e.g., launchd 
+on macOS, systemd on Linux). The daemon is required for most construct operations.`,
+		Example: `  # Install the daemon with default settings
+  construct daemon install`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			out := cmd.OutOrStdout()
 			if options.Quiet {

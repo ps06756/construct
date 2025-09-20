@@ -23,14 +23,9 @@ type daemonUninstallOptions struct {
 func NewDaemonUninstallCmd() *cobra.Command {
 	options := daemonUninstallOptions{}
 	cmd := &cobra.Command{
-		Use:   "uninstall",
-		Short: "Uninstall the Construct daemon",
+		Use:   "uninstall [flags]",
+		Short: "Uninstall the Construct daemon from the system",
 		Args:  cobra.NoArgs,
-		Example: `  # Uninstall daemon with confirmation prompt
-  construct daemon uninstall
-
-  # Uninstall daemon without confirmation
-  construct daemon uninstall -y`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if options.Quiet {
 				cmd.SetOut(io.Discard)
@@ -40,7 +35,7 @@ func NewDaemonUninstallCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&options.SkipConfirm, "yes", "y", false, "Skip confirmation prompt")
+	cmd.Flags().BoolVarP(&options.SkipConfirm, "yes", "y", false, "Skip the confirmation prompt")
 	cmd.Flags().BoolVarP(&options.Quiet, "quiet", "q", false, "Quiet mode")
 
 	return cmd

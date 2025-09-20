@@ -10,7 +10,7 @@ import (
 func NewTaskCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "task",
-		Short:   "Manage and interact with agent tasks",
+		Short:   "Manage tasks, which are the records of conversations",
 		Aliases: []string{"tasks"},
 		GroupID: "resource",
 	}

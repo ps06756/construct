@@ -16,20 +16,14 @@ func NewAgentGetCmd() *cobra.Command {
 	var options agentGetOptions
 
 	cmd := &cobra.Command{
-		Use:   "get <id-or-name>",
-		Short: "Get an agent by ID or name",
+		Use:   "get <name|id> [flags]",
+		Short: "Inspect the details of a specific agent",
 		Args:  cobra.ExactArgs(1),
-		Example: `  # Get agent by name
-  construct agent get "coder"
+		Example: `  # Get details for the 'coder' agent
+  construct agent get coder
 
-  # Get agent by agent ID
-  construct agent get 01974c1d-0be8-70e1-88b4-ad9462fff25e
-
-  # Get agent with JSON output
-  construct agent get "sql-expert" --output json
-
-  # Get agent with YAML output
-  construct agent get "reviewer" --output yaml`,
+  # Get details and format as JSON
+  construct agent get 01974c1d-0be8-70e1-88b4-ad9462fff25e --output json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 			idOrName := args[0]

@@ -11,6 +11,7 @@ import (
 
 type taskListOptions struct {
 	Agent         string
+	Limit         int32
 	RenderOptions RenderOptions
 }
 
@@ -18,17 +19,14 @@ func NewTaskListCmd() *cobra.Command {
 	var options taskListOptions
 
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List tasks",
+		Use:     "list [flags]",
+		Short:   "List all tasks",
 		Aliases: []string{"ls"},
-		Example: `  # List all tasks
+		Example: `  # List all recent tasks
   construct task list
 
-  # List tasks by agent name
-  construct task list --agent "coder"
-
-  # List tasks with YAML output
-  construct task list --output yaml`,
+  # List tasks assigned to the 'coder' agent, in JSON format
+  construct task ls --agent "coder" --output json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -67,7 +65,8 @@ func NewTaskListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "Filter by agent (name or ID)")
+	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "Filter tasks by the agent assigned to them")
+	cmd.Flags().Int32VarP(&options.Limit, "limit", "l", 0, "Limit the number of results returned")
 	addRenderOptions(cmd, &options.RenderOptions)
 	return cmd
 }

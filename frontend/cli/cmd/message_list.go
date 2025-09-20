@@ -19,21 +19,18 @@ func NewMessageListCmd() *cobra.Command {
 	var options messageListOptions
 
 	cmd := &cobra.Command{
-		Use:     "list",
+		Use:     "list [flags]",
 		Short:   "List messages",
 		Aliases: []string{"ls"},
-		Long:    `List messages with optional filtering by task, agent, and role.`,
-		Example: `  # List all messages
-  construct message list
+		Long:    `List messages.
 
-  # List messages by agent name
-  construct message list --agent "coder"
+Lists messages, typically filtered by a specific task. Useful for reviewing or 
+exporting a conversation history.`,
+		Example: `  # List all messages for a specific task
+  construct message list --task "01974c1d-0be8-70e1-88b4-ad9462fff25e"
 
-  # List messages by task ID
-  construct message list --task "456e7890-e12b-34c5-a678-901234567890"
-
-  # List only assistant messages
-  construct message list --role assistant`,
+  # List only the assistant's responses in that task
+  construct message list --task "01974c1d-0be8-70e1-88b4-ad9462fff25e" --role assistant`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -84,9 +81,9 @@ func NewMessageListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.Task, "task", "t", "", "Filter by task ID")
-	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "Filter by agent name or ID")
-	cmd.Flags().StringVarP(&options.Role, "role", "r", "", "Filter by role (user or assistant)")
+	cmd.Flags().StringVarP(&options.Task, "task", "t", "", "(Recommended) Filter messages by task ID")
+	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "Filter by the agent that participated in the conversation")
+	cmd.Flags().StringVarP(&options.Role, "role", "r", "", "Filter messages by the role of the author")
 	addRenderOptions(cmd, &options.RenderOptions)
 
 	return cmd

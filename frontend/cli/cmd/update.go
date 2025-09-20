@@ -38,7 +38,7 @@ type Artifact struct {
 func NewUpdateCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:     "update",
-		Short:   "Update the CLI to the latest version",
+		Short:   "Update Construct to the latest version",
 		GroupID: "system",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmd.SilenceUsage = true

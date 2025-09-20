@@ -18,7 +18,7 @@ func NewInfoCmd() *cobra.Command {
 	options := infoOptions{}
 	cmd := &cobra.Command{
 		Use:     "info",
-		Short:   "Show version information",
+		Short:   "Print information about the Construct CLI",
 		GroupID: "system",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			renderer := getRenderer(cmd.Context())

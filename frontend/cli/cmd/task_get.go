@@ -16,14 +16,14 @@ func NewTaskGetCmd() *cobra.Command {
 	var options taskGetOptions
 
 	cmd := &cobra.Command{
-		Use:   "get <task-id>",
-		Short: "Get a task by ID",
+		Use:   "get <task-id> [flags]",
+		Short: "Inspect the details of a specific task",
 		Args:  cobra.ExactArgs(1),
-		Example: `  # Get task by ID
+		Example: `  # Get details for a specific task
   construct task get 01974c1d-0be8-70e1-88b4-ad9462fff25e
 
-  # Get task with JSON output
-  construct task get 01974c1d-0be8-70e1-88b4-ad9462fff25e --output json`,
+  # Get task details and format as YAML
+  construct task get 01974c1d-0be8-70e1-88b4-ad9462fff25e --output yaml`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 			taskID := args[0]

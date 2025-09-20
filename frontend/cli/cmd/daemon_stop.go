@@ -7,7 +7,7 @@ import (
 func NewDaemonStopCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
-		Short: "Stop the daemon",
+		Short: "Stop the running daemon service",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
 		},

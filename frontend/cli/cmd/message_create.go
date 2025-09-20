@@ -16,11 +16,14 @@ func NewMessageCreateCmd() *cobra.Command {
 	var options messageCreateOptions
 
 	cmd := &cobra.Command{
-		Use:   "create <task-id> <content>",
-		Short: "Create a new message",
-		Long:  `Create a new message for a task by specifying the task ID and message content.`,
-		Example: `  # Create a message for a task
-  construct message create "123e4567-e89b-12d3-a456-426614174000" "Please implement a hello world function""`,
+		Use:   "create <task-id> <content> [flags]",
+		Short: "Add a message to a task programmatically",
+		Long:  `Add a message to a task programmatically.
+
+Appends a new message to a task's history. This is an advanced command, typically 
+used for scripting or integrating external tools with Construct tasks.`,
+		Example: `  # Add a user message to an existing task
+  construct message create "01974c1d-0be8-70e1-88b4-ad9462fff25e" "Please check the file again."`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())

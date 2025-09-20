@@ -15,15 +15,16 @@ type modelProviderDeleteOptions struct {
 func NewModelProviderDeleteCmd() *cobra.Command {
 	options := new(modelProviderDeleteOptions)
 	cmd := &cobra.Command{
-		Use:     "delete <id-or-name>...",
-		Short:   "Delete one or more model providers by their IDs or names",
+		Use:     "delete <name|id>... [flags]",
+		Short:   "Permanently delete one or more model providers",
 		Args:    cobra.MinimumNArgs(1),
 		Aliases: []string{"rm"},
-		Example: `  # Delete multiple model providers
-  construct modelprovider delete anthropic-dev openai-prod
+		Long:    `Permanently delete one or more model providers.
 
-  # Delete model provider by ID
-  construct modelprovider delete 01974c1d-0be8-70e1-88b4-ad9462fff25e`,
+Deletes a provider configuration. **Warning**: This action will also delete all 
+models that depend on this provider.`,
+		Example: `  # Delete the 'anthropic-dev' provider
+  construct provider delete anthropic-dev`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -72,7 +73,7 @@ func NewModelProviderDeleteCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&options.Force, "force", "f", false, "force deletion without confirmation")
+	cmd.Flags().BoolVarP(&options.Force, "force", "f", false, "Skip the confirmation prompt")
 
 	return cmd
 }

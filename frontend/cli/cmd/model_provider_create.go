@@ -23,18 +23,20 @@ func NewModelProviderCreateCmd() *cobra.Command {
 	var options modelProviderCreateOptions
 
 	cmd := &cobra.Command{
-		Use:   "create <name> --type <provider-type>",
-		Short: "Create a new model provider",
+		Use:   "create <name> [flags]",
+		Short: "Configure a new model provider integration",
 		Args:  cobra.ExactArgs(1),
-		Example: `  # Create OpenAI provider with API key prompt
-  construct model-provider create "openai-dev" --type openai
+		Long:  `Configure a new model provider integration.
 
-  # Create provider with API key from environment variable
+Connects construct to an external AI model provider. This step is required to 
+gain access to models. API credentials can be provided interactively, via flags
+or environment variables (e.g., $OPENAI_API_KEY, $ANTHROPIC_API_KEY).`,
+		Example: `  # Create an OpenAI provider, using the API key from the environment
   export OPENAI_API_KEY="sk-..."
-  construct model-provider create "openai-prod" --type openai
+  construct provider create "openai-prod" --type openai
 
-  # Create Anthropic provider with API key from flag  
-  construct model-provider create "anthropic-prod" --type anthropic --api-key "sk-ant-..."`,
+  # Create an Anthropic provider, passing the API key directly
+  construct provider create "anthropic-dev" --type anthropic --api-key "sk-ant-..."`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			name := args[0]
 
@@ -67,8 +69,8 @@ func NewModelProviderCreateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.ApiKey, "api-key", "k", "", "The API key for the model provider (can also be set via environment variable)")
-	cmd.Flags().VarP(&options.Type, "type", "t", "The type of the model provider (anthropic, openai)")
+	cmd.Flags().StringVarP(&options.ApiKey, "api-key", "k", "", "The API key. If omitted, the corresponding environment variable will be used")
+	cmd.Flags().VarP(&options.Type, "type", "t", "The type of the model provider (required)")
 
 	cmd.MarkFlagRequired("type")
 

@@ -27,26 +27,22 @@ func NewResumeCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "resume [task-id] [flags]",
-		Short: "Resume an existing conversation",
-		Long: `Resume an existing conversation from where you left off. If no task ID is provided, shows an interactive picker of recent tasks. Supports partial ID matching for convenience.
+		Short: "Continue a previous task",
+		Long: `Continue a previous task.
 
-The resumed conversation will restore the full context including:
-- All previous messages in the conversation
-- The agent that was being used
-- The workspace directory settings
+Pick up a conversation where you left off. 'construct resume' restores the full 
+context of a previous task, including the agent and all messages.
 
-Examples:
-  # Show interactive picker to select from recent tasks
+If no task-id is provided, an interactive menu will display recent tasks to 
+choose from. Partial ID matching is supported.`,
+		Example: `  # Show an interactive picker to select a recent task
   construct resume
 
   # Resume the most recent task immediately
   construct resume --last
 
-  # Resume specific task by full ID
-  construct resume 01974c1d-0be8-70e1-88b4-ad9462fff25e
-
-  # Show more tasks, including non-interactive ones, in the picker
-  construct resume --all --limit 20`,
+  # Resume a specific task by its ID
+  construct resume 01974c1d-0be8-70e1-88b4-ad9462fff25e`,
 		GroupID: "core",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			apiClient := getAPIClient(cmd.Context())
@@ -55,7 +51,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().BoolVar(&options.last, "last", false, "Resume the most recent task immediately")
+	cmd.Flags().BoolVar(&options.last, "last", false, "Immediately resume the most recent session without showing the interactive picker")
 	cmd.Flags().BoolVar(&options.all, "all", false, "Show all tasks in the picker, including non-interactive ones")
 	cmd.Flags().IntVar(&options.limit, "limit", 10, "Maximum number of tasks to show in the picker")
 

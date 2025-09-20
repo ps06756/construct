@@ -16,7 +16,6 @@ type agentListOptions struct {
 	Models        []string
 	Names         []string
 	Limit         int32
-	Enabled       bool
 	RenderOptions RenderOptions
 }
 
@@ -24,20 +23,14 @@ func NewAgentListCmd() *cobra.Command {
 	var options agentListOptions
 
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List agents",
+		Use:     "list [flags]",
+		Short:   "List all available agents",
 		Aliases: []string{"ls"},
-		Example: `  # List all agents
+		Example: `  # List all agents in a table
   construct agent list
 
-  # List agents by model name
-  construct agent list --model "claude-4"
-
-  # List only enabled agents
-  construct agent list --enabled
-
-  # Multiple filters combined
-  construct agent list --model "claude-4" --enabled --limit 5`,
+  # Find all agents using a specific model
+  construct agent ls --model "claude-3-5-sonnet"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -50,10 +43,9 @@ func NewAgentListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringArrayVarP(&options.Models, "model", "m", []string{}, "Show only agents using this AI model (e.g., 'claude-4', 'gpt-4', or model ID)")
-	cmd.Flags().StringArrayVarP(&options.Names, "name", "n", []string{}, "Filter agents by name")
-	cmd.Flags().Int32VarP(&options.Limit, "limit", "l", 0, "Limit number of results")
-	cmd.Flags().BoolVar(&options.Enabled, "enabled", true, "Show only enabled agents")
+	cmd.Flags().StringArrayVarP(&options.Models, "model", "m", []string{}, "Filter agents by the model they use")
+	cmd.Flags().StringArrayVarP(&options.Names, "name", "n", []string{}, "Filter agents by name (supports partial matching)")
+	cmd.Flags().Int32VarP(&options.Limit, "limit", "l", 0, "Limit the number of results returned")
 	addRenderOptions(cmd, &options.RenderOptions)
 
 	return cmd

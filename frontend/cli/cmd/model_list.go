@@ -11,7 +11,6 @@ import (
 
 type modelListOptions struct {
 	ModelProvider string
-	ShowDisabled  bool
 	RenderOptions RenderOptions
 }
 
@@ -19,18 +18,14 @@ func NewModelListCmd() *cobra.Command {
 	var options modelListOptions
 
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List models",
+		Use:     "list [flags]",
+		Short:   "List all registered models",
 		Aliases: []string{"ls"},
-		Long:    `List models.`,
-		Example: `  # List all models
+		Example: `  # List all available models
   construct model list
 
-  # List models by provider name
-  construct model list --provider "anthropic-dev"
-
-  # List all models including disabled ones
-  construct model list --show-disabled`,
+  # List all models available from the 'anthropic' provider
+  construct model ls --provider "anthropic"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -44,10 +39,7 @@ func NewModelListCmd() *cobra.Command {
 				filter.ModelProviderId = &modelProviderID
 			}
 
-			if !options.ShowDisabled {
-				enabled := true
-				filter.Enabled = &enabled
-			}
+
 
 			req := &connect.Request[v1.ListModelsRequest]{
 				Msg: &v1.ListModelsRequest{
@@ -69,8 +61,7 @@ func NewModelListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.ModelProvider, "provider", "p", "", "Filter by model provider name or ID")
-	cmd.Flags().BoolVarP(&options.ShowDisabled, "show-disabled", "d", false, "Show disabled models")
+	cmd.Flags().StringVarP(&options.ModelProvider, "provider", "p", "", "Filter models by their provider")
 	addRenderOptions(cmd, &options.RenderOptions)
 	return cmd
 }

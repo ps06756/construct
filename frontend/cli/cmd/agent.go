@@ -14,7 +14,7 @@ import (
 func NewAgentCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "agent",
-		Short:   "Create, list, and configure reusable agents",
+		Short:   "Manage the AI agents that perform tasks",
 		Aliases: []string{"agents"},
 		GroupID: "resource",
 	}

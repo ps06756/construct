@@ -20,13 +20,18 @@ func NewTaskCreateCmd() *cobra.Command {
 	var options taskCreateOptions
 
 	cmd := &cobra.Command{
-		Use:   "create",
-		Short: "Create a new task",
-		Example: `  # Create task and assign to agent by name
+		Use:   "create [flags]",
+		Short: "Create a new task without starting an interactive session",
+		Long: `Create a new task without starting an interactive session.
+
+Programmatically creates a new task. This is useful for setting up tasks that 
+will be used later or by automated systems. To start an interactive task, 
+use construct new.`,
+		Example: `  # Create a new task assigned to the 'coder' agent
   construct task create --agent coder
 
-  # Create task with both agent and workspace directory
-  construct task create --agent sql-expert --workspace /path/to/repo`,
+  # Create a task with a specific workspace
+  construct task create --agent sql-expert --workspace /path/to/db/repo`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 			fs := getFileSystem(cmd.Context())
@@ -77,8 +82,8 @@ func NewTaskCreateCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "The agent to assign to the task (name or ID)")
-	cmd.Flags().StringVarP(&options.Workspace, "workspace", "w", "", "The workspace directory")
+	cmd.Flags().StringVarP(&options.Agent, "agent", "a", "", "The agent to assign to the task (required)")
+	cmd.Flags().StringVarP(&options.Workspace, "workspace", "w", "", "The workspace directory for the task")
 
 	cmd.MarkFlagRequired("agent")
 

@@ -1,759 +1,710 @@
+````markdown
 # Construct CLI Reference
 
-The Construct CLI is a command-line interface for managing AI agents, tasks, messages, models, and model providers. This document provides a complete reference for all available commands and their options.
+**Construct CLI: Your command-line copilot for building with AI.**
+
+Interact with, manage, and configure AI agents directly from your terminal. This document provides a complete reference for all `construct` commands, flags, and options.
 
 ## Global Options
 
-- `-v, --verbose`: Enable verbose output
-- `--help`: Show help information for any command
+-   `-v, --verbose`: Enable verbose output for detailed logging.
+-   `--help`: Show help information for any command or subcommand.
 
-## Commands Overview
+## Command Groups
 
-The CLI commands are organized into three main groups:
+The `construct` CLI is organized into three logical groups:
 
-- **Core Commands**: Primary workflow commands for interactive usage
-- **Resource Management**: Commands for managing agents, tasks, messages, models, and providers
-- **System Commands**: Configuration, daemon management, and utilities
+* **Core Workflow**: Commands for your primary day-to-day interactions with agents.
+* **Manage Resources**: Commands for creating, listing, and managing agents, models, and tasks.
+* **System & Configuration**: Commands for configuring the CLI and managing the system daemon.
 
 ---
 
-## Core Commands
+## Core Workflow
 
 ### `construct new`
 
-Start a new interactive conversation with an AI agent.
+Launch a new interactive chat session with an agent.
 
-**Usage:**
+**Usage**
 ```bash
 construct new [flags]
-```
+````
 
-**Flags:**
-- `--agent string`: Use a specific agent (default: last used or configured default)
-- `--workspace string`: The sandbox directory for the agent (default: current directory)
+**Description**
+Starts a real-time, interactive conversation with an AI agent in your terminal. This is the primary command for collaborative tasks like coding, debugging, and brainstorming. The session context, including messages and files, is saved automatically.
 
-**Examples:**
+**Options**
+
+  * `--agent <name|id>`: Start the session with a specific agent. Defaults to the last used agent.
+  * `--workspace <path>`: Set the agent's working directory. Defaults to the current directory (`.`).
+
+**Examples**
+
 ```bash
-# Start a new conversation with the default agent
+# Start a chat with the default agent
 construct new
 
-# Start with a specific agent
+# Start a chat with a specific agent named 'coder'
 construct new --agent coder
 
-# Sandbox another directory
-construct new --workspace /workspace/repo/hello/world
+# Start a chat with an agent sandboxed in a different directory
+construct new --workspace /path/to/project
 ```
 
 ### `construct resume`
 
-Resume an existing conversation from where you left off.
+Continue a previous chat session.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct resume [task-id] [flags]
 ```
 
-**Description:**
-Resume an existing conversation, restoring full context including all previous messages, the agent that was being used, and workspace directory settings. If no task ID is provided, shows an interactive picker of recent tasks. Supports partial ID matching for convenience.
+**Description**
+Pick up a conversation where you left off. `construct resume` restores the full context of a previous session, including the agent, all messages, and the original workspace directory.
 
-**Flags:**
-- `--last`: Resume the most recent task immediately
+If no `task-id` is provided, an interactive menu will display recent sessions to choose from. Partial ID matching is supported.
 
-**Examples:**
+**Options**
+
+  * `--last`: Immediately resume the most recent session without showing the interactive picker.
+
+**Examples**
+
 ```bash
-# Show interactive picker to select from recent tasks
+# Show an interactive picker to select a recent session
 construct resume
 
-# Resume the most recent task immediately
+# Immediately jump into the most recent session
 construct resume --last
 
-# Resume specific task by full ID
+# Resume a specific session by its ID
 construct resume 01974c1d-0be8-70e1-88b4-ad9462fff25e
 ```
 
-### `construct ask`
+### `construct exec`
 
-Ask a question to the AI and create a saved task that can be resumed later.
+Execute a non-interactive task with an agent..
 
-**Usage:**
+**Usage**
+
 ```bash
-construct ask [question] [flags]
+construct prompt "<question>" [flags]
 ```
 
-**Flags:**
-- `-a, --agent string`: The agent to use (name or ID)
-- `-w, --workspace string`: The workspace directory
-- `--max-turns int`: Maximum number of turns for the conversation (default: 5)
-- `-f, --file strings`: Files to include as context (can be used multiple times)
-- `-c, --continue`: Continue the previous task
+**Description**
+Sends a single prompt to an agent for immediate, non-interactive execution. This is ideal for scripting, running automated tasks, or integrating construct into other workflows and pipelines. The entire execution is saved as a task that can be inspected or resumed later with construct resume.
 
-**Examples:**
+**Options**
+
+  * `-a, --agent <name|id>`: Specify the agent to use by its name or ID.
+  * `-w, --workspace <path>`: Set the agent's working directory.
+  * `--max-turns <number>`: Set a maximum number of conversational turns for the agent to complete the task. (Default: 5)
+  * `-f, --file <path>`: Add a file to the agent's context. Can be used multiple times.
+  * `-c, --continue`: Continue the most recent task with this new question.
+
+**Examples**
+
 ```bash
-# Simple question
-construct ask "What is 2+2?"
+# Execute a simple command
+construct exec "What are the top 5 features of Go 1.22?"
 
-# Use a specific agent
-construct ask "Review this code for security issues" --agent security-reviewer
+# Pipe a file into the agent as context for summarization
+cat README.md | construct exec "Summarize this document."
 
-# Include files as context
-construct ask "What does this code do?" --file main.go --file utils.go
+# Instruct an agent to review specific files for bugs
+construct exec "Review this code for potential race conditions" \
+  --file ./cmd/server/main.go \
+  --file ./pkg/worker/worker.go \
+  --agent go-reviewer
 
-# Pipe input with question and file context
-cat main.go | construct ask "What does this code do?" --file config.yaml
+# Get structured JSON output for scripting
+construct exec "List all .go files in the workspace" --output json
 
-# Give agent more turns for complex tasks
-construct ask "Debug why the tests are failing" --max-turns 10 --file test.log
-
-# Get JSON output for scripting
-construct ask "List all Go files" --output json
-
-# Complex analysis with file context
-construct ask "Analyze the architecture and suggest improvements" --max-turns 15 --agent architect --file architecture.md
+# Give the agent more turns to complete a complex task
+construct  "Draft a project proposal based on the attached spec" \
+  --file ./specs/project-spec.md \
+  --max-turns 10
 ```
 
----
+-----
 
-## Resource Management Commands
+## Manage Resources
 
-### Agent Commands
+### Agent Commands: `construct agent`
 
-#### `construct agent create`
+Manage the AI agents that perform tasks.
 
-Create a new AI agent with custom instructions and model configuration.
+#### `construct agent create <name>`
 
-**Usage:**
+Define a new, reusable AI agent.
+
+**Usage**
+
 ```bash
 construct agent create <name> [flags]
 ```
 
-**Arguments:**
-- `name` (required): Name of the agent
+**Description**
+Creates a new agent by giving it a name, a system prompt, and assigning a model. The system prompt defines the agent's personality, goals, and constraints.
 
-**Flags:**
-- `-d, --description string`: Description of the agent
-- `-p, --prompt string`: System prompt that defines the agent's behavior
-- `--prompt-file string`: Read system prompt from file
-- `--prompt-stdin`: Read system prompt from stdin
-- `-m, --model string`: AI model to use (e.g. gpt-4o, claude-4 or model ID) (required)
+You must specify the agent's system prompt using one of `--prompt`, `--prompt-file`, or by piping it via `--prompt-stdin`.
 
-**Note:** Exactly one prompt source must be specified (--prompt, --prompt-file, or --prompt-stdin).
+**Arguments**
 
-**Examples:**
+  * `<name>` (required): A unique, memorable name for the agent (e.g., `coder`, `sql-writer`).
+
+**Options**
+
+  * `-m, --model <model-name|id>` (required): The AI model the agent will use (e.g., `gpt-4o`).
+  * `-p, --prompt <string>`: The system prompt that defines the agent's behavior.
+  * `--prompt-file <path>`: Read the system prompt from a specified file.
+  * `--prompt-stdin`: Read the system prompt from standard input (stdin).
+  * `-d, --description <string>`: A brief description of what the agent does.
+
+**Examples**
+
 ```bash
-construct agent create "coder" --prompt "You are a coding assistant" --model "claude-4"
-construct agent create "sql-expert" --prompt-file ./prompts/sql-expert.txt --model "claude-4"
-echo "You review code" | construct agent create "reviewer" --prompt-stdin --model "gpt-4o"
-construct agent create "RFC writer" --prompt "You help with writing" --model "gemini-2.5.pro" --description "RFC writing assistant"
+# Create a simple coding assistant
+construct agent create "coder" \
+  --model "gpt-4o" \
+  --prompt "You are an expert Go developer. Your code is clean, efficient, and well-documented."
+
+# Create an agent with a prompt from a file
+construct agent create "sql-expert" \
+  --model "claude-3-5-sonnet" \
+  --prompt-file ./prompts/sql.txt
+
+# Create an agent by piping the prompt
+echo "You are a security expert reviewing code for vulnerabilities." | \
+  construct agent create "reviewer" --model "gpt-4o" --prompt-stdin
 ```
 
 #### `construct agent list`
 
-List all available agents with optional filtering.
+List all available agents.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct agent list [flags]
 ```
 
-**Aliases:** `construct agent ls`
+**Aliases**: `ls`
 
-**Flags:**
-- `-m, --model string`: Show only agents using this AI model (e.g., 'claude-4', 'gpt-4', or model ID)
-- `-n, --name string`: Filter agents by name
-- `-l, --limit int`: Limit number of results
-- `--enabled`: Show only enabled agents (default: true)
-- `--output string`: Output format (json, yaml, table)
+**Options**
 
-**Examples:**
+  * `-m, --model <model-name|id>`: Filter agents by the model they use.
+  * `-n, --name <string>`: Filter agents by name (supports partial matching).
+  * `-l, --limit <number>`: Limit the number of results returned.
+  * `--output <table|json|yaml>`: Specify the output format.
+
+**Examples**
+
 ```bash
+# List all agents in a table
 construct agent list
-construct agent list --model "claude-4"
-construct agent list --enabled
-construct agent list --model "claude-4" --enabled --limit 5
+
+# Find all agents using a specific model
+construct agent ls --model "claude-3-5-sonnet"
 ```
 
-#### `construct agent get`
+#### `construct agent get <name|id>`
 
-Get detailed information about a specific agent.
+Inspect the details of a specific agent.
 
-**Usage:**
+**Usage**
+
 ```bash
-construct agent get <id-or-name> [flags]
+construct agent get <name|id> [flags]
 ```
 
-**Arguments:**
-- `id-or-name` (required): Agent ID or name
+**Examples**
 
-**Flags:**
-- `--output string`: Output format (json, yaml, table)
-
-**Examples:**
 ```bash
-construct agent get "coder"
-construct agent get 01974c1d-0be8-70e1-88b4-ad9462fff25e
-construct agent get "sql-expert" --output json
-construct agent get "reviewer" --output yaml
+# Get details for the 'coder' agent
+construct agent get coder
+
+# Get details and format as JSON
+construct agent get 01974c1d-0be8-70e1-88b4-ad9462fff25e --output json
 ```
 
-#### `construct agent edit`
+#### `construct agent edit <name|id>`
 
-Edit an agent configuration interactively using your default editor.
+Edit an agent's configuration in your default editor.
 
-**Usage:**
+**Usage**
+
 ```bash
-construct agent edit <id-or-name>
+construct agent edit <name|id>
 ```
 
-**Description:**
-Edit an agent configuration using your default editor ($EDITOR). This command fetches the current agent configuration, opens it as a YAML file in your terminal editor, and applies any changes you make upon saving and closing the editor. Similar to 'kubectl edit', this provides a powerful way to make multiple changes to an agent in a single operation.
+**Description**
+Opens the agent's configuration in your default text editor (`$EDITOR`). This provides a fast and powerful way to modify an agent's prompt, model, or description, similar to `kubectl edit`. The changes are applied when you save and close the file.
 
-**Arguments:**
-- `id-or-name` (required): Agent ID or name
+**Examples**
 
-**Examples:**
 ```bash
-construct agent edit "coder"
-construct agent edit 01974c1d-0be8-70e1-88b4-ad9462fff25e
-EDITOR=nano construct agent edit "coder"
+# Edit the 'coder' agent in your default editor
+construct agent edit coder
+
+# Use a specific editor for the session
+EDITOR=vim construct agent edit sql-expert
 ```
 
-#### `construct agent delete`
+#### `construct agent delete <name|id>...`
 
-Delete one or more agents by their IDs or names.
+Permanently delete one or more agents.
 
-**Usage:**
+**Usage**
+
 ```bash
-construct agent delete <id-or-name>... [flags]
+construct agent delete <name|id>... [flags]
 ```
 
-**Aliases:** `construct agent rm`
+**Aliases**: `rm`
 
-**Arguments:**
-- `id-or-name...` (required): One or more agent IDs or names
+**Options**
 
-**Flags:**
-- `-f, --force`: Force deletion without confirmation
+  * `-f, --force`: Skip the confirmation prompt.
 
-**Examples:**
+**Examples**
+
 ```bash
-construct agent delete coder architect debugger
-construct agent delete 01974c1d-0be8-70e1-88b4-ad9462fff25e
-construct agent delete coder --force
+# Delete a single agent
+construct agent delete coder
+
+# Delete multiple agents at once
+construct agent rm architect security-reviewer
+
+# Force delete without a confirmation prompt
+construct agent delete old-agent --force
 ```
 
-### Task Commands
+### Task Commands: `construct task`
+
+Manage tasks, which are the saved records of conversations.
 
 #### `construct task create`
 
-Create a new task and assign it to an agent.
+Create a new task without starting an interactive session.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct task create [flags]
 ```
 
-**Flags:**
-- `-a, --agent string`: The agent to assign to the task (name or ID) (required)
-- `-w, --workspace string`: The workspace directory
+**Description**
+Programmatically creates a new task (a container for a conversation) and assigns an agent to it. This is useful for setting up tasks that will be used later or by automated systems. To start an interactive chat, use `construct new`.
 
-**Examples:**
+**Options**
+
+  * `-a, --agent <name|id>` (required): The agent to assign to the task.
+  * `-w, --workspace <path>`: The workspace directory for the task.
+
+**Examples**
+
 ```bash
+# Create a new task assigned to the 'coder' agent
 construct task create --agent coder
-construct task create --agent sql-expert --workspace /path/to/repo
+
+# Create a task with a specific workspace
+construct task create --agent sql-expert --workspace /path/to/db/repo
 ```
 
 #### `construct task list`
 
-List all tasks with optional filtering.
+List all tasks.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct task list [flags]
 ```
 
-**Aliases:** `construct task ls`
+**Aliases**: `ls`
 
-**Flags:**
-- `-a, --agent string`: Filter by agent (name or ID)
-- `--output string`: Output format (json, yaml, table)
+**Options**
 
-**Examples:**
+  * `-a, --agent <name|id>`: Filter tasks by the agent assigned to them.
+  * `-l, --limit <number>`: Limit the number of results returned.
+  * `--output <table|json|yaml>`: Specify the output format.
+
+**Examples**
+
 ```bash
+# List all recent tasks
 construct task list
-construct task list --agent "coder"
-construct task list --output yaml
+
+# List tasks assigned to the 'coder' agent, in JSON format
+construct task ls --agent "coder" --output json
 ```
 
-#### `construct task get`
+#### `construct task get <task-id>`
 
-Get detailed information about a specific task.
+Inspect the details of a specific task.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct task get <task-id> [flags]
 ```
 
-**Arguments:**
-- `task-id` (required): Task ID
+**Examples**
 
-**Flags:**
-- `--output string`: Output format (json, yaml, table)
-
-**Examples:**
 ```bash
+# Get details for a specific task
 construct task get 01974c1d-0be8-70e1-88b4-ad9462fff25e
-construct task get 01974c1d-0be8-70e1-88b4-ad9462fff25e --output json
+
+# Get task details and format as YAML
+construct task get 01974c1d-0be8-70e1-88b4-ad9462fff25e --output yaml
 ```
 
-#### `construct task delete`
+#### `construct task delete <task-id>...`
 
-Delete one or more tasks by their IDs.
+Permanently delete one or more tasks.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct task delete <task-id>... [flags]
 ```
 
-**Aliases:** `construct task rm`
+**Aliases**: `rm`
 
-**Arguments:**
-- `task-id...` (required): One or more task IDs
+**Options**
 
-**Flags:**
-- `-f, --force`: Force deletion without confirmation
+  * `-f, --force`: Skip the confirmation prompt.
 
-**Examples:**
+**Examples**
+
 ```bash
+# Delete a single task
 construct task delete 01974c1d-0be8-70e1-88b4-ad9462fff25e
-construct task delete 01974c1d-0be8-70e1-88b4-ad9462fff25e 01974c1d-0be8-70e1-88b4-ad9462fff26f
+
+# Delete multiple tasks at once
+construct task rm 01974c1d-0be8-70e1-88b4-ad9462fff25e 01974c1d-0be8-70e1-88b4-ad9462fff26f
 ```
 
-### Message Commands
+### Message Commands: `construct message`
 
-#### `construct message create`
+Interact directly with the messages within a task.
 
-Create a new message for a task.
+#### `construct message create <task-id> <content>`
 
-**Usage:**
+Add a message to a task programmatically.
+
+**Usage**
+
 ```bash
 construct message create <task-id> <content> [flags]
 ```
 
-**Arguments:**
-- `task-id` (required): Task ID
-- `content` (required): Message content
+**Description**
+Appends a new message to a task's history. This is an advanced command, typically used for scripting or integrating external tools with Construct tasks.
 
-**Flags:**
-- `--output string`: Output format (json, yaml, table)
+**Arguments**
 
-**Examples:**
+  * `<task-id>` (required): The ID of the task to add the message to.
+  * `<content>` (required): The text content of the message.
+
+**Examples**
+
 ```bash
-construct message create "123e4567-e89b-12d3-a456-426614174000" "Please implement a hello world function"
+# Add a user message to an existing task
+construct message create "01974c1d-0be8-70e1-88b4-ad9462fff25e" "Please check the file again."
 ```
 
 #### `construct message list`
 
-List messages with optional filtering.
+List messages.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct message list [flags]
 ```
 
-**Aliases:** `construct message ls`, `construct msg ls`
+**Aliases**: `ls`, `msg ls`
 
-**Flags:**
-- `-t, --task string`: Filter by task ID
-- `-a, --agent string`: Filter by agent name or ID
-- `-r, --role string`: Filter by role (user or assistant)
-- `--output string`: Output format (json, yaml, table)
+**Description**
+Lists messages, typically filtered by a specific task. Useful for reviewing or exporting a conversation history.
 
-**Examples:**
+**Options**
+
+  * `-t, --task <task-id>`: (Recommended) Filter messages by task ID.
+  * `-a, --agent <name|id>`: Filter by the agent that participated in the conversation.
+  * `-r, --role <user|assistant>`: Filter messages by the role of the author.
+  * `--output <table|json|yaml>`: Specify the output format.
+
+**Examples**
+
 ```bash
-construct message list
-construct message list --agent "coder"
-construct message list --task "456e7890-e12b-34c5-a678-901234567890"
-construct message list --role assistant
+# List all messages for a specific task
+construct message list --task "01974c1d-0be8-70e1-88b4-ad9462fff25e"
+
+# List only the assistant's responses in that task
+construct message list --task "01974c1d-0be8-70e1-88b4-ad9462fff25e" --role assistant
 ```
 
-#### `construct message get`
+### Model Commands: `construct model`
 
-Get detailed information about a specific message.
+Manage the large language models available to agents.
 
-**Usage:**
+#### `construct model create <name>`
+
+Register a new large language model for use by agents.
+
+**Usage**
+
 ```bash
-construct message get <message-id> [flags]
+construct model create <name> [flags]
 ```
 
-**Arguments:**
-- `message-id` (required): Message ID
+**Description**
+Makes a specific model from a provider (like `gpt-4o` from OpenAI) available to `construct`. You must configure a provider before you can create a model.
 
-**Flags:**
-- `--output string`: Output format (json, yaml, table)
+**Arguments**
 
-**Examples:**
+  * `<name>` (required): The official name of the model (e.g., `gpt-4o`, `claude-3-5-sonnet-20240620`).
+
+**Options**
+
+  * `-p, --provider <name|id>` (required): The name or ID of the model provider.
+  * `-w, --context-window <number>` (required): The maximum context window size for the model.
+
+**Examples**
+
 ```bash
-construct message get "123e4567-e89b-12d3-a456-426614174000"
-```
+# Register GPT-4o from the 'openai-prod' provider
+construct model create "gpt-4o" --provider "openai-prod" --context-window 128000
 
-#### `construct message delete`
-
-Delete one or more messages by ID.
-
-**Usage:**
-```bash
-construct message delete <message-id>... [flags]
-```
-
-**Aliases:** `construct message rm`, `construct msg rm`
-
-**Arguments:**
-- `message-id...` (required): One or more message IDs
-
-**Flags:**
-- `-f, --force`: Force deletion without confirmation
-
-**Examples:**
-```bash
-construct message delete "123e4567-e89b-12d3-a456-426614174000"
-```
-
-### Model Commands
-
-#### `construct model create`
-
-Create a new model with specified configuration.
-
-**Usage:**
-```bash
-construct model create <model-name> [flags]
-```
-
-**Arguments:**
-- `model-name` (required): Name of the model
-
-**Flags:**
-- `-p, --provider string`: The name or ID of the model provider (required)
-- `-w, --context-window int`: The context window size (required)
-
-**Examples:**
-```bash
-construct model create "gpt-4" --provider "openai-dev" --context-window 8192
-construct model create "claude-3-5-sonnet" --provider "123e4567-e89b-12d3-a456-426614174000" --context-window 200000
+# Register Claude Sonnet 3.5 from the 'anthropic' provider
+construct model create "claude-3-5-sonnet-20240620" --provider "anthropic" --context-window 200000
 ```
 
 #### `construct model list`
 
-List all available models with optional filtering.
+List all registered models.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct model list [flags]
 ```
 
-**Aliases:** `construct model ls`
+**Aliases**: `ls`
 
-**Flags:**
-- `-p, --provider string`: Filter by model provider name or ID
-- `-d, --show-disabled`: Show disabled models
-- `--output string`: Output format (json, yaml, table)
+**Options**
 
-**Examples:**
+  * `-p, --provider <name|id>`: Filter models by their provider.
+  * `--output <table|json|yaml>`: Specify the output format.
+
+**Examples**
+
 ```bash
+# List all available models
 construct model list
-construct model list --provider "anthropic-dev"
-construct model list --show-disabled
+
+# List all models available from the 'anthropic' provider
+construct model ls --provider "anthropic"
 ```
 
-#### `construct model get`
+### Provider Commands: `construct provider`
 
-Get detailed information about a specific model.
+Manage integrations with model providers like OpenAI and Anthropic.
 
-**Usage:**
+#### `construct provider create <name>`
+
+Configure a new model provider integration.
+
+**Usage**
+
 ```bash
-construct model get <model-id-or-name> [flags]
+construct provider create <name> [flags]
 ```
 
-**Arguments:**
-- `model-id-or-name` (required): Model ID or name
+**Description**
+Connects `construct` to an external AI model provider. This step is required to gain access to models. API credentials can be provided via flags or environment variables (e.g., `$OPENAI_API_KEY`, `$ANTHROPIC_API_KEY`).
 
-**Flags:**
-- `--output string`: Output format (json, yaml, table)
+**Arguments**
 
-**Examples:**
+  * `<name>` (required): A unique name for this provider configuration (e.g., `openai-personal`, `anthropic-work`).
+
+**Options**
+
+  * `-t, --type <openai|anthropic>` (required): The type of the model provider.
+  * `-k, --api-key <string>`: The API key. If omitted, the corresponding environment variable will be used.
+
+**Examples**
+
 ```bash
-construct model get "gpt-4"
-construct model get "123e4567-e89b-12d3-a456-426614174000"
+# Create an OpenAI provider, using the API key from the environment
+export OPENAI_API_KEY="sk-..."
+construct provider create "openai-prod" --type openai
+
+# Create an Anthropic provider, passing the API key directly
+construct provider create "anthropic-dev" --type anthropic --api-key "sk-ant-..."
 ```
 
-#### `construct model delete`
+#### `construct provider list`
 
-Delete one or more models by ID or name.
+List all configured model providers.
 
-**Usage:**
+**Usage**
+
 ```bash
-construct model delete <model-id-or-name>... [flags]
+construct provider list [flags]
 ```
 
-**Aliases:** `construct model rm`
+**Aliases**: `ls`, `mp ls`
 
-**Arguments:**
-- `model-id-or-name...` (required): One or more model IDs or names
+**Options**
 
-**Flags:**
-- `-f, --force`: Force deletion without confirmation
+  * `-t, --type <openai|anthropic>`: Filter providers by type.
+  * `--output <table|json|yaml>`: Specify the output format.
 
-**Examples:**
+**Examples**
+
 ```bash
-construct model delete "gpt-4"
-construct model delete "claude-3-5-sonnet" "llama-3.1-8b" "gpt-4"
+# List all configured providers
+construct provider list
 ```
 
-### Model Provider Commands
+#### `construct provider delete <name|id>...`
 
-#### `construct modelprovider create`
+Permanently delete one or more model providers.
 
-Create a new model provider integration.
+**Usage**
 
-**Usage:**
 ```bash
-construct modelprovider create <name> [flags]
+construct provider delete <name|id>... [flags]
 ```
 
-**Description:**
-Configure integrations to AI model providers to access their language models for your agents. Providers require API credentials and offer different model capabilities. At least one provider must be configured before creating agents.
+**Aliases**: `rm`, `mp rm`
 
-**Supported providers:**
-- **OpenAI**: Access to GPT models (gpt-4, gpt-3.5-turbo, etc.)
-- **Anthropic**: Access to Claude models (claude-3-5-sonnet, claude-3-haiku, etc.)
+**Description**
+Deletes a provider configuration. **Warning**: This action will also delete all models that depend on this provider.
 
-**Arguments:**
-- `name` (required): Name of the provider
+**Options**
 
-**Flags:**
-- `-k, --api-key string`: The API key for the model provider (can also be set via environment variable)
-- `-t, --type string`: The type of the model provider (anthropic, openai) (required)
+  * `-f, --force`: Skip the confirmation prompt.
 
-**Examples:**
+**Examples**
+
 ```bash
-construct modelprovider create "openai-dev" --type openai
-export OPENAI_API_KEY="sk-..." && construct modelprovider create "openai-prod" --type openai
-construct modelprovider create "anthropic-prod" --type anthropic --api-key "sk-ant-..."
+# Delete the 'anthropic-dev' provider
+construct provider delete anthropic-dev
 ```
 
-#### `construct modelprovider list`
+-----
 
-List all model providers with optional filtering.
+## System & Configuration
 
-**Usage:**
-```bash
-construct modelprovider list [flags]
-```
+### Config Commands: `construct config`
 
-**Aliases:** `construct modelprovider ls`, `construct mp ls`
+Manage CLI configuration settings.
 
-**Flags:**
-- `-t, --provider-type strings`: Filter by provider type (anthropic, openai)
-- `--enabled`: Show only enabled model providers (default: true)
-- `--output string`: Output format (json, yaml, table)
+#### `construct config set <key> <value>`
 
-**Examples:**
-```bash
-construct modelprovider list --enabled=false
-construct modelprovider list --provider-type anthropic --provider-type openai
-```
+Set a configuration value.
 
-#### `construct modelprovider get`
+**Usage**
 
-Get detailed information about a specific model provider.
-
-**Usage:**
-```bash
-construct modelprovider get <id-or-name> [flags]
-```
-
-**Arguments:**
-- `id-or-name` (required): Provider ID or name
-
-**Flags:**
-- `--output string`: Output format (json, yaml, table)
-
-**Examples:**
-```bash
-construct modelprovider get "anthropic-dev"
-construct modelprovider get "openai-prod" --output json
-```
-
-#### `construct modelprovider delete`
-
-Delete one or more model providers by their IDs or names.
-
-**Usage:**
-```bash
-construct modelprovider delete <id-or-name>... [flags]
-```
-
-**Aliases:** `construct modelprovider rm`, `construct mp rm`
-
-**Arguments:**
-- `id-or-name...` (required): One or more provider IDs or names
-
-**Flags:**
-- `-f, --force`: Force deletion without confirmation
-
-**Note:** This operation also deletes all associated models.
-
-**Examples:**
-```bash
-construct modelprovider delete anthropic-dev openai-prod
-construct modelprovider delete 01974c1d-0be8-70e1-88b4-ad9462fff25e
-```
-
----
-
-## System Commands
-
-### Configuration Commands
-
-#### `construct config set`
-
-Set a configuration value using dot notation for nested keys.
-
-**Usage:**
 ```bash
 construct config set <key> <value>
 ```
 
-**Arguments:**
-- `key` (required): Configuration key (supports dot notation)
-- `value` (required): Configuration value
+**Description**
+Sets a persistent configuration key-value pair. Use dot notation for nested keys.
 
-**Supported Configuration Keys:**
-- `cmd.new.agent`: Default agent for new command
-- `cmd.ask.agent`: Default agent for ask command  
-- `cmd.ask.max-turns`: Default max turns for ask command
-- `cmd.resume.recent_task_limit`: Recent task limit for resume command
-- `log.level`: Logging level
-- `log.file`: Log file path
-- `log.format`: Log format
-- `editor`: Default editor
-- `output.format`: Default output format
-- `output.no-headers`: Disable headers in output
-- `output.wide`: Enable wide output format
+**Examples**
 
-**Examples:**
 ```bash
+# Set the default agent for the 'new' command
 construct config set cmd.new.agent "coder"
+
+# Set the default output format to JSON
 construct config set output.format "json"
-construct config set log.level "debug"
 ```
 
-#### `construct config get`
+#### `construct config get <key>`
 
 Get a configuration value.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct config get <key>
 ```
 
-**Arguments:**
-- `key` (required): Configuration key
+**Examples**
 
-**Examples:**
 ```bash
+# Get the default agent for the 'new' command
 construct config get cmd.new.agent
-construct config get output.format
 ```
 
 #### `construct config list`
 
-List all configuration values.
+List all current configuration values.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct config list
 ```
 
-#### `construct config unset`
+### Daemon Commands: `construct daemon`
 
-Remove a configuration value.
-
-**Usage:**
-```bash
-construct config unset <key> [flags]
-```
-
-**Arguments:**
-- `key` (required): Configuration key
-
-**Flags:**
-- `-f, --force`: Force the removal without confirmation
-
-**Examples:**
-```bash
-construct config unset cmd.new.agent
-construct config unset output.format --force
-```
-
-### Daemon Commands
+Manage the `construct` background daemon.
 
 #### `construct daemon install`
 
-Install the Construct daemon as a system service.
+Install and enable the Construct daemon as a system service.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct daemon install [flags]
 ```
 
-**Description:**
-Install the daemon with platform-specific service management (launchd on macOS, systemd on Linux).
+**Description**
+Installs the daemon using the appropriate service manager for your OS (e.g., launchd on macOS, systemd on Linux). The daemon is required for most `construct` operations.
 
-**Flags:**
-- `-f, --force`: Force install the daemon
-- `--always-running`: Run the daemon continuously instead of using socket activation
-- `--listen-http string`: HTTP address to listen on
-- `-q, --quiet`: Silent installation
-- `-n, --name string`: Name of the daemon (used for socket activation and context) (default: "default")
+**Examples**
 
-**Examples:**
 ```bash
+# Install the daemon with default settings
 construct daemon install
-construct daemon install --listen-http 127.0.0.1:8080
-construct daemon install --force
-construct daemon install --name production --listen-http :8080 --always-running
 ```
 
 #### `construct daemon run`
 
-Run the API server as a persistent service.
+Run the daemon process in the foreground.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct daemon run [flags]
 ```
 
-**Description:**
-Run the construct server as a single, long-running process. Supports different launch modes:
+**Description**
+Starts the daemon process directly in the current terminal. This is useful for debugging and development. For normal use, `construct daemon install` is recommended.
 
-**On macOS:**
-- If launched by launchd: uses HTTP address if provided, otherwise uses socket activation
-- If not launched by launchd: uses provided HTTP address or Unix socket
+**Options**
 
-**On Linux:**
-- If launched by systemd: uses HTTP address if provided, otherwise uses socket activation  
-- If not launched by systemd: uses provided HTTP address or Unix socket
-
-**Flags:**
-- `--listen-http string`: The address to listen on for HTTP requests
-- `--listen-unix string`: The path to listen on for Unix socket requests
+  * `--listen-http <address>`: The address and port to listen on (e.g., `127.0.0.1:8080`).
 
 #### `construct daemon stop`
 
-Stop the running daemon.
+Stop the running daemon service.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct daemon stop
 ```
@@ -762,96 +713,39 @@ construct daemon stop
 
 Uninstall the Construct daemon from the system.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct daemon uninstall [flags]
 ```
 
-**Flags:**
-- `-y, --yes`: Skip confirmation prompt
-- `-q, --quiet`: Quiet mode
+**Options**
 
-**Examples:**
-```bash
-construct daemon uninstall
-construct daemon uninstall -y
-```
+  * `-y, --yes`: Skip the confirmation prompt.
+
+-----
 
 ### Utility Commands
 
 #### `construct version`
 
-Print the version number of Construct.
+Print the version of the Construct CLI.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct version
 ```
 
 #### `construct update`
 
-Update the CLI to the latest version.
+Update the Construct CLI to the latest version.
 
-**Usage:**
+**Usage**
+
 ```bash
 construct update
 ```
 
----
-
-## Common Patterns
-
-### Output Formats
-
-Many commands support multiple output formats:
-- `table` (default): Human-readable table format
-- `json`: JSON format for scripting and automation
-- `yaml`: YAML format for configuration files
-
-Use the `--output` flag to specify the format:
-```bash
-construct agent list --output json
-construct task get <task-id> --output yaml
 ```
-
-### ID and Name Resolution
-
-Commands that accept IDs or names automatically resolve names to IDs when needed. You can use either:
-- Full UUIDs: `01974c1d-0be8-70e1-88b4-ad9462fff25e`
-- Human-readable names: `coder`, `sql-expert`
-
-### Confirmation Prompts
-
-Delete operations include confirmation prompts unless the `--force` flag is used:
-```bash
-construct agent delete coder        # Shows confirmation prompt
-construct agent delete coder --force # Skips confirmation
 ```
-
-### Aliases
-
-Many commands have shorter aliases for convenience:
-- `construct agent ls` → `construct agent list`
-- `construct task rm` → `construct task delete`
-- `construct modelprovider` → `construct mp`
-- `construct message` → `construct msg`
-
-### Context and Configuration
-
-The CLI automatically manages contexts and configuration:
-- Configuration is stored in `~/.construct/config.yaml`
-- Context information is stored in `~/.construct/context.yaml`
-- The daemon must be installed before using resource management commands
-
----
-
-## Getting Help
-
-For detailed help on any command, use the `--help` flag:
-```bash
-construct --help                    # General help
-construct agent --help              # Help for agent commands
-construct agent create --help       # Help for specific subcommand
-```
-
-For more information and documentation, visit the project repository or documentation site.

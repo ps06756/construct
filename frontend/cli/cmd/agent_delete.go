@@ -15,14 +15,17 @@ type agentDeleteOptions struct {
 func NewAgentDeleteCmd() *cobra.Command {
 	options := new(agentDeleteOptions)
 	cmd := &cobra.Command{
-		Use:     "delete <id-or-name>...",
-		Short:   "Delete one or more agents by their IDs or names",
+		Use:     "delete <name|id>... [flags]",
+		Short:   "Permanently delete one or more agents",
 		Aliases: []string{"rm"},
-		Example: `  # Delete multiple agents
-  construct agent delete coder architect debugger
+		Example: `  # Delete a single agent
+  construct agent delete coder
 
-  # Delete agent by agent ID
-  construct agent delete 01974c1d-0be8-70e1-88b4-ad9462fff25e`,
+  # Delete multiple agents at once
+  construct agent rm architect security-reviewer
+
+  # Force delete without a confirmation prompt
+  construct agent delete old-agent --force`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
@@ -54,7 +57,7 @@ func NewAgentDeleteCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().BoolVarP(&options.Force, "force", "f", false, "force deletion without confirmation")
+	cmd.Flags().BoolVarP(&options.Force, "force", "f", false, "Skip the confirmation prompt")
 
 	return cmd
 }

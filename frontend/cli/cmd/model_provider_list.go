@@ -10,7 +10,6 @@ import (
 
 type modelProviderListOptions struct {
 	ProviderTypes ModelProviderTypes
-	Enabled       bool
 	RenderOptions RenderOptions
 }
 
@@ -18,14 +17,11 @@ func NewModelProviderListCmd() *cobra.Command {
 	var options modelProviderListOptions
 
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List model providers",
+		Use:     "list [flags]",
+		Short:   "List all configured model providers",
 		Aliases: []string{"ls"},
-		Example: `  # List all model providers including disabled ones
-  construct modelprovider list --enabled=false
-
-  # List multiple provider types
-  construct modelprovider list --provider-type anthropic --provider-type openai`,
+		Example: `  # List all configured providers
+  construct provider list`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client := getAPIClient(cmd.Context())
 
@@ -63,8 +59,7 @@ func NewModelProviderListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().VarP(&options.ProviderTypes, "provider-type", "t", "Filter by provider type (anthropic, openai)")
-	cmd.Flags().BoolVar(&options.Enabled, "enabled", true, "Show only enabled model providers")
+	cmd.Flags().VarP(&options.ProviderTypes, "type", "t", "Filter providers by type")
 	addRenderOptions(cmd, &options.RenderOptions)
 	return cmd
 }

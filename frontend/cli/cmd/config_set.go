@@ -13,7 +13,14 @@ func NewConfigSetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "set <key> <value>",
 		Short: "Set a configuration value",
-		Long:  `The "config set" command allows you to set a configuration value`,
+		Long:  `Set a configuration value.
+
+Sets a persistent configuration key-value pair. Use dot notation for nested keys.`,
+		Example: `  # Set the default agent for the 'new' command
+  construct config set cmd.new.agent "coder"
+
+  # Set the default output format to JSON
+  construct config set output.format "json"`,
 		Args:  cobra.ExactArgs(2),
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			if len(args) == 0 {

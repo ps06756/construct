@@ -26,18 +26,20 @@ func NewNewCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "new [flags]",
-		Short: "Start a new interactive conversation",
-		Long: `Start a new interactive conversation.
+		Short: "Launch a new interactive session with an agent",
+		Long: `Launch a new interactive session with an agent.
 
-Examples:
-  # Start a new conversation with the default agent
+Starts a real-time, interactive conversation with an AI agent in your terminal. 
+This is the primary command for collaborative tasks like coding, debugging, and 
+code reviews.`,
+		Example: `  # Start a chat with the default agent
   construct new
 
-  # Start with a specific agent
+  # Start a chat with a specific agent named 'coder'
   construct new --agent coder
 
-  # Sandbox another directory
-  construct new --workspace /workspace/repo/hello/world`,
+  # Start a chat with an agent sandboxed in a different directory
+  construct new --workspace /path/to/project`,
 		GroupID: "core",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			userInfo := getUserInfo(cmd.Context())
@@ -59,8 +61,8 @@ Examples:
 		},
 	}
 
-	cmd.Flags().StringVar(&options.agent, "agent", "", "Use a specific agent (default: last used or configured default)")
-	cmd.Flags().StringVar(&options.workspace, "workspace", "", "The sandbox in which the agent can operate. It cannot see outside of the sandbox. If not specified the current directory is used")
+	cmd.Flags().StringVar(&options.agent, "agent", "", "Start the session with a specific agent. Defaults to the last used agent")
+	cmd.Flags().StringVar(&options.workspace, "workspace", "", "Set the agent's working directory. Defaults to the current directory")
 
 	return cmd
 }

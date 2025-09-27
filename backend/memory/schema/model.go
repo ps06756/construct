@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"entgo.io/ent/schema/mixin"
 	"github.com/furisto/construct/backend/memory/schema/types"
 	"github.com/google/uuid"
@@ -39,6 +40,13 @@ func (Model) Edges() []ent.Edge {
 			Unique().
 			Required(),
 		edge.From("messages", Message.Type).Ref("model"),
+	}
+}
+
+func (Model) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("name").
+			Unique(),
 	}
 }
 

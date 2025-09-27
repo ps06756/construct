@@ -126,6 +126,13 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "model_name",
+				Unique:  true,
+				Columns: []*schema.Column{ModelsColumns[3]},
+			},
+		},
 	}
 	// ModelProvidersColumns holds the columns for the "model_providers" table.
 	ModelProvidersColumns = []*schema.Column{

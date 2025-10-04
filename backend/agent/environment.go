@@ -158,3 +158,145 @@ func newShell(path string) (*Shell, error) {
 		Name: name,
 	}, nil
 }
+
+type DevTools struct {
+	VersionControl         []string
+	PackageManagers        []string
+	LanguageRuntimes       []string
+	BuildTools             []string
+	Testing                []string
+	Database               []string
+	ContainerOrchestration []string
+	CloudInfrastructure    []string
+	TextProcessing         []string
+	FileOperations         []string
+	NetworkHTTP            []string
+	SystemMonitoring       []string
+}
+
+func AvailableDevTools() *DevTools {
+	toolCategories := map[string][]string{
+		"VersionControl": {
+			"git", "gh",
+		},
+		"PackageManagers": {
+			"npm", "yarn", "pnpm", "pip", "pip3", "pipenv", "poetry",
+			"cargo", "go", "composer", "gem", "bundle", "maven", "gradle",
+			"brew",
+		},
+		"LanguageRuntimes": {
+			"node", "python", "python3", "java", "go", "php", "ruby", "swift", "kotlin",
+			"scala", "dotnet",
+		},
+		"BuildTools": {
+			"make", "cmake", "ninja", "webpack", "vite", "rollup", "parcel",
+			"gulp", "bazel",
+		},
+		"Testing": {
+			"jest", "mocha", "pytest", "phpunit", "rspec",
+		},
+		"Database": {
+			"mysql", "psql", "sqlite3", "mongo", "redis-cli",
+		},
+		"ContainerOrchestration": {
+			"docker", "docker-compose", "podman", "kubectl", "helm", "minikube", "nerdctl",
+		},
+		"CloudInfrastructure": {
+			"aws", "gcloud", "az", "terraform", "ansible", "pulumi",
+		},
+		"TextProcessing": {
+			"grep", "rg", "ag", "ack", "sed", "awk", "jq", "yq",
+		},
+		"FileOperations": {
+			"find", "fd", "locate", "rsync", "scp", "tar", "zip", "unzip", "gzip",
+		},
+		"NetworkHTTP": {
+			"curl", "wget", "nc", "ping", "dig", "nslookup",
+		},
+		"SystemMonitoring": {
+			"ps", "top", "htop", "lsof", "netstat", "ss",
+			"df", "du",
+		},
+	}
+
+	result := &DevTools{}
+
+	for _, tool := range toolCategories["VersionControl"] {
+		if isToolAvailable(tool) {
+			result.VersionControl = append(result.VersionControl, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["PackageManagers"] {
+		if isToolAvailable(tool) {
+			result.PackageManagers = append(result.PackageManagers, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["LanguageRuntimes"] {
+		if isToolAvailable(tool) {
+			result.LanguageRuntimes = append(result.LanguageRuntimes, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["BuildTools"] {
+		if isToolAvailable(tool) {
+			result.BuildTools = append(result.BuildTools, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["Testing"] {
+		if isToolAvailable(tool) {
+			result.Testing = append(result.Testing, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["Database"] {
+		if isToolAvailable(tool) {
+			result.Database = append(result.Database, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["ContainerOrchestration"] {
+		if isToolAvailable(tool) {
+			result.ContainerOrchestration = append(result.ContainerOrchestration, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["CloudInfrastructure"] {
+		if isToolAvailable(tool) {
+			result.CloudInfrastructure = append(result.CloudInfrastructure, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["TextProcessing"] {
+		if isToolAvailable(tool) {
+			result.TextProcessing = append(result.TextProcessing, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["FileOperations"] {
+		if isToolAvailable(tool) {
+			result.FileOperations = append(result.FileOperations, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["NetworkHTTP"] {
+		if isToolAvailable(tool) {
+			result.NetworkHTTP = append(result.NetworkHTTP, tool)
+		}
+	}
+
+	for _, tool := range toolCategories["SystemMonitoring"] {
+		if isToolAvailable(tool) {
+			result.SystemMonitoring = append(result.SystemMonitoring, tool)
+		}
+	}
+
+	return result
+}
+
+func isToolAvailable(tool string) bool {
+	_, err := exec.LookPath(tool)
+	return err == nil
+}

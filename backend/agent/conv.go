@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	v1 "github.com/furisto/construct/api/go/v1"
 	"github.com/furisto/construct/backend/memory"
@@ -81,10 +82,18 @@ func ConvertMemoryMessageBlocksToModel(blocks []types.MessageBlock) ([]model.Con
 			if err != nil {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter result block: %w", err)
 			}
+
+			result := interpreterResult.Output
+			if interpreterResult.Error != ""{
+				result = interpreterResult.Output + "\n\n" + interpreterResult.Error
+				if strings.Contains(interpreterResult.Error, "ReferenceError") {
+					result = result + "\n" + "You likely tried to reference a variable from a previous code interpreter call. All code interpreter calls are isolated and share no state with each other."
+				}
+			}
 			contentBlocks = append(contentBlocks, &model.ToolResultBlock{
 				ID:        interpreterResult.ID,
 				Name:      "code_interpreter",
-				Result:    interpreterResult.Output,
+				Result:    result,
 				Succeeded: interpreterResult.Error == "",
 			})
 		default:

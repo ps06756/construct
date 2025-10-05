@@ -131,7 +131,7 @@ print(gitLog.stdout);
 const commitMessage = %[2]sEnhance read_file tool with line number prefixing
 ... Rest of message depends on style found in the last commits.
 
-Co-authored-by: construct-agent <agent@construct.sh>%[2]s
+Co-authored-by: construct-agent <noreply@construct.sh>%[2]s
 
 const commitResult = execute_command(%[2]sgit commit -m "$commitMessage"%[2]s);
 // Verify the commit was created successfully

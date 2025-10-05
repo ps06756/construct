@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -34,7 +35,7 @@ var (
 )
 
 type globalOptions struct {
-	Verbose bool
+	LogLevel LogLevel
 }
 
 func NewRootCmd() *cobra.Command {
@@ -44,8 +45,9 @@ func NewRootCmd() *cobra.Command {
 		Short: "Construct: Build intelligent agents.",
 		Long:  figure.NewColorFigure("construct", "standard", "blue", true).String(),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			options.LogLevel = resolveLogLevel(cmd, &options)
 			slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-				Level: slog.LevelDebug,
+				Level: options.LogLevel.SlogLevel(),
 			})))
 
 			cmd.SetContext(setGlobalOptions(cmd.Context(), &options))
@@ -68,7 +70,7 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().BoolVarP(&options.Verbose, "verbose", "v", false, "verbose output")
+	cmd.PersistentFlags().Var(&options.LogLevel, "log-level", "set the log level")
 
 	cmd.AddGroup(
 		&cobra.Group{
@@ -203,4 +205,70 @@ func confirm(stdin io.Reader, stdout io.Writer, message string) bool {
 
 	confirm = strings.TrimSpace(strings.ToLower(confirm))
 	return confirm == "y" || confirm == "yes"
+}
+
+type LogLevel string
+
+const (
+	LogLevelDebug LogLevel = "debug"
+	LogLevelInfo  LogLevel = "info"
+	LogLevelWarn  LogLevel = "warn"
+	LogLevelError LogLevel = "error"
+)
+
+func (e *LogLevel) String() string {
+	if e == nil {
+		return ""
+	}
+	return string(*e)
+}
+
+func (e *LogLevel) Set(v string) error {
+	for _, level := range []LogLevel{LogLevelDebug, LogLevelInfo, LogLevelWarn, LogLevelError} {
+		if v == string(level) {
+			*e = level
+			return nil
+		}
+	}
+	return errors.New(`must be one of "debug", "info", "warn", or "error"`)
+}
+
+func (e *LogLevel) Type() string {
+	return "log-level"
+}
+
+func (e *LogLevel) SlogLevel() slog.Level {
+	switch *e {
+	case LogLevelDebug:
+		return slog.LevelDebug
+	case LogLevelInfo:
+		return slog.LevelInfo
+	case LogLevelWarn:
+		return slog.LevelWarn
+	case LogLevelError:
+		return slog.LevelError
+	}
+
+	return slog.LevelInfo
+}
+
+func resolveLogLevel(cmd *cobra.Command, options *globalOptions) LogLevel {
+	if cmd.Flags().Changed("log-level") {
+		return options.LogLevel
+	}
+
+	logLevel := os.Getenv("CONSTRUCT_LOG_LEVEL")
+	if logLevel != "" {
+		switch logLevel {
+		case "debug":
+			return LogLevelDebug
+		case "info":
+			return LogLevelInfo
+		case "warn":
+			return LogLevelWarn
+		case "error":
+			return LogLevelError
+		}
+	}
+	return LogLevelInfo
 }

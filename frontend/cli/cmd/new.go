@@ -3,7 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
+	"log/slog"
 
 	"connectrpc.com/connect"
 	tea "github.com/charmbracelet/bubbletea"
@@ -55,7 +55,7 @@ code reviews.`,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			apiClient := getAPIClient(cmd.Context())
-			verbose := getGlobalOptions(cmd.Context()).Verbose
+			verbose := getGlobalOptions(cmd.Context()).LogLevel == LogLevelDebug
 
 			return fail.HandleError(handleNewCommand(cmd.Context(), apiClient, options, verbose))
 		},
@@ -68,8 +68,10 @@ code reviews.`,
 }
 
 func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOptions, verbose bool) error {
+	slog.Info("starting new command", "agent", options.agent, "workspace", options.workspace)
 	agentID, err := getAgentID(ctx, apiClient, options.agent)
 	if err != nil {
+		slog.Error("failed to get agent ID", "error", err, "agent", options.agent)
 		return err
 	}
 
@@ -79,6 +81,7 @@ func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOp
 		},
 	})
 	if err != nil {
+		slog.Error("failed to retrieve agent", "error", err, "agent", options.agent)
 		return err
 	}
 
@@ -86,16 +89,14 @@ func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOp
 	resp, err := apiClient.Task().CreateTask(ctx, &connect.Request[v1.CreateTaskRequest]{
 		Msg: &v1.CreateTaskRequest{
 			AgentId:          agent.Metadata.Id,
-			Description:      "Build a Go-based coding agent with Anthropic and OpenAI API integration",
 			ProjectDirectory: options.workspace,
 		},
 	})
 
 	if err != nil {
+		slog.Error("failed to create task", "error", err, "agent", options.agent)
 		return err
 	}
-
-	fmt.Println("Created task", resp.Msg.Task.Metadata.Id)
 
 	model := terminal.NewSession(ctx, apiClient, resp.Msg.Task, agent)
 	if verbose {
@@ -107,7 +108,6 @@ func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOp
 		tea.WithAltScreen(),
 	)
 
-	fmt.Println("Subscribed to task", resp.Msg.Task.Metadata.Id)
 	go func() {
 		watch, err := apiClient.Task().Subscribe(ctx, &connect.Request[v1.SubscribeRequest]{
 			Msg: &v1.SubscribeRequest{
@@ -115,7 +115,7 @@ func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOp
 			},
 		})
 		if err != nil {
-			fmt.Println("error subscribing to task:", err)
+			program.Send(terminal.NewError(err))
 			return
 		}
 
@@ -132,19 +132,9 @@ func handleNewCommand(ctx context.Context, apiClient *api.Client, options *newOp
 		}
 
 		if err := watch.Err(); err != nil {
-			fmt.Println("error watching task:", err)
+			program.Send(terminal.NewError(err))
 		}
 	}()
-	fmt.Println("Running program", resp.Msg.Task.Metadata.Id)
-
-	tempFile, err := os.CreateTemp("", "construct-new-*")
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Temp file created", tempFile.Name())
-
-	tea.LogToFile(tempFile.Name(), "debug")
 
 	if _, err := program.Run(); err != nil {
 		fmt.Printf("Error running program: %v\n", err)

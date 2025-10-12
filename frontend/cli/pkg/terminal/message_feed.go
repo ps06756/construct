@@ -42,12 +42,13 @@ func NewMessageFeedKeybindings() MessageFeedKeybindings {
 }
 
 type MessageFeed struct {
-	width          int
-	height         int
-	viewport       viewport.Model
-	messages       []message
-	partialMessage string
-	keyBindings    MessageFeedKeybindings
+	width           int
+	height          int
+	viewport        viewport.Model
+	messages        []message
+	partialMessage  string
+	keyBindings     MessageFeedKeybindings
+	userHasScrolled bool
 }
 
 var _ tea.Model = (*MessageFeed)(nil)
@@ -68,6 +69,9 @@ func (m *MessageFeed) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if key.Matches(msg, m.keyBindings.Up) || key.Matches(msg, m.keyBindings.Down) || key.Matches(msg, m.keyBindings.HalfPageUp) || key.Matches(msg, m.keyBindings.HalfPageDown) {
+			m.userHasScrolled = true
+		}
 		switch {
 		case key.Matches(msg, m.keyBindings.HalfPageUp):
 			m.viewport.HalfViewUp()
@@ -150,14 +154,22 @@ func (m *MessageFeed) renderInitialMessage() string {
 }
 
 func (m *MessageFeed) updateViewportContent() {
-	wasAtBottom := m.viewport.AtBottom()
-
 	formatted := formatMessages(m.messages, m.partialMessage, m.viewport.Width)
 	m.viewport.SetContent(formatted)
 
-	if wasAtBottom {
+	// scroll if user hasn't manually scrolled (e.g. when a conversation is resumed) OR they're near bottom
+	shouldScroll := !m.userHasScrolled || linesFromBottom(m.viewport) < 15
+
+	if shouldScroll {
 		m.viewport.GotoBottom()
 	}
+}
+
+func linesFromBottom(vp viewport.Model) int {
+	if vp.TotalLineCount() <= vp.Height {
+		return 0
+	}
+	return vp.TotalLineCount() - vp.YOffset - vp.Height
 }
 
 func (m *MessageFeed) upsertErrorMessage(errMsg *Error) {

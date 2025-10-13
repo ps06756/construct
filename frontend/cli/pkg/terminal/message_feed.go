@@ -360,7 +360,13 @@ func formatMessages(messages []message, partialMessage string, width int) string
 			renderedMessages = append(renderedMessages, renderAssistantMessage(msg, width, addBottomMargin(i, messages)))
 
 		case *readFileToolCall:
-			renderedMessages = append(renderedMessages, renderToolCallMessage("Read", msg.Input.Path, width, addBottomMargin(i, messages)))
+			var readFileInput string
+			if msg.Input.StartLine != 0 && msg.Input.EndLine != 0 {
+				readFileInput = fmt.Sprintf("%s L%d-%d", msg.Input.Path, msg.Input.StartLine, msg.Input.EndLine)
+			} else {
+				readFileInput = msg.Input.Path
+			}
+			renderedMessages = append(renderedMessages, renderToolCallMessage("Read", readFileInput, width, addBottomMargin(i, messages)))
 
 		case *createFileToolCall:
 			renderedMessages = append(renderedMessages, renderToolCallMessage("Create", msg.Input.Path, width, addBottomMargin(i, messages)))
@@ -368,12 +374,8 @@ func formatMessages(messages []message, partialMessage string, width int) string
 		case *editFileToolCall:
 			renderedMessages = append(renderedMessages, renderToolCallMessage("Edit", msg.Input.Path, width, addBottomMargin(i, messages)))
 
-		case *executeCommandToolCall:
-			command := msg.Input.Command
-			if len(command) > 50 {
-				command = command[:47] + "..."
-			}
-			renderedMessages = append(renderedMessages, renderToolCallMessage("Execute", command, width, addBottomMargin(i, messages)))
+		case *executeCommandToolCall:		
+			renderedMessages = append(renderedMessages, renderToolCallMessage("Execute", msg.Input.Command, width, addBottomMargin(i, messages)))
 
 		case *findFileToolCall:
 			pathInfo := msg.Input.Path
@@ -395,7 +397,7 @@ func formatMessages(messages []message, partialMessage string, width int) string
 			}
 
 			renderedMessages = append(renderedMessages,
-				renderToolCallMessage("Find", fmt.Sprintf("(pattern: %s, path: %s, exclude: %s)", msg.Input.Pattern, pathInfo, excludeArg), width, addBottomMargin(i, messages)))
+				renderToolCallMessage("Find", fmt.Sprintf("pattern: %s, path: %s, exclude: %s", msg.Input.Pattern, pathInfo, excludeArg), width, addBottomMargin(i, messages)))
 
 		case *grepToolCall:
 			searchInfo := msg.Input.Query

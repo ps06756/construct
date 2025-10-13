@@ -374,11 +374,18 @@ func convertArgumentsToProtoToolCall(tooCall Tool, arguments []sobek.Value, sess
 			},
 		}
 	case *filesystem.ReadFileInput:
-		toolCall.Input = &v1.ToolCall_ReadFile{
+		readFile := &v1.ToolCall_ReadFile{
 			ReadFile: &v1.ToolCall_ReadFileInput{
 				Path: input.Path,
 			},
 		}
+		if input.StartLine != nil {
+			readFile.ReadFile.StartLine = int32(*input.StartLine)
+		}
+		if input.EndLine != nil {
+			readFile.ReadFile.EndLine = int32(*input.EndLine)
+		}
+		toolCall.Input = readFile
 	case *communication.SubmitReportInput:
 		toolCall.Input = &v1.ToolCall_SubmitReport{
 			SubmitReport: &v1.ToolCall_SubmitReportInput{

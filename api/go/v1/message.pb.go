@@ -2726,6 +2726,8 @@ func (x *ToolCall_ListFilesInput) GetRecursive() bool {
 type ToolCall_ReadFileInput struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Path          string                 `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+	StartLine     int32                  `protobuf:"varint,2,opt,name=start_line,json=startLine,proto3" json:"start_line,omitempty"`
+	EndLine       int32                  `protobuf:"varint,3,opt,name=end_line,json=endLine,proto3" json:"end_line,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2765,6 +2767,20 @@ func (x *ToolCall_ReadFileInput) GetPath() string {
 		return x.Path
 	}
 	return ""
+}
+
+func (x *ToolCall_ReadFileInput) GetStartLine() int32 {
+	if x != nil {
+		return x.StartLine
+	}
+	return 0
+}
+
+func (x *ToolCall_ReadFileInput) GetEndLine() int32 {
+	if x != nil {
+		return x.EndLine
+	}
+	return 0
 }
 
 type ToolCall_SubmitReportInput struct {
@@ -3708,7 +3724,7 @@ const file_construct_v1_message_proto_rawDesc = "" +
 	"\amessage\x18\x01 \x01(\v2\x15.construct.v1.MessageB\x06\xbaH\x03\xc8\x01\x01R\amessage\"0\n" +
 	"\x14DeleteMessageRequest\x12\x18\n" +
 	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x17\n" +
-	"\x15DeleteMessageResponse\"\xa0\x0f\n" +
+	"\x15DeleteMessageResponse\"\xda\x0f\n" +
 	"\bToolCall\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12#\n" +
 	"\ttool_name\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\btoolName\x12I\n" +
@@ -3761,9 +3777,12 @@ const file_construct_v1_message_proto_rawDesc = "" +
 	"\aoptions\x18\x02 \x03(\tR\aoptions\x1aB\n" +
 	"\x0eListFilesInput\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1c\n" +
-	"\trecursive\x18\x02 \x01(\bR\trecursive\x1a#\n" +
+	"\trecursive\x18\x02 \x01(\bR\trecursive\x1a]\n" +
 	"\rReadFileInput\x12\x12\n" +
-	"\x04path\x18\x01 \x01(\tR\x04path\x1a\x8e\x01\n" +
+	"\x04path\x18\x01 \x01(\tR\x04path\x12\x1d\n" +
+	"\n" +
+	"start_line\x18\x02 \x01(\x05R\tstartLine\x12\x19\n" +
+	"\bend_line\x18\x03 \x01(\x05R\aendLine\x1a\x8e\x01\n" +
 	"\x11SubmitReportInput\x12\x18\n" +
 	"\asummary\x18\x01 \x01(\tR\asummary\x12\x1c\n" +
 	"\tcompleted\x18\x02 \x01(\bR\tcompleted\x12\"\n" +

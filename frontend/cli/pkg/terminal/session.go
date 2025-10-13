@@ -37,15 +37,11 @@ func NewSessionKeyBindings() SessionKeyBindings {
 	return SessionKeyBindings{
 		Help: key.NewBinding(
 			key.WithKeys("ctrl+?"),
-			key.WithHelp("h", "toggle help"),
+			key.WithHelp("ctrl+?", "toggle help"),
 		),
 		SendMessage: key.NewBinding(
 			key.WithKeys("enter"),
 			key.WithHelp("enter", "send message"),
-		),
-		NewLine: key.NewBinding(
-			key.WithKeys("strg+enter"),
-			key.WithHelp("strg+enter", "new line"),
 		),
 		SwitchAgent: key.NewBinding(
 			key.WithKeys("tab"),
@@ -101,6 +97,8 @@ func NewSession(ctx context.Context, apiClient *api_client.Client, task *v1.Task
 	ta.FocusedStyle.CursorLine = lipgloss.NewStyle()
 	ta.Prompt = ""
 	ta.Placeholder = "Type your message..."
+	ta.KeyMap.InsertNewline.SetEnabled(true)
+	ta.KeyMap.InsertNewline.SetKeys("alt+enter")
 
 	sp := spinner.New()
 	sp.Spinner = spinner.Spinner{
@@ -192,19 +190,8 @@ func (m *Session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if !m.showHelp {
-		switch k := msg.(type) {
-		case tea.KeyMsg:
-			// Ignore Alt/ESC-prefixed key messages which are usually terminal
-			// responses (e.g. OSC colour queries). These have k.Alt == true.
-			// We forward only genuine user keyboard input (Alt not pressed).
-			if !k.Alt {
-				m.input, cmd = m.input.Update(msg)
-				cmds = append(cmds, cmd)
-			}
-		case tea.MouseMsg:
-			m.input, cmd = m.input.Update(msg)
-			cmds = append(cmds, cmd)
-		}
+		m.input, cmd = m.input.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	messageFeed, cmd := m.messageFeed.Update(msg)
@@ -231,8 +218,6 @@ func (m *Session) onKeyEvent(msg tea.KeyMsg) tea.Cmd {
 		return nil
 	case key.Matches(msg, m.keyBindings.SendMessage):
 		return m.handleMessageSend()
-	case key.Matches(msg, m.keyBindings.NewLine):
-		return m.handleInsertNewLine()
 	case key.Matches(msg, m.keyBindings.SwitchAgent):
 		return m.handleSwitchAgent()
 	case key.Matches(msg, m.keyBindings.SuspendTask):
@@ -255,11 +240,6 @@ func (m *Session) handleMessageSend() tea.Cmd {
 		}
 	}
 
-	return nil
-}
-
-func (m *Session) handleInsertNewLine() tea.Cmd {
-	m.input.InsertString("\n")
 	return nil
 }
 

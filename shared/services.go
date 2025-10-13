@@ -127,6 +127,7 @@ type UserInfo interface {
 	HomeDir() (string, error)
 	ConstructConfigDir() (string, error)
 	ConstructDataDir() (string, error)
+	ConstructStateDir() (string, error)
 	Cwd() (string, error)
 }
 
@@ -182,6 +183,14 @@ func (u *DefaultUserInfo) ConstructDataDir() (string, error) {
 		return "", fmt.Errorf("failed to create data directory: %w", err)
 	}
 	return dataDir, nil
+}
+
+func (u *DefaultUserInfo) ConstructStateDir() (string, error) {
+	stateDir := filepath.Join(xdg.StateHome, "construct")
+	if err := u.fs.MkdirAll(stateDir, 0700); err != nil {
+		return "", fmt.Errorf("failed to create state directory: %w", err)
+	}
+	return stateDir, nil
 }
 
 func (u *DefaultUserInfo) Cwd() (string, error) {

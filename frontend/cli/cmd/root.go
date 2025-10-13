@@ -282,17 +282,17 @@ func resolveLogLevel(cmd *cobra.Command, options *globalOptions) LogLevel {
 }
 
 func setupLogSink(userInfo shared.UserInfo, stdout io.Writer) io.Writer {
-	dataDir, err := userInfo.ConstructDataDir()
+	dataDir, err := userInfo.ConstructStateDir()
 	if err != nil {
 		return stdout
 	}
 
 	fileLogger := &lumberjack.Logger{
-		Filename: filepath.Join(dataDir, "construct.log"),
-		MaxSize:  50, 
-		MaxAge:   7, 
+		Filename:   filepath.Join(dataDir, "construct.json"),
+		MaxSize:    50,
+		MaxAge:     7,
 		MaxBackups: 3,
-		Compress: true,
+		Compress:   true,
 	}
 	return io.MultiWriter(stdout, fileLogger)
 }

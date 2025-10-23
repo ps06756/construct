@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	v1 "github.com/furisto/construct/api/go/v1"
 	"github.com/furisto/construct/backend/memory"
@@ -84,11 +83,8 @@ func ConvertMemoryMessageBlocksToModel(blocks []types.MessageBlock) ([]model.Con
 			}
 
 			result := interpreterResult.Output
-			if interpreterResult.Error != ""{
+			if interpreterResult.Error != "" {
 				result = interpreterResult.Output + "\n\n" + interpreterResult.Error
-				if strings.Contains(interpreterResult.Error, "ReferenceError") {
-					result = result + "\n" + "You likely tried to reference a variable from a previous code interpreter call. All code interpreter calls are isolated and share no state with each other."
-				}
 			}
 			contentBlocks = append(contentBlocks, &model.ToolResultBlock{
 				ID:        interpreterResult.ID,
@@ -136,7 +132,7 @@ func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter call block: %w", err)
 			}
 
-			var interpreterArgs codeact.InterpreterArgs
+			var interpreterArgs codeact.InterpreterInput
 			err = json.Unmarshal(toolCall.Args, &interpreterArgs)
 			if err != nil {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter args: %w", err)
@@ -695,4 +691,17 @@ func ConvertModelUsageToMemory(usage *model.Usage) *types.MessageUsage {
 		OutputTokens:     usage.OutputTokens,
 		CacheWriteTokens: usage.CacheWriteTokens,
 	}
+}
+
+func convertTaskPhaseToMemory(phase TaskPhase) types.TaskPhase {
+	switch phase {
+	case TaskPhaseAwaitInput:
+		return types.TaskPhaseAwaiting
+	case TaskPhaseExecuteTools, TaskPhaseInvokeModel:
+		return types.TaskPhaseRunning
+	case TaskPhaseSuspended:
+		return types.TaskPhaseSuspended
+	}
+
+	return types.TaskPhaseUnspecified
 }

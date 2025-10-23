@@ -16,7 +16,7 @@ type workqueueMetricsProvider struct {
 	retries                 *prometheus.CounterVec
 }
 
-func newWorkqueueMetricsProvider(registry *prometheus.Registry) *workqueueMetricsProvider {
+func newWorkqueueMetricsProvider(registry prometheus.Registerer) *workqueueMetricsProvider {
 	p := &workqueueMetricsProvider{
 		depth: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Subsystem: "workqueue",

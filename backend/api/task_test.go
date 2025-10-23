@@ -185,9 +185,13 @@ func TestListTasks(t *testing.T) {
 				modelProvider := test.NewModelProviderBuilder(t, uuid.New(), db).Build(ctx)
 				model := test.NewModelBuilder(t, modelID, db, modelProvider).Build(ctx)
 
-				agent1 := test.NewAgentBuilder(t, agentID, db, model).Build(ctx)
-				agent2 := test.NewAgentBuilder(t, uuid.New(), db, model).WithID(uuid.New()).Build(ctx)
-
+			agent1 := test.NewAgentBuilder(t, agentID, db, model).
+				WithName("agent-1").
+				Build(ctx)
+			agent2 := test.NewAgentBuilder(t, uuid.New(), db, model).
+				WithID(uuid.New()).
+				WithName("agent-2").
+				Build(ctx)
 				test.NewTaskBuilder(t, taskID1, db, agent1).Build(ctx)
 				test.NewTaskBuilder(t, taskID2, db, agent2).Build(ctx)
 			},
@@ -388,9 +392,12 @@ func TestUpdateTask(t *testing.T) {
 				modelProvider := test.NewModelProviderBuilder(t, uuid.New(), db).Build(ctx)
 				model := test.NewModelBuilder(t, modelID, db, modelProvider).Build(ctx)
 
-				agent1 := test.NewAgentBuilder(t, agentID, db, model).Build(ctx)
-				test.NewAgentBuilder(t, agentID2, db, model).Build(ctx)
-
+			agent1 := test.NewAgentBuilder(t, agentID, db, model).
+				WithName("agent-1").
+				Build(ctx)
+			test.NewAgentBuilder(t, agentID2, db, model).
+				WithName("agent-2").
+				Build(ctx)
 				test.NewTaskBuilder(t, taskID, db, agent1).Build(ctx)
 			},
 			Request: &v1.UpdateTaskRequest{

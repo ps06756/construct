@@ -296,7 +296,7 @@ func TestModelProviderList(t *testing.T) {
 				// No mocks needed as validation happens before API call
 			},
 			Expected: TestExpectation{
-				Error: `invalid argument "luminal" for "-t, --provider-type" flag: must be one of "openai" or "anthropic"`,
+				Error: `invalid argument "luminal" for "-t, --provider-type" flag: must be one of "openai","anthropic","gemini","xai"`,
 			},
 		},
 		{

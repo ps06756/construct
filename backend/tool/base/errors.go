@@ -1,6 +1,9 @@
 package base
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type ErrorCode int32
 
@@ -99,7 +102,28 @@ type ToolError struct {
 }
 
 func (e *ToolError) Error() string {
-	return e.Message
+	var result strings.Builder
+	result.WriteString(e.Message)
+
+	if len(e.Suggestions) > 0 {
+		result.WriteString("\n\nSuggestions:")
+		for _, suggestion := range e.Suggestions {
+			result.WriteString("\n- ")
+			result.WriteString(suggestion)
+		}
+	}
+	
+	if len(e.Details) > 0 {
+		result.WriteString("\n\nDetails:")
+		for key, value := range e.Details {
+			result.WriteString("\n- ")
+			result.WriteString(key)
+			result.WriteString(": ")
+			result.WriteString(fmt.Sprintf("%v", value))
+		}
+	}
+	
+	return result.String()
 }
 
 func NewError(code ErrorCode, args ...any) *ToolError {

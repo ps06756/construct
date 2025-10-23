@@ -16,14 +16,12 @@ import (
 	"github.com/furisto/construct/backend/event"
 	"github.com/furisto/construct/backend/memory"
 	"github.com/furisto/construct/backend/secret"
-	"github.com/google/uuid"
 )
 
 type AgentRuntime interface {
 	Memory() *memory.Client
 	Encryption() *secret.Client
 	EventHub() *event.MessageHub
-	CancelTask(id uuid.UUID)
 }
 
 type Server struct {

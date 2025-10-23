@@ -226,19 +226,3 @@ func EmitAgentHandoff(client Client, fromAgentID string, toAgentID string, taskI
 		},
 	})
 }
-
-// Error & Recovery Events
-
-func EmitModelProviderFailure(client Client, providerType string, modelName string, errorCode string, retryAttempt int, fallbackUsed bool) {
-	client.Enqueue(Event{
-		DistinctId: "user",
-		Event:      "model_provider_failure",
-		Properties: map[string]interface{}{
-			"provider_type": providerType,
-			"model_name":    modelName,
-			"error_code":    errorCode,
-			"retry_attempt": retryAttempt,
-			"fallback_used": fallbackUsed,
-		},
-	})
-}

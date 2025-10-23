@@ -15,6 +15,7 @@ import (
 	"github.com/furisto/construct/backend/memory/agent"
 	"github.com/furisto/construct/backend/memory/extension"
 	"github.com/furisto/construct/backend/memory/message"
+	"github.com/furisto/construct/backend/memory/schema/types"
 	"github.com/furisto/construct/backend/memory/task"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -292,6 +293,13 @@ func (h *TaskHandler) SuspendTask(ctx context.Context, req *connect.Request[v1.S
 		return nil, apiError(connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("invalid task ID format: %w", err)))
 	}
 
-	h.runtime.CancelTask(taskID)
+	_, err = h.db.Task.UpdateOneID(taskID).SetPhase(types.TaskPhaseSuspended).Save(ctx)
+	if err != nil {
+		return nil, apiError(err)
+	}
+
+	event.Publish(h.eventBus, event.TaskEvent{
+		TaskID: taskID,
+	})
 	return connect.NewResponse(&v1.SuspendTaskResponse{}), nil
 }

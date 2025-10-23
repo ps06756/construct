@@ -45,7 +45,7 @@ func (Model) Edges() []ent.Edge {
 
 func (Model) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Fields("name").
+		index.Fields("name", "model_provider_id").
 			Unique(),
 	}
 }

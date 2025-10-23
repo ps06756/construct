@@ -58,9 +58,17 @@ func agentList(ctx context.Context, options agentListOptions, client *api.Client
 		filter.Names = options.Names
 	}
 
-	// Handle enabled/disabled filtering
-	// Note: API doesn't currently support enabled/disabled filtering
-	// This would need to be implemented on the backend first
+	// Resolve model names to IDs for client-side filtering
+	var modelIDs []string
+	if len(options.Models) > 0 {
+		for _, model := range options.Models {
+			modelID, err := getModelID(ctx, client, model)
+			if err != nil {
+				return nil, fmt.Errorf("failed to resolve model %s: %w", model, err)
+			}
+			modelIDs = append(modelIDs, modelID)
+		}
+	}
 
 	req := &connect.Request[v1.ListAgentsRequest]{
 		Msg: &v1.ListAgentsRequest{
@@ -68,16 +76,28 @@ func agentList(ctx context.Context, options agentListOptions, client *api.Client
 		},
 	}
 
-	// Note: API doesn't currently support limit parameter
-	// This would need to be implemented on the backend first
-
 	resp, err := client.Agent().ListAgents(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list agents: %w", err)
 	}
 
-	displayAgents := make([]*AgentDisplay, len(resp.Msg.Agents))
-	for i, agent := range resp.Msg.Agents {
+	// Client-side filtering by model IDs
+	filteredAgents := resp.Msg.Agents
+	if len(modelIDs) > 0 {
+		filteredAgents = make([]*v1.Agent, 0)
+		modelIDSet := make(map[string]bool)
+		for _, id := range modelIDs {
+			modelIDSet[id] = true
+		}
+		for _, agent := range resp.Msg.Agents {
+			if modelIDSet[agent.Spec.ModelId] {
+				filteredAgents = append(filteredAgents, agent)
+			}
+		}
+	}
+
+	displayAgents := make([]*AgentDisplay, len(filteredAgents))
+	for i, agent := range filteredAgents {
 		model, err := client.Model().GetModel(ctx, &connect.Request[v1.GetModelRequest]{
 			Msg: &v1.GetModelRequest{
 				Id: agent.Spec.ModelId,

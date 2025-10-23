@@ -6,17 +6,17 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/furisto/construct/shared"
 	"github.com/grafana/sobek"
 	"github.com/invopop/jsonschema"
 	"github.com/spf13/afero"
-	"github.com/furisto/construct/shared"
 )
 
-type InterpreterArgs struct {
+type InterpreterInput struct {
 	Script string `json:"script"`
 }
 
-type InterpreterResult struct {
+type InterpreterOutput struct {
 	ConsoleOutput string           `json:"console_output"`
 	FunctionCalls []FunctionCall   `json:"function_calls"`
 	ToolStats     map[string]int64 `json:"tool_stats"`
@@ -34,7 +34,7 @@ func NewInterpreter(tools []Tool, interceptors []Interceptor) *Interpreter {
 		AllowAdditionalProperties: false,
 		DoNotReference:            true,
 	}
-	var args InterpreterArgs
+	var args InterpreterInput
 	reflected := reflector.Reflect(args)
 	inputSchema := map[string]any{
 		"type":       "object",
@@ -64,8 +64,8 @@ func (c *Interpreter) Run(ctx context.Context, fsys afero.Fs, input json.RawMess
 	return "", nil
 }
 
-func (c *Interpreter) Interpret(ctx context.Context, fsys afero.Fs, input json.RawMessage, task *Task) (*InterpreterResult, error) {
-	var args InterpreterArgs
+func (c *Interpreter) Interpret(ctx context.Context, fsys afero.Fs, input json.RawMessage, task *Task) (*InterpreterOutput, error) {
+	var args InterpreterInput
 	err := json.Unmarshal(input, &args)
 	if err != nil {
 		return nil, err
@@ -93,6 +93,10 @@ func (c *Interpreter) Interpret(ctx context.Context, fsys afero.Fs, input json.R
 	_, err = vm.RunString(ensureStrictMode(args.Script))
 	close(done)
 
+	if err != nil {
+		err = c.handleScriptError(err)
+	}
+
 	callState, ok := GetValue[*FunctionCallState](session, "function_call_state")
 	if !ok {
 		callState = NewFunctionCallState()
@@ -103,11 +107,24 @@ func (c *Interpreter) Interpret(ctx context.Context, fsys afero.Fs, input json.R
 		toolStats = make(map[string]int64)
 	}
 
-	return &InterpreterResult{
+	return &InterpreterOutput{
 		ConsoleOutput: stdout.String(),
 		FunctionCalls: callState.Calls,
 		ToolStats:     toolStats,
 	}, err
+}
+
+func (c *Interpreter) handleScriptError(err error) error {
+	exception, ok := err.(*sobek.Exception)
+	if !ok {
+		return err
+	}
+
+	if exception.Unwrap() != nil {
+		return exception.Unwrap()
+	}
+
+	return err
 }
 
 func (c *Interpreter) intercept(session *Session, toolName Tool, inner func(sobek.FunctionCall) sobek.Value) func(sobek.FunctionCall) sobek.Value {

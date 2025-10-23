@@ -59,7 +59,7 @@ func NewModelProviderListCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().VarP(&options.ProviderTypes, "type", "t", "Filter providers by type")
+	cmd.Flags().VarP(&options.ProviderTypes, "provider-type", "t", "Filter providers by type")
 	addRenderOptions(cmd, &options.RenderOptions)
 	return cmd
 }

@@ -81,6 +81,7 @@ func (s *TestSetup) RunTests(t *testing.T, scenarios []TestScenario) {
 			}
 
 			userInfo := mocks.NewMockUserInfo(ctrl)
+			setupDefaultUserInfo(userInfo)
 			if scenario.SetupUserInfo != nil {
 				scenario.SetupUserInfo(userInfo)
 			}
@@ -108,6 +109,7 @@ func (s *TestSetup) RunTests(t *testing.T, scenarios []TestScenario) {
 
 			mockFormatter := &MockFormatter{}
 			ctx := context.Background()
+			ctx = context.WithValue(ctx, ContextKeyDisableFileLogs, true)
 			ctx = context.WithValue(ctx, ContextKeyAPIClient, mockClient.Client())
 			ctx = context.WithValue(ctx, ContextKeyFileSystem, fs)
 			ctx = context.WithValue(ctx, ContextKeyOutputRenderer, mockFormatter)
@@ -164,4 +166,8 @@ func setupModelNameLookup(mockClient *api_client.MockClient, modelName, modelID 
 			},
 		},
 	}, nil)
+}
+
+func setupDefaultUserInfo(userInfo *mocks.MockUserInfo) {
+	userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 }

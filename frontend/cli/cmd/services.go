@@ -23,6 +23,7 @@ const (
 	ContextKeyGlobalOptions   ContextKey = "global_options"
 	ContextKeyHttpClient      ContextKey = "http_client"
 	ContextKeyConfigStore     ContextKey = "config_store"
+	ContextKeyDisableFileLogs ContextKey = "disable_file_logs"
 )
 
 func getAPIClient(ctx context.Context) *api.Client {

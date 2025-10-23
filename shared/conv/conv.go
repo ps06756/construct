@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	v1 "github.com/furisto/construct/api/go/v1"
 	"github.com/furisto/construct/backend/memory"
@@ -30,7 +31,13 @@ func ErrorToString(err error) string {
 	if err == nil {
 		return ""
 	}
-	return err.Error()
+	errorMsg := err.Error()
+
+	if strings.Contains(errorMsg, "ReferenceError:") && strings.Contains(errorMsg, "is not defined") {
+		errorMsg += "\n\nNote: Variables do not persist across interpreter runs. If you're referencing a variable from a previous execution, you'll need to define it again in this script."
+	}
+
+	return errorMsg
 }
 
 func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
@@ -65,7 +72,7 @@ func ConvertMemoryMessageToProto(m *memory.Message) (*v1.Message, error) {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter call block: %w", err)
 			}
 
-			var interpreterArgs codeact.InterpreterArgs
+			var interpreterArgs codeact.InterpreterInput
 			err = json.Unmarshal(toolCall.Args, &interpreterArgs)
 			if err != nil {
 				return nil, fmt.Errorf("failed to unmarshal code interpreter args: %w", err)

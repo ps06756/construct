@@ -89,9 +89,9 @@ func EditFile(fsys afero.Fs, input *EditFileInput) (*EditFileResult, error) {
 
 	newContent, replacementsMade, validationErrors := processEdits(originalContent, input.Diffs)
 	if len(validationErrors) > 0 {
-		return nil, base.NewCustomError(fmt.Sprintf("validation failed: %d error(s) found", len(validationErrors)), []string{
+		return nil, base.NewCustomError("validation failed", []string{
 			"Please fix the validation errors and try again",
-		})
+		}, "path", path, "validation_errors", validationErrors)
 	}
 
 	var patchInfo PatchInfo

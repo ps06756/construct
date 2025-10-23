@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -122,8 +121,8 @@ func readFileRange(path string, file afero.File, startLine, endLine *int) (*Read
 			if contentStarted {
 				builder.WriteByte('\n')
 			}
-			builder.WriteString(strconv.Itoa(currentLine))
-			builder.WriteString(": ")
+			// builder.WriteString(strconv.Itoa(currentLine))
+			// builder.WriteString(": ")
 			builder.WriteString(line)
 			linesRead++
 			contentStarted = true

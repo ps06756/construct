@@ -50,10 +50,9 @@ func NewRootCmd() *cobra.Command {
 			userInfo := getUserInfo(cmd.Context())
 
 			options.LogLevel = resolveLogLevel(cmd, &options)
-			slog.SetDefault(slog.New(slog.NewJSONHandler(setupLogSink(userInfo, cmd.OutOrStdout()), &slog.HandlerOptions{
+			slog.SetDefault(slog.New(slog.NewJSONHandler(setupLogSink(cmd.Context(), userInfo, cmd.OutOrStdout()), &slog.HandlerOptions{
 				Level: options.LogLevel.SlogLevel(),
 			})))
-
 			cmd.SetContext(setGlobalOptions(cmd.Context(), &options))
 
 			configStore, err := config.NewStore(getFileSystem(cmd.Context()), userInfo)
@@ -281,7 +280,11 @@ func resolveLogLevel(cmd *cobra.Command, options *globalOptions) LogLevel {
 	return LogLevelInfo
 }
 
-func setupLogSink(userInfo shared.UserInfo, stdout io.Writer) io.Writer {
+func setupLogSink(ctx context.Context, userInfo shared.UserInfo, stdout io.Writer) io.Writer {
+	if disable, ok := ctx.Value(ContextKeyDisableFileLogs).(bool); ok && disable {
+		return stdout
+	}
+
 	dataDir, err := userInfo.ConstructStateDir()
 	if err != nil {
 		return stdout

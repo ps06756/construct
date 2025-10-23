@@ -72,7 +72,7 @@ func TestModelProviderCreate(t *testing.T) {
 			Name:    "error - invalid provider type",
 			Command: []string{"modelprovider", "create", "my-provider", "--type", "invalid"},
 			Expected: TestExpectation{
-				Error: "invalid argument \"invalid\" for \"-t, --type\" flag: must be one of \"openai\" or \"anthropic\"",
+				Error: "invalid argument \"invalid\" for \"-t, --type\" flag: must be one of \"openai\",\"anthropic\",\"gemini\",\"xai\"",
 			},
 		},
 		{

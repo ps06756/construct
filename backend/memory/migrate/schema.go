@@ -128,9 +128,9 @@ var (
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "model_name",
+				Name:    "model_name_model_provider_id",
 				Unique:  true,
-				Columns: []*schema.Column{ModelsColumns[3]},
+				Columns: []*schema.Column{ModelsColumns[3], ModelsColumns[12]},
 			},
 		},
 	}

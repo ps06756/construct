@@ -11,6 +11,7 @@ import (
 
 type modelListOptions struct {
 	ModelProvider string
+	All           bool
 	RenderOptions RenderOptions
 }
 
@@ -39,6 +40,11 @@ func NewModelListCmd() *cobra.Command {
 				filter.ModelProviderId = &modelProviderID
 			}
 
+			if !options.All {
+				enabled := true
+				filter.Enabled = &enabled
+			}
+
 
 
 			req := &connect.Request[v1.ListModelsRequest]{
@@ -62,6 +68,7 @@ func NewModelListCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&options.ModelProvider, "provider", "p", "", "Filter models by their provider")
+	cmd.Flags().BoolVarP(&options.All, "all", "a", false, "Show all models including disabled ones")
 	addRenderOptions(cmd, &options.RenderOptions)
 	return cmd
 }

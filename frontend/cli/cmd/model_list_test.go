@@ -89,7 +89,7 @@ func TestModelList(t *testing.T) {
 
 		{
 			Name:    "success - list all models including disabled ones",
-			Command: []string{"model", "list", "--show-disabled"},
+			Command: []string{"model", "list", "--all"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelListMock(mockClient, nil, nil, []*v1.Model{
 					createTestModel(modelID1, "gpt-4", modelProviderID1, 8192, true),
@@ -144,7 +144,7 @@ func TestModelList(t *testing.T) {
 		},
 		{
 			Name:    "success - list models with short flags",
-			Command: []string{"model", "list", "-p", "anthropic-dev", "-d", "-o", "yaml"},
+			Command: []string{"model", "list", "-p", "anthropic-dev", "-a", "-o", "yaml"},
 			SetupMocks: func(mockClient *api_client.MockClient) {
 				setupModelProviderLookupForListMock(mockClient, "anthropic-dev", modelProviderID2)
 				setupModelListMock(mockClient, &modelProviderID2, nil, []*v1.Model{

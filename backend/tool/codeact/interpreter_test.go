@@ -30,7 +30,7 @@ func TestInterpreter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			interpreter := NewInterpreter(test.Tools, nil)
-			args := InterpreterArgs{
+			args := InterpreterInput{
 				Script: test.Script,
 			}
 

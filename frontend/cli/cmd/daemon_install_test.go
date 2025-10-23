@@ -30,7 +30,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().ConstructDir().Return("/home/user/.construct", nil).AnyTimes()
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				// Simulate executable path
@@ -52,7 +52,7 @@ func TestDaemonInstall(t *testing.T) {
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
 				userInfo.EXPECT().HomeDir().Return("/Users/testuser", nil)
-				userInfo.EXPECT().UserID().Return("501")
+				userInfo.EXPECT().UserID().Return("501", nil)
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				// Simulate executable path
@@ -74,7 +74,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -95,7 +95,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -116,7 +116,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -140,7 +140,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -154,7 +154,7 @@ func TestDaemonInstall(t *testing.T) {
 			Command:  []string{"daemon", "install"},
 			Platform: "linux",
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -170,7 +170,7 @@ func TestDaemonInstall(t *testing.T) {
 			Command:  []string{"daemon", "install"},
 			Platform: "linux",
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -189,7 +189,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "daemon-reload").Return("Failed to reload", fmt.Errorf("systemctl error"))
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -210,7 +210,7 @@ func TestDaemonInstall(t *testing.T) {
 				commandRunner.EXPECT().Run(gomock.Any(), "systemctl", "enable", "construct.socket").Return("", nil)
 			},
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)
@@ -224,7 +224,7 @@ func TestDaemonInstall(t *testing.T) {
 			Command:  []string{"daemon", "install"},
 			Platform: "windows",
 			SetupUserInfo: func(userInfo *mocks.MockUserInfo) {
-				userInfo.EXPECT().HomeDir().Return("/home/user", nil)
+				userInfo.EXPECT().ConstructConfigDir().Return("/home/user/.construct", nil).AnyTimes()
 			},
 			SetupFileSystem: func(fs *afero.Afero) {
 				fs.WriteFile("/usr/local/bin/construct", []byte("binary"), 0755)

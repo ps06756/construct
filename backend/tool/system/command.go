@@ -40,7 +40,7 @@ func ExecuteCommand(input *ExecuteCommandInput) (*ExecuteCommandResult, error) {
 		return nil, base.NewCustomError("error executing command", []string{
 			"Check if the command is valid and executable.",
 			"Ensure the command is properly formatted for the target operating system.",
-		}, "command", input.Command, "error", err)
+		}, "command", input.Command, "error", err, "output", string(output))
 	}
 
 	return &ExecuteCommandResult{

@@ -11,6 +11,42 @@ import (
 func SupportedAnthropicModels() []Model {
 	return []Model{
 		{
+			ID:       uuid.MustParse("0199ee5a-ffd4-721f-9e41-ad8167f7d909"),
+			Name:     "claude-haiku-4-5-20251001",
+			Provider: ProviderKindAnthropic,
+			Capabilities: []Capability{
+				CapabilityImage,
+				CapabilityComputerUse,
+				CapabilityPromptCache,
+				CapabilityExtendedThinking,
+			},
+			ContextWindow: 200000,
+			Pricing: ModelPricing{
+				Input:      3.0,
+				Output:     15.0,
+				CacheWrite: 3.75,
+				CacheRead:  0.3,
+			},
+		},
+		{
+			ID:       uuid.MustParse("0199ee5a-ffd4-721f-9e41-ad8167f7d909"),
+			Name:     "claude-sonnet-4-5-20250929",
+			Provider: ProviderKindAnthropic,
+			Capabilities: []Capability{
+				CapabilityImage,
+				CapabilityComputerUse,
+				CapabilityPromptCache,
+				CapabilityExtendedThinking,
+			},
+			ContextWindow: 200000,
+			Pricing: ModelPricing{
+				Input:      3.0,
+				Output:     15.0,
+				CacheWrite: 3.75,
+				CacheRead:  0.3,
+			},
+		},
+		{
 			ID:       uuid.MustParse("0197e0d5-7567-70c6-8f64-e217dee9eb05"),
 			Name:     "claude-sonnet-4-20250514",
 			Provider: ProviderKindAnthropic,

@@ -200,7 +200,7 @@ func (r *TaskReconciler) reconcile(ctx context.Context, taskID uuid.UUID) (Resul
 		return Result{}, fmt.Errorf("failed to fetch messages: %w", err)
 	}
 
-	status, err := r.computeStatus(messages)
+	status, err := r.computeStatus(task, messages)
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to compute status: %w", err)
 	}
@@ -209,8 +209,12 @@ func (r *TaskReconciler) reconcile(ctx context.Context, taskID uuid.UUID) (Resul
 	defer r.setTaskPhaseAndPublish(ctx, taskID, TaskPhaseAwaitInput)
 
 	switch status.Phase {
-	case TaskPhaseAwaitInput, TaskPhaseSuspended:
+	case TaskPhaseAwaitInput:
 		slog.DebugContext(ctx, "no unprocessed messages", "task_id", taskID, "phase", status.Phase)
+		return Result{}, nil
+
+	case TaskPhaseSuspended:
+		slog.DebugContext(ctx, "task is suspended", "task_id", taskID, "phase", status.Phase)
 		return Result{}, nil
 
 	case TaskPhaseInvokeModel:
@@ -244,7 +248,11 @@ func (r *TaskReconciler) fetchTaskWithAgent(ctx context.Context, taskID uuid.UUI
 }
 
 // computeStatus analyzes the message history and determines what action to take
-func (r *TaskReconciler) computeStatus(messages []*memory.Message) (*TaskStatus, error) {
+func (r *TaskReconciler) computeStatus(task *memory.Task, messages []*memory.Message) (*TaskStatus, error) {
+	if task.Phase == types.TaskPhaseSuspended {
+		return &TaskStatus{Phase: TaskPhaseSuspended}, nil
+	}
+
 	if len(messages) == 0 {
 		return &TaskStatus{Phase: TaskPhaseAwaitInput}, nil
 	}
@@ -578,7 +586,7 @@ func (r *TaskReconciler) callTools(ctx context.Context, task *memory.Task, messa
 				return nil, nil, fmt.Errorf("failed to unmarshal tool call: %w", err)
 			}
 			logInterpreterArgs(ctx, task.ID, toolCall.Args)
-			
+
 			result, err := r.interpreter.Interpret(ctx, afero.NewOsFs(), toolCall.Args, &codeact.Task{
 				ID:               task.ID,
 				ProjectDirectory: task.ProjectDirectory,

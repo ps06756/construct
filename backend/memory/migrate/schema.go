@@ -164,8 +164,8 @@ var (
 		{Name: "cost", Type: field.TypeFloat64, Nullable: true},
 		{Name: "turns", Type: field.TypeInt64, Default: 0},
 		{Name: "tool_uses", Type: field.TypeJSON},
-		{Name: "desired_phase", Type: field.TypeEnum, Enums: []string{"unspecified", "running", "awaiting", "suspended"}, Default: "unspecified"},
-		{Name: "phase", Type: field.TypeEnum, Enums: []string{"unspecified", "running", "awaiting", "suspended"}, Default: "unspecified"},
+		{Name: "desired_phase", Type: field.TypeEnum, Enums: []string{"unspecified", "running", "awaiting", "suspended"}, Default: "running"},
+		{Name: "phase", Type: field.TypeEnum, Enums: []string{"unspecified", "running", "awaiting", "suspended"}, Default: "awaiting"},
 		{Name: "agent_id", Type: field.TypeUUID, Nullable: true},
 	}
 	// TasksTable holds the schema information for the "tasks" table.

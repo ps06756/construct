@@ -108,7 +108,7 @@ var (
 	DefaultID func() uuid.UUID
 )
 
-const DefaultDesiredPhase types.TaskPhase = "unspecified"
+const DefaultDesiredPhase types.TaskPhase = "running"
 
 // DesiredPhaseValidator is a validator for the "desired_phase" field enum values. It is called by the builders before save.
 func DesiredPhaseValidator(dp types.TaskPhase) error {
@@ -120,7 +120,7 @@ func DesiredPhaseValidator(dp types.TaskPhase) error {
 	}
 }
 
-const DefaultPhase types.TaskPhase = "unspecified"
+const DefaultPhase types.TaskPhase = "awaiting"
 
 // PhaseValidator is a validator for the "phase" field enum values. It is called by the builders before save.
 func PhaseValidator(ph types.TaskPhase) error {

@@ -34,6 +34,10 @@ type listAgentsCmd struct{}
 
 type taskUpdatedMsg struct{}
 
+type switchAgentCmd struct {
+	agentId string
+}
+
 type Error struct {
 	Error error
 	Time  time.Time

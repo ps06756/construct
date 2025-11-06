@@ -119,17 +119,14 @@ func (g *TitleGenerator) generateTitleWithRetry(
 		},
 	})
 
-	var anthropicProvider *model.AnthropicProvider
-	anthropicProvider, ok := provider.(*model.AnthropicProvider)
+	_, ok := provider.(*model.AnthropicProvider)
 	if !ok {
 		return "", fmt.Errorf("provider is not an Anthropic provider")
 	}
 
-	budgetModel := anthropicProvider.BudgetModel()
-
 	response, err := provider.InvokeModel(
 		ctx,
-		budgetModel,
+		model.AnthropicBudgetModel,
 		systemPrompt,
 		messagesWithPrefill,
 	)

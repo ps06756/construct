@@ -328,14 +328,6 @@ func (p *AnthropicProvider) validateInput(model, systemPrompt string, messages [
 	return nil
 }
 
-func (p *AnthropicProvider) DefaultModel() string {
-	return AnthropicDefaultModel
-}
-
-func (p *AnthropicProvider) BudgetModel() string {
-	return AnthropicBudgetModel
-}
-
 func NewAnthropicProviderError(kind ProviderErrorKind, err error) *ProviderError {
 	return NewProviderError("anthropic", kind, err)
 }

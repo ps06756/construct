@@ -101,7 +101,7 @@ func (h *ModelProviderHandler) CreateModelProvider(ctx context.Context, req *con
 	}
 
 	_, err = memory.Transaction(ctx, h.db, func(tx *memory.Client) (*memory.Agent, error) {
-		err := createBuiltinAgents(ctx, tx, model.ProviderKind(providerType))
+		err := createBuiltinAgents(ctx, tx, modelProvider)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create builtin agents: %w", err)
 		}
@@ -269,7 +269,7 @@ func marshalAuthToJson(config any) ([]byte, error) {
 	}
 }
 
-func createBuiltinAgents(ctx context.Context, tx *memory.Client, providerType model.ProviderKind) error {
+func createBuiltinAgents(ctx context.Context, tx *memory.Client, modelProvider *memory.ModelProvider) error {
 	builtinAgents, err := tx.Agent.Query().Where(agent.Builtin(true)).WithModel().All(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get system agents: %w", err)
@@ -279,22 +279,29 @@ func createBuiltinAgents(ctx context.Context, tx *memory.Client, providerType mo
 		return nil
 	}
 
-	defaultModel, err := model.DefaultModel(model.ProviderKind(providerType))
+	defaultModel, err := tx.Model.Query().Where(modeldb.ModelProviderID(modelProvider.ID)).
+		Where(modeldb.Name(model.AnthropicDefaultModel)).First(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get default model: %w", err)
 	}
 
-	modelID, err := tx.Model.Query().Where(modeldb.Name(defaultModel.Name)).FirstID(ctx)
+	budgetModel, err := tx.Model.Query().Where(modeldb.ModelProviderID(modelProvider.ID)).
+		Where(modeldb.Name(model.AnthropicBudgetModel)).First(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get default model: %w", err)
+		return fmt.Errorf("failed to get budget model: %w", err)
 	}
 
-	err = createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000001"), "coder", prompt.Coder, "Implements solutions based on plans or on demand", modelID)
+	err = createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000001"), "edit", prompt.Edit, "Implements solutions based on plans or on demand", defaultModel.ID)
 	if err != nil {
 		return err
 	}
 
-	return createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000002"), "architect", prompt.Architect, "Gathers requirements and designs detailed implementation plans", modelID)
+	err = createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000002"), "fastedit", prompt.Edit, "Fast, focused edits for specific code changes", budgetModel.ID)
+	if err != nil {
+		return err
+	}
+
+	return createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000003"), "plan", prompt.Plan, "Gathers requirements and designs detailed implementation plans", defaultModel.ID)
 }
 
 func createBuiltinAgent(ctx context.Context, tx *memory.Client, agentID uuid.UUID, name string, instructions string, description string, modelID uuid.UUID) error {

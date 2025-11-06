@@ -5,7 +5,7 @@ import (
 )
 
 //go:embed architect.md
-var Architect string
+var Plan string
 
 //go:embed coder.md
-var Coder string
+var Edit string

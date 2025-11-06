@@ -167,7 +167,7 @@ func (m *Session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		cmds = append(cmds, m.onKeyEvent(msg))
+		cmds = append(cmds, m.onKeyEvent(msg)...)
 		if m.showHelp {
 			if msg.Type == tea.KeyEsc || msg.String() == "ctrl+?" {
 				m.showHelp = false
@@ -193,6 +193,8 @@ func (m *Session) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, m.executeGetModel(msg.modelId))
 	case listAgentsCmd:
 		cmds = append(cmds, m.executeListAgents())
+	case switchAgentCmd:
+		cmds = append(cmds, m.executeSwitchAgent(msg.agentId))
 	case taskUpdatedMsg:
 		// task was already updated, just trigger re-render
 	}
@@ -225,7 +227,7 @@ func (m *Session) updateUsage(msg tea.Msg) {
 	}
 }
 
-func (m *Session) onKeyEvent(msg tea.KeyMsg) tea.Cmd {
+func (m *Session) onKeyEvent(msg tea.KeyMsg) []tea.Cmd {
 	defer func() {
 		// if the key is not quit, reset the last Ctrl+C time
 		if !key.Matches(msg, m.keyBindings.ClearOrQuit) {
@@ -238,13 +240,13 @@ func (m *Session) onKeyEvent(msg tea.KeyMsg) tea.Cmd {
 		m.showHelp = !m.showHelp
 		return nil
 	case key.Matches(msg, m.keyBindings.SendMessage):
-		return m.handleMessageSend()
+		return []tea.Cmd{m.handleMessageSend()}
 	case key.Matches(msg, m.keyBindings.SwitchAgent):
 		return m.handleSwitchAgent()
 	case key.Matches(msg, m.keyBindings.SuspendTask):
-		return m.handleSuspendTask()
+		return []tea.Cmd{m.handleSuspendTask()}
 	case key.Matches(msg, m.keyBindings.ClearOrQuit):
-		return m.handleClearOrQuit()
+		return []tea.Cmd{m.handleClearOrQuit()}
 	}
 
 	return nil
@@ -264,7 +266,7 @@ func (m *Session) handleMessageSend() tea.Cmd {
 	return nil
 }
 
-func (m *Session) handleSwitchAgent() tea.Cmd {
+func (m *Session) handleSwitchAgent() []tea.Cmd {
 	if len(m.agents) <= 1 {
 		return nil
 	}
@@ -286,9 +288,11 @@ func (m *Session) handleSwitchAgent() tea.Cmd {
 	m.activeAgent = m.agents[currentIdx]
 
 	// Fetch model info for the new agent
-	return func() tea.Msg {
+	return []tea.Cmd{func() tea.Msg {
 		return getModelCmd{modelId: m.activeAgent.Spec.ModelId}
-	}
+	}, func() tea.Msg {
+		return switchAgentCmd{agentId: m.activeAgent.Metadata.Id}
+	}}
 }
 
 func (m *Session) handleClearOrQuit() tea.Cmd {
@@ -408,6 +412,22 @@ func (m *Session) executeListAgents() tea.Cmd {
 		}
 
 		m.agents = agents.Msg.Agents
+		return nil
+	}
+}
+
+func (m *Session) executeSwitchAgent(agentId string) tea.Cmd {
+	return func() tea.Msg {
+		_, err := m.apiClient.Task().UpdateTask(m.ctx, &connect.Request[v1.UpdateTaskRequest]{
+			Msg: &v1.UpdateTaskRequest{
+				Id:      m.task.Metadata.Id,
+				AgentId: api_client.Ptr(agentId),
+			},
+		})
+		if err != nil {
+			return handleAPIError(err)
+		}
+
 		return nil
 	}
 }

@@ -35,16 +35,25 @@ You take initiative when the user asks you to do something, but try to maintain 
 - Be well-structured - Logical organization, separation of concerns
 - Handle errors - Include appropriate error handling
 - Be efficient - Optimize appropriately for context
-- Be readable - Clear, self-documenting code
+- Be readable - Clear, self-documenting code with meaningful names (prefer this to comments)
 - Be testable - Structure for easy testing
 
 ## Code Comments
 **CRITICAL**: DO NOT add comments to explain code changes.
+
 **Comments are only acceptable when:**
 - Genuinely complex logic requiring future context
 - Non-obvious architectural decisions
 - Explicitly requested by the user
-**Remember**: Explanations belong in your text responses, not in code.
+
+**NEVER add comments for:**
+- Simple variable assignments or transformations
+- Obvious function purposes (if name is clear, no comment needed)
+- Loop iterations or basic control flow
+- Single-line explanations of what the code literally does
+- Comments that merely repeat the code (e.g., `count++` with comment `// increment count`)
+
+**Remember**: Explanations belong in your text responses, not in code. Self-documenting code through clear naming and structure is preferred.
 
 ## Security
 - Always follow security best practices

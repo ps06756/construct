@@ -157,8 +157,9 @@ func (m *MessageFeed) updateViewportContent() {
 	formatted := formatMessages(m.messages, m.partialMessage, m.viewport.Width)
 	m.viewport.SetContent(formatted)
 
-	// scroll if user hasn't manually scrolled (e.g. when a conversation is resumed) OR they're near bottom
-	shouldScroll := !m.userHasScrolled || linesFromBottom(m.viewport) < 15
+	// scroll if user hasn't manually scrolled (e.g. when a conversation is resumed)
+	// OR they're near bottom OR the last message is a user message
+	shouldScroll := !m.userHasScrolled || linesFromBottom(m.viewport) < 12 || lastMessageIsUserMessage(m.messages)
 
 	if shouldScroll {
 		m.viewport.GotoBottom()
@@ -170,6 +171,16 @@ func linesFromBottom(vp viewport.Model) int {
 		return 0
 	}
 	return vp.TotalLineCount() - vp.YOffset - vp.Height
+}
+
+func lastMessageIsUserMessage(messages []message) bool {
+	if len(messages) == 0 {
+		return false
+	}
+
+	lastMessage := messages[len(messages)-1]
+	_, ok := lastMessage.(*userTextMessage)
+	return ok
 }
 
 func (m *MessageFeed) upsertErrorMessage(errMsg *Error) {

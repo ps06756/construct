@@ -19,7 +19,8 @@ import (
 type resumeOptions struct {
 	last  bool
 	all   bool
-	limit int
+	limit int	
+	agent string
 }
 
 func NewResumeCmd() *cobra.Command {
@@ -54,6 +55,7 @@ choose from. Partial ID matching is supported.`,
 	cmd.Flags().BoolVar(&options.last, "last", false, "Immediately resume the most recent session without showing the interactive picker")
 	cmd.Flags().BoolVar(&options.all, "all", false, "Show all tasks in the picker, including non-interactive ones")
 	cmd.Flags().IntVar(&options.limit, "limit", 10, "Maximum number of tasks to show in the picker")
+	cmd.Flags().StringVar(&options.agent, "agent", "", "Resume the task with a specific agent")
 
 	return cmd
 }
@@ -61,26 +63,26 @@ choose from. Partial ID matching is supported.`,
 func handleResumeCommand(ctx context.Context, apiClient *api.Client, options *resumeOptions, args []string) error {
 	if len(args) > 0 {
 		taskID := args[0]
-		return resumeTaskByID(ctx, apiClient, taskID)
+		return resumeTaskByID(ctx, apiClient, taskID, options.agent)
 	}
 
 	if options.last {
-		return resumeMostRecentTask(ctx, apiClient)
+		return resumeMostRecentTask(ctx, apiClient, options.agent)
 	}
 
 	return showTaskPicker(ctx, apiClient, options)
 }
 
-func resumeTaskByID(ctx context.Context, apiClient *api.Client, taskID string) error {
+func resumeTaskByID(ctx context.Context, apiClient *api.Client, taskID string, agent string) error {
 	task, err := resolveTaskID(ctx, apiClient, taskID)
 	if err != nil {
 		return fmt.Errorf("failed to resolve task ID %s: %w", taskID, err)
 	}
 
-	return resumeTask(ctx, apiClient, task)
+	return resumeTask(ctx, apiClient, task, agent)
 }
 
-func resumeMostRecentTask(ctx context.Context, apiClient *api.Client) error {
+func resumeMostRecentTask(ctx context.Context, apiClient *api.Client, agent string) error {
 	resp, err := apiClient.Task().ListTasks(ctx, &connect.Request[v1.ListTasksRequest]{
 		Msg: &v1.ListTasksRequest{
 			Filter:    &v1.ListTasksRequest_Filter{},
@@ -98,15 +100,26 @@ func resumeMostRecentTask(ctx context.Context, apiClient *api.Client) error {
 	}
 
 	mostRecentTask := resp.Msg.Tasks[0]
-	return resumeTaskByID(ctx, apiClient, mostRecentTask.Metadata.Id)
+	return resumeTaskByID(ctx, apiClient, mostRecentTask.Metadata.Id, agent)
 }
 
-func resumeTask(ctx context.Context, apiClient *api.Client, task *v1.Task) error {
+func resumeTask(ctx context.Context, apiClient *api.Client, task *v1.Task, agent string) error {
+	var agentID string
+	if agent != "" {
+		var err error
+		agentID, err = getAgentID(ctx, apiClient, agent)
+		if err != nil {
+			return fmt.Errorf("failed to get agent %s: %w", agent, err)
+		}
+	} else {
+		agentID = *task.Spec.AgentId
+	}
+
 	agentResp, err := apiClient.Agent().GetAgent(ctx, &connect.Request[v1.GetAgentRequest]{
-		Msg: &v1.GetAgentRequest{Id: PtrToString(task.Spec.AgentId)},
+		Msg: &v1.GetAgentRequest{Id: agentID},
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get agent: %w", err)
+		return fmt.Errorf("failed to get agent %s: %w", agentID, err)
 	}
 
 	return startInteractiveSession(ctx, apiClient, task, agentResp.Msg.Agent)
@@ -169,7 +182,7 @@ func showTaskPicker(ctx context.Context, apiClient *api.Client, options *resumeO
 		return fmt.Errorf("no task selected")
 	}
 
-	return resumeTask(ctx, apiClient, selectedTask)
+	return resumeTask(ctx, apiClient, selectedTask, options.agent)
 }
 
 func resolveTaskID(ctx context.Context, apiClient *api.Client, taskID string) (*v1.Task, error) {

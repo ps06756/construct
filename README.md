@@ -2,31 +2,129 @@
   <img src="logo.jpeg" alt="Construct Logo" width="600"
 </p>
 
-An API-first, multi-agent coding assistant designed for superior tool calling performance.
+<p align="center">
+  <strong>An open-source AI coding assistant built for engineers who demand full control</strong>
+</p>
+
+<p align="center">
+  API-first • Superior tool calling • Multi-agent workflows • Complete transparency
+</p>
+
+---
+
+## Why Construct?
+
+Most AI coding tools are black boxes. You interact through a web interface or thin CLI wrapper, with limited visibility and minimal control over the system.
+
+Construct is different:
+
+- **Full transparency**: See every tool call, export all data, understand costs
+- **Programmatic control**: Script every operation, integrate with existing workflows
+- **Extensibility**: Build custom agents, access everything via API
+- **Vendor independence**: Self-host, switch models, no lock-in
 
 ## Overview
 
-Construct is a next-generation coding assistant that breaks away from traditional black-box AI assistants. Built with an API-first approach, it offers unparalleled customization and extensibility while supporting multiple collaborative agents that can work together on complex tasks.
+Construct is an open-source AI coding assistant with an API-first architecture. Everything—agents, tasks, conversations, tool calls—is accessible programmatically. The CLI is just one client of the daemon's ConnectRPC API.
 
 ## Key Features
 
-### API-first Architecture
-Everything in Construct can be configured via API, making it highly customizable and integrable with existing workflows and tools. This is in stark contrast to traditional coding assistants that operate as black boxes with limited configuration options.
+### Agents Write JavaScript to Call Tools
 
-### Multi-Agentic System
-Construct supports multiple agents by default that can work together on a task. The system handles agent handoffs and delegations automatically, allowing for specialized agents to tackle different aspects of a problem.
+Instead of rigid JSON schemas, agents write executable JavaScript code to call tools. This enables loops, conditionals, and complex data processing in a single execution.
 
-### CodeAct Tool Calling
-Construct uses CodeAct tool calling with JavaScript for superior tool call performance. This approach provides more reliable and efficient tool execution compared to traditional methods.
+**Example:** Systematically checking and fixing route files:
 
+```javascript
+// Find all route files
+const routeFiles = find_file({
+  pattern: "**/*route*.ts",
+  path: "/project/src"
+});
+
+print(`Processing ${routeFiles.files.length} route files...`);
+
+for (const file of routeFiles.files) {
+  // Check if this file needs authentication
+  const matches = grep({
+    query: "router\\.(get|post).*(?!authenticateToken)",
+    path: file
+  });
+
+  if (matches.total_matches > 0) {
+    print(`⚠️ ${file}: Found ${matches.total_matches} unprotected endpoints`);
+
+    // Build edits dynamically based on findings
+    const edits = [];
+    matches.matches.forEach(match => {
+      edits.push({
+        old: match.line,
+        new: match.line.replace(/(\([^,]+,\s*)/, '$1authenticateToken, ')
+      });
+    });
+
+    edit_file(file, edits);
+    print(`✅ Protected ${edits.length} endpoints`);
+  }
+}
+```
+
+One execution instead of dozens of separate tool calls. Research shows this approach achieves 20% higher success rates vs JSON tool calling.
+
+See [Tool Calling in Construct](docs/tool_calling.md) for a detailed technical analysis.
+
+### API-First Architecture
+
+The CLI is just one client. The daemon exposes every operation via ConnectRPC.
+
+**Example:** Trigger code reviews from CI:
+
+```python
+from construct import Client
+
+client = Client()
+task = client.tasks.create(agent="reviewer", workspace=".")
+result = client.messages.create(
+    task_id=task.id,
+    content="Review this PR for security issues"
+)
+```
+
+Build your own IDE plugins, Slack bots, or automation scripts. Full programmatic control over agents, tasks, messages, models, and providers.
+
+Language SDKs for Python, TypeScript, and Go coming soon.
+
+### Multiple Specialized Agents
+
+Three built-in agents optimized for different phases of work:
+
+- **plan** (Opus) - Architecture & complex decisions
+- **edit** (Sonnet) - Daily implementation work
+- **quick** (Haiku) - Simple refactors & formatting
+
+Switch between agents seamlessly. All agents share conversation history and workspace context.
+
+**Create custom agents:**
+
+```bash
+construct agent create reviewer \
+  --model claude-opus \
+  --prompt "You review Go code for race conditions..."
+```
+
+### Full Terminal Experience
+
+- **Persistent tasks**: Every conversation saved with full history and workspace context
+- **Resume anywhere**: `construct resume --last` instantly picks up where you left off
+- **Non-interactive mode**: `construct exec` for scripting and CI/CD pipelines
+- **Export everything**: `construct message list --task <id> -o json > conversation.json`
 
 ### Additional Features
 
-- **Multiple Model Providers**: Support for various AI models including Anthropic, OpenAI, DeepSeek, and more
-- **Language SDKs**: SDKs available for multiple programming languages
-- **Model Context Protocol**: Enhanced context management for improved model performance
-- **Parallel Tool Use**: Execute multiple tools simultaneously for faster operations
-- **Checkpoints**: Save and restore the state of your work at any point
+- **Cost transparency**: Track token usage and cost per task
+- **Zero dependencies**: Single Go binary, just download and run
+- **Flexible deployment**: Local daemon, remote server, or your own infrastructure
+- **Open source**: Inspect the code, self-host, no vendor lock-in
 
 ## Architecture
 
@@ -38,61 +136,51 @@ Construct is built with a modular architecture that separates concerns between:
 
 The multi-agent system allows for specialized agents to collaborate on tasks, with the runtime managing message passing and coordination between agents.
 
-## Getting Started
-
-### Prerequisites
-
-- Go 1.19 or later (for building from source)
-- A supported operating system (macOS, Linux)
+## Quick Start
 
 ### Installation
 
 ```bash
-# Clone the repository
+# Clone and build
 git clone https://github.com/furisto/construct
-cd construct
-
-# Build the CLI
-cd frontend/cli
+cd construct/frontend/cli
 go build -o construct
 
-# Install the daemon
-./construct daemon install
+# Install to PATH (optional)
+sudo mv construct /usr/local/bin/
 ```
 
-### Quick Start
+### Setup (5 minutes)
 
-1. **Install and start the daemon**:
-   ```bash
-   construct daemon install
-   ```
+```bash
+# 1. Install daemon
+construct daemon install
 
-2. **Create a model provider** (required before creating agents):
-   ```bash
-   # For OpenAI
-   construct modelprovider create "openai" --type openai --api-key "your-api-key"
-   
-   # For Anthropic
-   construct modelprovider create "anthropic" --type anthropic --api-key "your-api-key"
-   ```
+# 2. Configure provider (Anthropic example)
+export ANTHROPIC_API_KEY="sk-ant-..."
+construct modelprovider create anthropic --type anthropic
 
-3. **Create models**:
-   ```bash
-   construct model create "gpt-4" --provider "openai" --context-window 8192
-   construct model create "claude-3-5-sonnet" --provider "anthropic" --context-window 200000
-   ```
+# 3. Register models
+construct model create claude-sonnet-4 \
+  --provider anthropic \
+  --context-window 200000
 
-4. **Create your first agent**:
-   ```bash
-   construct agent create "coder" --prompt "You are a helpful coding assistant" --model "claude-3-5-sonnet"
-   ```
+construct model create claude-haiku-3.5 \
+  --provider anthropic \
+  --context-window 200000
 
-5. **Start a conversation**:
-   ```bash
-   construct new --agent coder
-   # or ask a quick question
-   construct ask "Help me write a hello world function in Python"
-   ```
+# 4. Create agents
+construct agent create edit \
+  --model claude-sonnet-4 \
+  --prompt "You are a coding assistant who writes clean, well-documented code"
+
+construct agent create quick \
+  --model claude-haiku-3.5 \
+  --prompt "You are a fast coding assistant for quick tasks"
+
+# 5. Start coding
+construct new --agent edit
+```
 
 ## Usage Examples
 
@@ -109,21 +197,22 @@ construct resume --last
 construct new --agent coder --workspace /path/to/project
 ```
 
-### Quick Questions with Context
+### Non-Interactive Mode
 
 ```bash
-# Ask a simple question
-construct ask "What is the time complexity of quicksort?"
-
-# Include files for context
-construct ask "Review this code for bugs" --file main.go --file utils.go
+# Execute a task and exit
+construct exec "Review this code for security issues" \
+  --agent reviewer \
+  --file src/auth.go
 
 # Use piped input
-cat error.log | construct ask "What's causing this error?"
+cat error.log | construct exec "What's causing this error?"
 
-# Complex analysis with multiple turns
-construct ask "Analyze this architecture and suggest improvements" \
-  --agent architect --max-turns 10 --file architecture.md
+# Include multiple files for context
+construct exec "Analyze this architecture" \
+  --file design.md \
+  --file implementation.go \
+  --max-turns 10
 ```
 
 ### Agent Management
@@ -184,18 +273,56 @@ construct config set cmd.ask.max-turns 10
 construct config get cmd.new.agent
 ```
 
+## Roadmap
+
+Construct is actively developed. Planned features:
+
+- **MCP support** - Model Context Protocol integration
+- **More providers** - Bedrock, Gemini, and additional model providers
+- **Agent delegation** - Agents can send messages to and delegate work to other agents
+- **Fine-grained permissions** - Control which tools each agent can use
+- **Complete privacy mode** - No analytics, no telemetry
+- **Language SDKs** - Python, TypeScript, and Go client libraries
+
+See [GitHub Issues](https://github.com/furisto/construct/issues) for detailed feature requests and progress tracking.
+
 ## Documentation
 
-For more detailed documentation, please refer to:
-
+- [Tool Calling in Construct](docs/tool_calling.md) - Technical deep dive on JavaScript-based tool calling
 - [CLI Reference](docs/cli_reference.md) - Complete reference for all CLI commands
 - [API Reference](https://docs.construct.sh/api) (Coming soon)
 - [User Guide](https://docs.construct.sh/guide) (Coming soon)
 
+## Support
+
+### Getting Help
+
+- **Documentation**: Check the [docs/](docs/) directory for guides and references
+- **GitHub Discussions**: Ask questions and discuss ideas
+- **GitHub Issues**: Report bugs and request features
+
+### Reporting Issues
+
+Found a bug? Please [open an issue](https://github.com/furisto/construct/issues/new) with:
+- Clear description of the problem
+- Steps to reproduce
+- Your environment (OS, Go version, Construct version)
+- Relevant logs or error messages
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on reporting issues.
+
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+
+- Development setup and workflow
+- Coding standards and best practices
+- Testing requirements
+- Pull request process
+- Reporting issues
 
 ## License
 
-[License information will be provided here]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+Copyright 2025 Thomas Schubart

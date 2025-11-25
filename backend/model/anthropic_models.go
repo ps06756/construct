@@ -11,10 +11,29 @@ import (
 const (
 	AnthropicBudgetModel  = "claude-haiku-4-5-20251001"
 	AnthropicDefaultModel = "claude-sonnet-4-5-20250929"
+	AnthropicPlanModel    = "claude-opus-4-5-20251101"
 )
 
 func SupportedAnthropicModels() []Model {
 	return []Model{
+		{
+			ID:       uuid.MustParse("019abac1-a52d-7dbf-bf8d-d9155ca475dc"),
+			Name:     "claude-opus-4-5-20251101",
+			Provider: ProviderKindAnthropic,
+			Capabilities: []Capability{
+				CapabilityImage,
+				CapabilityComputerUse,
+				CapabilityPromptCache,
+				CapabilityExtendedThinking,
+			},
+			ContextWindow: 200000,
+			Pricing: ModelPricing{
+				Input:      5.0,
+				Output:     25.0,
+				CacheWrite: 6.25,
+				CacheRead:  0.5,
+			},
+		},
 		{
 			ID:       uuid.MustParse("0199ee5a-ffd4-721f-9e41-ad8167f7d909"),
 			Name:     "claude-haiku-4-5-20251001",
@@ -27,10 +46,10 @@ func SupportedAnthropicModels() []Model {
 			},
 			ContextWindow: 200000,
 			Pricing: ModelPricing{
-				Input:      3.0,
-				Output:     15.0,
-				CacheWrite: 3.75,
-				CacheRead:  0.3,
+				Input:      1.0,
+				Output:     5.0,
+				CacheWrite: 1.25,
+				CacheRead:  0.1,
 			},
 		},
 		{

@@ -291,6 +291,12 @@ func createBuiltinAgents(ctx context.Context, tx *memory.Client, modelProvider *
 		return fmt.Errorf("failed to get budget model: %w", err)
 	}
 
+	planModel, err := tx.Model.Query().Where(modeldb.ModelProviderID(modelProvider.ID)).
+		Where(modeldb.Name(model.AnthropicPlanModel)).First(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get plan model: %w", err)
+	}
+
 	err = createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000001"), "edit", prompt.Edit, "Implements code changes from plans or direct requests", defaultModel.ID)
 	if err != nil {
 		return err
@@ -301,7 +307,7 @@ func createBuiltinAgents(ctx context.Context, tx *memory.Client, modelProvider *
 		return err
 	}
 
-	return createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000003"), "plan", prompt.Plan, "Analyzes requirements and creates detailed implementation plans", defaultModel.ID)
+	return createBuiltinAgent(ctx, tx, uuid.MustParse("00000001-0000-0000-0000-000000000003"), "plan", prompt.Plan, "Analyzes requirements and creates detailed implementation plans", planModel.ID)
 }
 
 func createBuiltinAgent(ctx context.Context, tx *memory.Client, agentID uuid.UUID, name string, instructions string, description string, modelID uuid.UUID) error {

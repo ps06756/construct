@@ -81,6 +81,10 @@ The CLI is just one client. The daemon exposes every operation via ConnectRPC.
 
 Build your own IDE plugins, Slack bots, or automation scripts. Full programmatic control over agents, tasks, messages, models, and providers.
 
+<p align="center">
+  <img src="docs/images/construct-architecture.png" alt="Construct Architecture" width="600"
+</p>
+
 #### Agent-as-a-Service (Coming Soon)
 
 Construct's daemon can run anywhere - locally, on a remote server, or in cloud sandboxes. The architecture supports connecting to remote daemons, enabling:
@@ -137,7 +141,7 @@ construct agent create reviewer \
 ## Quick Start
 
 > [!WARNING]
-> Construct is in preview. Expect bugs and missing features as we actively develop toward a stable release. [Report issues](https://github.com/furisto/construct/issues) to help us improve.
+> Construct is in preview. Expect bugs, breaking changes and missing features as we actively develop toward a stable release. [Report issues](https://github.com/furisto/construct/issues) to help us improve.
 
 ### Installation
 

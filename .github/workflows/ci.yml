@@ -36,10 +36,10 @@ jobs:
 
       - name: Run tests
         run: |
-          cd backend && go test ./...
-          cd ../frontend/cli && go test ./...
-          cd ../shared && go test ./...
-          cd ../api/go && go test ./...
+          (cd backend && go test ./...)
+          (cd frontend/cli && go test ./...)
+          (cd shared && go test ./...)
+          (cd api/go && go test ./...)
         env:
           CGO_ENABLED: 0
 

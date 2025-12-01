@@ -71,7 +71,7 @@ When the user asks you to create a new git commit, follow these steps carefully:
 2. **Analyze changes**: List modified files, categorize change type (feature/fix/refactor/docs/test)
 3. **Determine motivation**: Why were these changes made?
 4. **Security scan**: Check staged files for sensitive information
-5. **Check repository style**: Review recent commits (%[2]sgit log --format='%h - %s%n%b%n---' -6%[2]s) for message patterns
+5. **Check repository style**: Review recent commits (%[2]sgit log --format='%%h - %%s%%n%%b%%n---' -6%[2]s) for message patterns
 
 ### Commit Message Rules
 - Focus on "why" not "what" - explain purpose, not just actions
@@ -124,7 +124,7 @@ const gitDiffCached = execute_command("git diff --cached");
 print("=== CACHED DIFF ===");
 print(gitDiffCached.stdout);
 
-const gitLog = execute_command("git log --format='%h - %s%n%b%n---' -6");
+const gitLog = execute_command("git log --format='%%h - %%s%%n%%b%%n---' -6");
 print("=== LAST 6 COMMITS ===");
 print(gitLog.stdout);
 

@@ -24,18 +24,18 @@ func TestEditFile(t *testing.T) {
 
 	setup.RunToolTests(t, []base.ToolTestScenario[*EditFileInput, *EditFileResult]{
 		{
-		Name: "escape sequence in string literal - actual newline to literal escape",
-		TestInput: &EditFileInput{
-			Path: "/workspace/daemon_run.go",
-			Diffs: []DiffPair{
-				{
-					// Model generates actual newline in string
-					Old: "fmt.Fprintf(cmd.OutOrStdout(), \"🤖 Starting Agent Runtime...\n\")",
-					// Model also generates actual newline in diff.New
-					New: "fmt.Fprintf(cmd.OutOrStdout(), \"🤖 Starting Agent Runtime...\n\") // updated",
+			Name: "escape sequence in string literal - actual newline to literal escape",
+			TestInput: &EditFileInput{
+				Path: "/workspace/daemon_run.go",
+				Diffs: []DiffPair{
+					{
+						// Model generates actual newline in string
+						Old: "fmt.Fprintf(cmd.OutOrStdout(), \"🤖 Starting Agent Runtime...\n\")",
+						// Model also generates actual newline in diff.New
+						New: "fmt.Fprintf(cmd.OutOrStdout(), \"🤖 Starting Agent Runtime...\n\") // updated",
+					},
 				},
 			},
-		},
 			SeedFilesystem: func(ctx context.Context, fs afero.Fs) {
 				fs.MkdirAll("/workspace", 0755)
 				// File contains literal escape sequence

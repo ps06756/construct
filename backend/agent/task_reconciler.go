@@ -840,12 +840,12 @@ func logInterpreter(ctx context.Context, taskID uuid.UUID, toolID string, conten
 	defer fp.Close()
 
 	type ToolOperation struct {
-		ToolID string `json:"tool_id"`
+		ToolID  string `json:"tool_id"`
 		Content string `json:"content"`
 	}
 
 	toolOperation := ToolOperation{
-		ToolID: toolID,
+		ToolID:  toolID,
 		Content: content,
 	}
 

@@ -189,7 +189,7 @@ func TestTaskList(t *testing.T) {
 					gomock.Any(),
 					&connect.Request[v1.ListTasksRequest]{
 						Msg: &v1.ListTasksRequest{
-							Filter: &v1.ListTasksRequest_Filter{},
+							Filter:   &v1.ListTasksRequest_Filter{},
 							PageSize: conv.Ptr(int32(0)),
 						},
 					},

@@ -19,7 +19,7 @@ import (
 type resumeOptions struct {
 	last  bool
 	all   bool
-	limit int	
+	limit int
 	agent string
 }
 
